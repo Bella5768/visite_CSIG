@@ -1,28 +1,172 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-people"></i> Visiteurs</h2>
-    <a href="{% url 'visiteurs:ajouter' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Nouveau visiteur</a>
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-people-fill"></i> Gestion des visiteurs</h2>
+        <div class="subtitle">{{ visiteurs.paginator.count|default:0 }} visiteurs enregistrés</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visiteurs:ajouter' %}" class="btn-primary-gradient">
+            <i class="bi bi-person-plus"></i> Nouveau visiteur
+        </a>
+        <a href="{% url 'visiteurs:rechercher' %}" class="btn-outline-gradient">
+            <i class="bi bi-search"></i> Rechercher
+        </a>
+    </div>
 </div>
-<div class="card mb-4"><div class="card-body">
-    <form method="get" class="row g-3 align-items-end">
-        <div class="col-md-6"><input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ search_term }}"></div>
-        <div class="col-md-2"><button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button></div>
+
+<!-- Search & Stats -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <form method="get" class="search-box" style="max-width: 400px;">
+        <div class="search-input">
+            <i class="bi bi-search"></i>
+            <input type="text" name="search" placeholder="Recherche rapide..." value="{{ search_term }}">
+        </div>
+        <select class="select-filter" name="filter">
+            <option value="">Trier par nom</option>
+            <option value="recent">Plus récent</option>
+            <option value="visites">Nb visites</option>
+        </select>
     </form>
-</div></div>
-<div class="card"><div class="card-body p-0">
-    <table class="table table-hover mb-0">
-        <thead><tr><th>Nom</th><th>Téléphone</th><th>Identité</th><th>Visites</th><th>Actions</th></tr></thead>
+    <div class="stats-mini">
+        <div class="stat-mini">
+            <div class="value">{{ stats_today|default:0 }}</div>
+            <div class="label">Aujourd'hui</div>
+        </div>
+        <div class="stat-mini">
+            <div class="value">{{ stats_week|default:0 }}</div>
+            <div class="label">7 jours</div>
+        </div>
+        <div class="stat-mini">
+            <div class="value">{{ stats_month|default:visiteurs.paginator.count|default:0 }}</div>
+            <div class="label">30 jours</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+    <div class="table-header">
+        <h3><i class="bi bi-list-ul"></i> Liste des visiteurs</h3>
+        <a href="#" class="btn-export"><i class="bi bi-download"></i> Export Excel</a>
+    </div>
+    <table class="table-modern">
+        <thead>
+            <tr>
+                <th class="sortable">Nom et prénom <i class="bi bi-arrow-down-up"></i></th>
+                <th>Identité</th>
+                <th>Contact</th>
+                <th>Visites</th>
+                <th>Dernière visite</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
         <tbody>
             {% for v in visiteurs %}
-            <tr><td>{{ v.prenoms }} {{ v.nom }}</td><td>{{ v.telephone|default:"-" }}</td><td>{{ v.numero_identite|default:"-" }}</td><td><span class="badge bg-primary">{{ v.nb_visites }}</span></td>
-                <td><a href="{% url 'visiteurs:historique' v.id %}" class="btn btn-sm btn-outline-info"><i class="bi bi-clock-history"></i></a>
-                    <a href="{% url 'visiteurs:modifier' v.id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                    <a href="{% url 'visites:nouvelle_visite_visiteur' v.id %}" class="btn btn-sm btn-outline-success"><i class="bi bi-plus"></i></a></td>
+            <tr>
+                <td>
+                    <div class="user-cell">
+                        <div class="user-avatar {% cycle 'blue' 'green' 'orange' %}">
+                            {{ v.prenoms|slice:":1"|upper }}{{ v.nom|slice:":1"|upper }}
+                        </div>
+                        <div class="user-info-cell">
+                            <div class="user-name">{{ v.prenoms }} {{ v.nom }}</div>
+                            <div class="user-meta">Créé le {{ v.date_creation|date:"d/m/Y" }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if v.type_identite == 'passeport' %}
+                        <span class="badge-type passport">Passeport</span>
+                    {% elif v.type_identite == 'cni' %}
+                        <span class="badge-type cni">Carte Nationale</span>
+                    {% else %}
+                        <span class="badge-type other">{{ v.type_identite|default:"N/A" }}</span>
+                    {% endif %}
+                    <div style="font-size: 12px; color: #64748b; margin-top: 4px;">{{ v.numero_identite|default:"-" }}</div>
+                </td>
+                <td>
+                    <div class="contact-cell">
+                        {% if v.telephone %}
+                            <a href="tel:{{ v.telephone }}"><i class="bi bi-telephone"></i> {{ v.telephone }}</a>
+                        {% endif %}
+                        {% if v.email %}
+                            <a href="mailto:{{ v.email }}"><i class="bi bi-envelope"></i> {{ v.email }}</a>
+                        {% endif %}
+                        {% if not v.telephone and not v.email %}
+                            <span style="color: #94a3b8;">-</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge-visits"><i class="bi bi-calendar-check"></i> {{ v.nb_visites|default:0 }} visite{{ v.nb_visites|pluralize }}</span>
+                </td>
+                <td>
+                    {% if v.derniere_visite %}
+                        {{ v.derniere_visite|date:"d/m/Y" }}
+                    {% else %}
+                        <span style="color: #94a3b8;">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if v.en_visite %}
+                        <span class="badge-status present"><i class="bi bi-circle-fill" style="font-size: 8px;"></i> Présent</span>
+                    {% else %}
+                        <span class="badge-status active"><i class="bi bi-circle-fill" style="font-size: 8px;"></i> Actif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="{% url 'visiteurs:historique' v.id %}" class="btn-action-sm" title="Historique">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+                        <a href="{% url 'visiteurs:modifier' v.id %}" class="btn-action-sm primary" title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'visites:nouvelle_visite_visiteur' v.id %}" class="btn-action-sm success" title="Nouvelle visite">
+                            <i class="bi bi-plus-lg"></i>
+                        </a>
+                    </div>
+                </td>
             </tr>
-            {% empty %}<tr><td colspan="5" class="text-center text-muted py-4">Aucun visiteur trouvé</td></tr>{% endfor %}
+            {% empty %}
+            <tr>
+                <td colspan="7">
+                    <div class="empty-state">
+                        <i class="bi bi-people"></i>
+                        <p>Aucun visiteur enregistré</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
         </tbody>
     </table>
-</div></div>
-{% if visiteurs.has_other_pages %}<nav class="mt-4"><ul class="pagination justify-content-center">{% if visiteurs.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ visiteurs.previous_page_number }}&search={{ search_term }}">Précédent</a></li>{% endif %}<li class="page-item disabled"><span class="page-link">Page {{ visiteurs.number }} / {{ visiteurs.paginator.num_pages }}</span></li>{% if visiteurs.has_next %}<li class="page-item"><a class="page-link" href="?page={{ visiteurs.next_page_number }}&search={{ search_term }}">Suivant</a></li>{% endif %}</ul></nav>{% endif %}
+</div>
+
+<!-- Pagination -->
+{% if visiteurs.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if visiteurs.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ visiteurs.previous_page_number }}&search={{ search_term }}">
+                    <i class="bi bi-chevron-left"></i> Précédent
+                </a>
+            </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ visiteurs.number }} / {{ visiteurs.paginator.num_pages }}</span>
+        </li>
+        {% if visiteurs.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ visiteurs.next_page_number }}&search={{ search_term }}">
+                    Suivant <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}
