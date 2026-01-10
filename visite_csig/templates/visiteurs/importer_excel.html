@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-file-earmark-excel-fill"></i> Importer des visiteurs</h2>
+        <div class="subtitle">Importation rapide depuis un fichier Excel</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visiteurs:index' %}" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Formulaire d'importation -->
+        <div class="card-section mb-4">
+            <div class="card-header-custom">
+                <i class="bi bi-upload"></i> Téléverser un fichier Excel
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="importForm">
+                    {% csrf_token %}
+                    
+                    <div class="upload-zone" id="uploadZone">
+                        <i class="bi bi-cloud-arrow-up" style="font-size: 48px; color: #104480;"></i>
+                        <h5 class="mt-3">Glissez votre fichier Excel ici</h5>
+                        <p class="text-muted">ou cliquez pour sélectionner un fichier</p>
+                        <input type="file" name="fichier_excel" id="fichierExcel" accept=".xlsx,.xls" 
+                               style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer;">
+                        <div id="fileName" class="mt-2" style="display: none;">
+                            <span class="badge bg-success"><i class="bi bi-file-earmark-check"></i> <span id="fileNameText"></span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn-primary-gradient" id="submitBtn" disabled>
+                            <i class="bi bi-upload"></i> Importer les visiteurs
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Actions supplémentaires -->
+        <div class="card-section">
+            <div class="card-header-custom">
+                <i class="bi bi-tools"></i> Actions
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <a href="{% url 'visiteurs:telecharger_modele_excel' %}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-download"></i><br>
+                            <strong>Télécharger le modèle</strong><br>
+                            <small class="text-muted">Fichier Excel pré-formaté</small>
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{% url 'visiteurs:exporter_excel' %}" class="btn btn-outline-success w-100 py-3">
+                            <i class="bi bi-file-earmark-arrow-down"></i><br>
+                            <strong>Exporter les visiteurs</strong><br>
+                            <small class="text-muted">Télécharger tous les visiteurs</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Instructions -->
+        <div class="card-section">
+            <div class="card-header-custom">
+                <i class="bi bi-info-circle"></i> Instructions
+            </div>
+            <div class="card-body">
+                <h6 style="color: #374151; font-weight: 600;">Format du fichier</h6>
+                <p style="font-size: 13px; color: #64748b;">
+                    Le fichier Excel doit contenir les colonnes suivantes :
+                </p>
+                <ul style="font-size: 13px; color: #64748b; padding-left: 20px;">
+                    <li><strong>Nom</strong> (obligatoire)</li>
+                    <li><strong>Prénoms</strong> (obligatoire)</li>
+                    <li>Téléphone</li>
+                    <li>Email</li>
+                    <li>Adresse</li>
+                    <li>Type Identité</li>
+                    <li>Numéro Identité</li>
+                </ul>
+                
+                <hr>
+                
+                <h6 style="color: #374151; font-weight: 600;"><i class="bi bi-lightbulb text-warning"></i> Conseils</h6>
+                <ul style="font-size: 13px; color: #64748b; padding-left: 20px;">
+                    <li>La première ligne doit contenir les en-têtes</li>
+                    <li>Les visiteurs existants seront mis à jour</li>
+                    <li>Utilisez le modèle pour éviter les erreurs</li>
+                </ul>
+                
+                <hr>
+                
+                <h6 style="color: #374151; font-weight: 600;"><i class="bi bi-shield-check text-success"></i> Détection des doublons</h6>
+                <p style="font-size: 13px; color: #64748b;">
+                    Un visiteur est considéré comme existant si :
+                </p>
+                <ul style="font-size: 13px; color: #64748b; padding-left: 20px;">
+                    <li>Même numéro d'identité</li>
+                    <li>Ou même nom + prénoms + téléphone</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.upload-zone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+}
+.upload-zone:hover, .upload-zone.dragover {
+    border-color: #104480;
+    background: #eff6ff;
+}
+.upload-zone h5 {
+    color: #374151;
+    margin-bottom: 5px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fichierExcel');
+    const fileName = document.getElementById('fileName');
+    const fileNameText = document.getElementById('fileNameText');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            fileName.style.display = 'block';
+            fileNameText.textContent = this.files[0].name;
+            submitBtn.disabled = false;
+        }
+    });
+    
+    uploadZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    
+    uploadZone.addEventListener('dragleave', function() {
+        this.classList.remove('dragover');
+    });
+    
+    uploadZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            fileName.style.display = 'block';
+            fileNameText.textContent = e.dataTransfer.files[0].name;
+            submitBtn.disabled = false;
+        }
+    });
+});
+</script>
+{% endblock %}
