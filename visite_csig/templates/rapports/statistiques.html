@@ -1,20 +1,100 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-graph-up"></i> Statistiques</h2></div></div>
-<div class="row mb-4">
-    <div class="col-md-3"><div class="card bg-primary text-white"><div class="card-body text-center"><h3>{{ stats_globales.total_visiteurs }}</h3><small>Visiteurs</small></div></div></div>
-    <div class="col-md-3"><div class="card bg-success text-white"><div class="card-body text-center"><h3>{{ stats_globales.total_visites }}</h3><small>Total visites</small></div></div></div>
-    <div class="col-md-3"><div class="card bg-info text-white"><div class="card-body text-center"><h3>{{ stats_globales.visites_mois }}</h3><small>Ce mois</small></div></div></div>
-    <div class="col-md-3"><div class="card bg-warning text-dark"><div class="card-body text-center"><h3>{{ stats_globales.visites_jour }}</h3><small>Aujourd'hui</small></div></div></div>
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-graph-up-arrow"></i> Statistiques</h2>
+        <div class="subtitle">Aperçu global de l'activité</div>
+    </div>
 </div>
-<div class="card mb-4"><div class="card-header"><h6 class="mb-0">Evolution sur 30 jours</h6></div><div class="card-body"><canvas id="chartEvolution" height="100"></canvas></div></div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card blue">
+            <div class="stat-value">{{ stats_globales.total_visiteurs|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-people stat-icon"></i> Visiteurs</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card indigo">
+            <div class="stat-value">{{ stats_globales.total_visites|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-calendar-check stat-icon"></i> Total visites</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card cyan">
+            <div class="stat-value">{{ stats_globales.visites_mois|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-calendar-month stat-icon"></i> Ce mois</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card purple">
+            <div class="stat-value">{{ stats_globales.visites_jour|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-calendar-day stat-icon"></i> Aujourd'hui</div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="card-section mb-4">
+    <div class="card-header-custom">
+        <i class="bi bi-graph-up"></i> Évolution sur 30 jours
+    </div>
+    <div class="card-body" style="padding: 24px;">
+        <canvas id="chartEvolution" height="80"></canvas>
+    </div>
+</div>
+
 <div class="row">
-    <div class="col-md-6"><div class="card mb-4"><div class="card-header"><h6 class="mb-0">Top visiteurs</h6></div>
-        <div class="card-body p-0"><ul class="list-group list-group-flush">{% for v in top_visiteurs %}<li class="list-group-item d-flex justify-content-between">{{ v.prenoms }} {{ v.nom }}<span class="badge bg-primary">{{ v.nb_visites }}</span></li>{% empty %}<li class="list-group-item text-muted">Aucune donnée</li>{% endfor %}</ul></div>
-    </div></div>
-    <div class="col-md-6"><div class="card mb-4"><div class="card-header"><h6 class="mb-0">Par motif</h6></div>
-        <div class="card-body p-0"><ul class="list-group list-group-flush">{% for item in repartition_motifs %}<li class="list-group-item d-flex justify-content-between">{{ item.motif__libelle }}<span class="badge bg-primary">{{ item.count }}</span></li>{% empty %}<li class="list-group-item text-muted">Aucune donnée</li>{% endfor %}</ul></div>
-    </div></div>
+    <!-- Top visiteurs -->
+    <div class="col-lg-6 mb-4">
+        <div class="card-section">
+            <div class="card-header-custom">
+                <i class="bi bi-trophy"></i> Top visiteurs
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for v in top_visiteurs %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center" style="padding: 14px 20px;">
+                        <div class="user-cell">
+                            <div class="user-avatar {% cycle 'blue' 'green' 'orange' %}">
+                                {{ v.prenoms|slice:":1"|upper }}{{ v.nom|slice:":1"|upper }}
+                            </div>
+                            <div class="user-info-cell">
+                                <div class="user-name">{{ v.prenoms }} {{ v.nom }}</div>
+                            </div>
+                        </div>
+                        <span class="badge-visits">{{ v.nb_visites }} visite{{ v.nb_visites|pluralize }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted text-center py-4">Aucune donnée</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Par motif -->
+    <div class="col-lg-6 mb-4">
+        <div class="card-section">
+            <div class="card-header-custom">
+                <i class="bi bi-pie-chart"></i> Répartition par motif
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for item in repartition_motifs %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center" style="padding: 14px 20px;">
+                        <span style="font-size: 14px;">{{ item.motif__libelle }}</span>
+                        <span class="badge-visits">{{ item.count }}</span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted text-center py-4">Aucune donnée</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 {% block extra_js %}
@@ -24,6 +104,40 @@
 var data = JSON.parse(document.getElementById("evolutionData").textContent || "[]");
 var labels = data.map(function(d) { var date = new Date(d.jour); return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }); });
 var values = data.map(function(d) { return d.count; });
-new Chart(document.getElementById("chartEvolution"), { type: "line", data: { labels: labels, datasets: [{ label: "Visites", data: values, fill: true, backgroundColor: "rgba(67, 97, 238, 0.2)", borderColor: "rgba(67, 97, 238, 1)", tension: 0.3 }] }, options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+new Chart(document.getElementById("chartEvolution"), { 
+    type: "line", 
+    data: { 
+        labels: labels, 
+        datasets: [{ 
+            label: "Visites", 
+            data: values, 
+            fill: true, 
+            backgroundColor: "rgba(59, 130, 246, 0.1)", 
+            borderColor: "rgba(59, 130, 246, 1)", 
+            borderWidth: 3,
+            tension: 0.4,
+            pointBackgroundColor: "#fff",
+            pointBorderColor: "rgba(59, 130, 246, 1)",
+            pointBorderWidth: 2,
+            pointRadius: 4
+        }] 
+    }, 
+    options: { 
+        responsive: true, 
+        plugins: {
+            legend: { display: false }
+        },
+        scales: { 
+            y: { 
+                beginAtZero: true, 
+                ticks: { stepSize: 1 },
+                grid: { color: "rgba(0,0,0,0.05)" }
+            },
+            x: {
+                grid: { display: false }
+            }
+        } 
+    } 
+});
 </script>
 {% endblock %}
