@@ -7,7 +7,13 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-visite-csig-change-in
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1', '.pythonanywhere.com']
 
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000', 'http://127.0.0.1:55006']
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000', 
+    'http://localhost:8000', 
+    'http://127.0.0.1:55006',
+    'https://boubacar32.pythonanywhere.com',
+    'http://boubacar32.pythonanywhere.com',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
