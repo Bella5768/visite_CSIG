@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> Gestion des correspondants</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus"></i> Nouveau</button>
+</div>
+<div class="card"><div class="card-body p-0">
+    <table class="table table-hover mb-0">
+        <thead><tr><th>Nom</th><th>Fonction</th><th>Département</th><th>Téléphone</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for c in correspondants %}
+            <tr><td>{{ c.prenoms }} {{ c.nom }}</td><td>{{ c.fonction|default:"-" }}</td><td>{{ c.departement|default:"-" }}</td><td>{{ c.telephone|default:"-" }}</td>
+                <td><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ c.id }}" data-nom="{{ c.nom }}" data-prenoms="{{ c.prenoms }}" data-fonction="{{ c.fonction }}" data-departement="{{ c.departement }}" data-telephone="{{ c.telephone }}" data-email="{{ c.email }}"><i class="bi bi-pencil"></i></button></td>
+            </tr>
+            {% empty %}<tr><td colspan="5" class="text-center text-muted">Aucun correspondant</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div></div>
+<div class="modal fade" id="addModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="create">
+        <div class="modal-header"><h5 class="modal-title">Nouveau correspondant</h5></div>
+        <div class="modal-body">
+            <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Nom *</label><input type="text" name="nom" class="form-control" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Prénoms *</label><input type="text" name="prenoms" class="form-control" required></div></div>
+            <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Fonction</label><input type="text" name="fonction" class="form-control"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Département</label><input type="text" name="departement" class="form-control"></div></div>
+            <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Téléphone</label><input type="text" name="telephone" class="form-control"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Email</label><input type="email" name="email" class="form-control"></div></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button><button type="submit" class="btn btn-primary">Créer</button></div>
+    </form>
+</div></div></div>
+<div class="modal fade" id="editModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="update"><input type="hidden" name="correspondant_id" id="edit_id">
+        <div class="modal-header"><h5 class="modal-title">Modifier correspondant</h5></div>
+        <div class="modal-body">
+            <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Nom *</label><input type="text" name="nom" id="edit_nom" class="form-control" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Prénoms *</label><input type="text" name="prenoms" id="edit_prenoms" class="form-control" required></div></div>
+            <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Fonction</label><input type="text" name="fonction" id="edit_fonction" class="form-control"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Département</label><input type="text" name="departement" id="edit_departement" class="form-control"></div></div>
+            <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Téléphone</label><input type="text" name="telephone" id="edit_telephone" class="form-control"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Email</label><input type="email" name="email" id="edit_email" class="form-control"></div></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div>
+    </form>
+</div></div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
+    var btn = e.relatedTarget;
+    document.getElementById('edit_id').value = btn.dataset.id;
+    document.getElementById('edit_nom').value = btn.dataset.nom;
+    document.getElementById('edit_prenoms').value = btn.dataset.prenoms;
+    document.getElementById('edit_fonction').value = btn.dataset.fonction;
+    document.getElementById('edit_departement').value = btn.dataset.departement;
+    document.getElementById('edit_telephone').value = btn.dataset.telephone;
+    document.getElementById('edit_email').value = btn.dataset.email;
+});
+</script>
+{% endblock %}

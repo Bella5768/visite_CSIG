@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-plus-circle"></i> Nouvelle visite</h2></div></div>
+<div class="card"><div class="card-body">
+    <form method="post">{% csrf_token %}
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Visiteur *</label>
+                {% if visiteur %}<input type="hidden" name="visiteur_id" value="{{ visiteur.id }}"><input type="text" class="form-control" value="{{ visiteur }}" readonly>
+                {% else %}<div class="input-group"><input type="text" id="searchVisiteur" class="form-control" placeholder="Rechercher un visiteur..."><a href="{% url 'visiteurs:ajouter' %}" class="btn btn-outline-secondary"><i class="bi bi-plus"></i></a></div>
+                <input type="hidden" name="visiteur_id" id="visiteur_id"><div id="searchResults" class="list-group mt-1" style="position:absolute;z-index:1000;"></div><div id="selectedVisiteur" class="alert alert-info mt-2 d-none"></div>{% endif %}
+            </div>
+            <div class="col-md-6"><label class="form-label">Motif de visite *</label><select name="motif_id" class="form-select" required><option value="">-- Sélectionner --</option>{% for motif in motifs %}<option value="{{ motif.id }}">{{ motif.libelle }}</option>{% endfor %}</select></div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6"><label class="form-label">Correspondant</label><select name="correspondant_id" class="form-select"><option value="">-- Visite libre --</option>{% for c in correspondants %}<option value="{{ c.id }}">{{ c.prenoms }} {{ c.nom }} - {{ c.departement }}</option>{% endfor %}</select></div>
+            <div class="col-md-6"><label class="form-label">Type de visite</label><select name="type_visite" class="form-select">{% for value, label in types_visite %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div>
+        </div>
+        <div class="mb-3"><label class="form-label">Observations</label><textarea name="observations" class="form-control" rows="2"></textarea></div>
+        <div class="d-flex gap-2"><button type="submit" class="btn btn-success"><i class="bi bi-check"></i> Enregistrer l'entrée</button><a href="{% url 'visites:index' %}" class="btn btn-secondary">Annuler</a></div>
+    </form>
+</div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+var searchInput = document.getElementById('searchVisiteur');
+var resultsDiv = document.getElementById('searchResults');
+var visiteurIdInput = document.getElementById('visiteur_id');
+var selectedDiv = document.getElementById('selectedVisiteur');
+if (searchInput) {
+    var timeout = null;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(timeout);
+        var q = this.value;
+        if (q.length < 2) { resultsDiv.innerHTML = ''; return; }
+        timeout = setTimeout(function() {
+            fetch('{% url "visiteurs:api_search" %}?q=' + encodeURIComponent(q))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    resultsDiv.innerHTML = '';
+                    data.results.forEach(function(v) {
+                        var item = document.createElement('a');
+                        item.href = '#';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.textContent = v.prenoms + ' ' + v.nom + (v.telephone ? ' - ' + v.telephone : '');
+                        item.onclick = function(e) {
+                            e.preventDefault();
+                            visiteurIdInput.value = v.id;
+                            selectedDiv.textContent = v.prenoms + ' ' + v.nom;
+                            selectedDiv.classList.remove('d-none');
+                            resultsDiv.innerHTML = '';
+                            searchInput.value = '';
+                        };
+                        resultsDiv.appendChild(item);
+                    });
+                });
+        }, 300);
+    });
+}
+</script>
+{% endblock %}

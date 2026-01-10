@@ -1,0 +1,8 @@
+body { min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1; }
+.navbar-brand { font-weight: bold; }
+.card { box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); border: none; }
+.card-header { background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+.table th { font-weight: 600; background-color: #f8f9fa; }
+.btn-sm { padding: 0.25rem 0.5rem; }
+.badge { font-weight: 500; }

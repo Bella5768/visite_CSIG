@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-search"></i> Rechercher un visiteur</h2></div></div>
+<div class="card mb-4"><div class="card-body">
+    <form method="get"><div class="input-group"><input type="text" name="q" class="form-control form-control-lg" placeholder="Nom, prénom, téléphone ou numéro d'identité..." value="{{ search_term }}" autofocus><button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Rechercher</button></div></form>
+</div></div>
+{% if visiteurs %}
+<div class="card"><div class="card-body p-0">
+    <table class="table table-hover mb-0">
+        <thead><tr><th>Nom</th><th>Téléphone</th><th>Identité</th><th>Visites</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for v in visiteurs %}
+            <tr><td>{{ v.prenoms }} {{ v.nom }}</td><td>{{ v.telephone|default:"-" }}</td><td>{{ v.numero_identite|default:"-" }}</td><td><span class="badge bg-primary">{{ v.nb_visites }}</span></td>
+                <td><a href="{% url 'visiteurs:historique' v.id %}" class="btn btn-sm btn-outline-info"><i class="bi bi-clock-history"></i></a><a href="{% url 'visites:nouvelle_visite_visiteur' v.id %}" class="btn btn-sm btn-outline-success"><i class="bi bi-plus"></i> Visite</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div></div>
+{% elif search_term %}<div class="alert alert-info">Aucun visiteur trouvé pour "{{ search_term }}"</div>{% endif %}
+{% endblock %}

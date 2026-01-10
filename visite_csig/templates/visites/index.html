@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar-check"></i> Visites</h2>
+    <a href="{% url 'visites:nouvelle_visite' %}" class="btn btn-success"><i class="bi bi-plus"></i> Nouvelle visite</a>
+</div>
+<div class="row mb-4">
+    <div class="col-md-3"><div class="card bg-primary text-white"><div class="card-body text-center"><h4>{{ stats.total_jour }}</h4><small>Total du jour</small></div></div></div>
+    <div class="col-md-3"><div class="card bg-warning text-dark"><div class="card-body text-center"><h4>{{ stats.en_cours }}</h4><small>En cours</small></div></div></div>
+    <div class="col-md-3"><div class="card bg-success text-white"><div class="card-body text-center"><h4>{{ stats.terminees }}</h4><small>Terminées</small></div></div></div>
+    <div class="col-md-3"><a href="{% url 'visites:sortie' %}" class="card bg-info text-white text-decoration-none"><div class="card-body text-center"><h4><i class="bi bi-box-arrow-right"></i></h4><small>Enregistrer sortie</small></div></a></div>
+</div>
+<div class="card mb-4"><div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3"><label class="form-label">Date</label><input type="date" name="date" class="form-control" value="{{ date_filter }}"></div>
+        <div class="col-md-3"><label class="form-label">Statut</label><select name="statut" class="form-select"><option value="">Tous</option>{% for value, label in statuts %}<option value="{{ value }}" {% if statut_filter == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filtrer</button></div>
+    </form>
+</div></div>
+<div class="card"><div class="card-body p-0">
+    <table class="table table-hover mb-0">
+        <thead><tr><th>Visiteur</th><th>Motif</th><th>Correspondant</th><th>Entrée</th><th>Sortie</th><th>Durée</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for visite in visites %}
+            <tr><td><a href="{% url 'visiteurs:historique' visite.visiteur.id %}">{{ visite.visiteur }}</a></td><td>{{ visite.motif }}</td><td>{{ visite.correspondant|default:"-" }}</td><td>{{ visite.heure_entree|time:"H:i" }}</td><td>{{ visite.heure_sortie|time:"H:i"|default:"-" }}</td><td>{{ visite.get_duree }}</td>
+                <td>{% if visite.statut == 'en_cours' %}<span class="badge bg-warning">En cours</span>{% elif visite.statut == 'terminee' %}<span class="badge bg-success">Terminée</span>{% else %}<span class="badge bg-danger">Annulée</span>{% endif %}</td>
+                <td><a href="{% url 'visites:detail' visite.id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+            </tr>
+            {% empty %}<tr><td colspan="8" class="text-center text-muted py-4">Aucune visite trouvée</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div></div>
+{% if visites.has_other_pages %}<nav class="mt-4"><ul class="pagination justify-content-center">{% if visites.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ visites.previous_page_number }}&date={{ date_filter }}&statut={{ statut_filter }}">Précédent</a></li>{% endif %}<li class="page-item disabled"><span class="page-link">Page {{ visites.number }} / {{ visites.paginator.num_pages }}</span></li>{% if visites.has_next %}<li class="page-item"><a class="page-link" href="?page={{ visites.next_page_number }}&date={{ date_filter }}&statut={{ statut_filter }}">Suivant</a></li>{% endif %}</ul></nav>{% endif %}
+{% endblock %}

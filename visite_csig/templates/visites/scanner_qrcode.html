@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-qr-code-scan"></i> Scanner QR Code - {% if mode == 'entree' %}Entrée{% else %}Sortie{% endif %}</h2></div></div>
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card"><div class="card-header"><h5 class="mb-0"><i class="bi bi-camera"></i> Scanner</h5></div>
+            <div class="card-body text-center"><div id="reader" style="width: 100%;"></div><p class="text-muted mt-3">Placez le QR code du visiteur devant la caméra</p></div>
+        </div>
+        <div class="mt-3">
+            <a href="{% url 'visites:scanner_qrcode' %}?mode=entree" class="btn {% if mode == 'entree' %}btn-success{% else %}btn-outline-success{% endif %}"><i class="bi bi-box-arrow-in-right"></i> Mode Entrée</a>
+            <a href="{% url 'visites:scanner_qrcode' %}?mode=sortie" class="btn {% if mode == 'sortie' %}btn-warning{% else %}btn-outline-warning{% endif %}"><i class="bi bi-box-arrow-right"></i> Mode Sortie</a>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card"><div class="card-header"><h5 class="mb-0"><i class="bi bi-person"></i> Résultat</h5></div>
+            <div class="card-body">
+                <div id="result" class="text-center text-muted"><i class="bi bi-qr-code h1"></i><p>En attente de scan...</p></div>
+                <div id="visiteurInfo" class="d-none"><h5 id="visiteurNom"></h5><p id="visiteurDetails"></p>
+                    {% if mode == 'entree' %}
+                    <form id="entreeForm"><input type="hidden" id="visiteurId">
+                        <div class="mb-3"><label class="form-label">Motif de visite *</label><select class="form-select" id="motifId" required><option value="">-- Sélectionner --</option></select></div>
+                        <div class="mb-3"><label class="form-label">Correspondant</label><select class="form-select" id="correspondantId"><option value="">-- Visite libre --</option></select></div>
+                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-check-lg"></i> Enregistrer l'entrée</button>
+                    </form>
+                    {% else %}<button id="btnSortie" class="btn btn-warning w-100"><i class="bi bi-box-arrow-right"></i> Enregistrer la sortie</button>{% endif %}
+                </div>
+                <div id="successMessage" class="alert alert-success d-none"><i class="bi bi-check-circle"></i> <span id="successText"></span></div>
+                <div id="errorMessage" class="alert alert-danger d-none"><i class="bi bi-exclamation-triangle"></i> <span id="errorText"></span></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+var mode = "{{ mode }}";
+var csrfToken = "{{ csrf_token }}";
+var urlEntree = "{% url 'visites:traiter_entree_qrcode' %}";
+var urlSortie = "{% url 'visites:traiter_sortie_qrcode' %}";
+var urlMotifs = "{% url 'visites:api_motifs' %}";
+var urlCorrespondants = "{% url 'visites:api_correspondants' %}";
+var currentVisiteurId = null;
+var html5QrCode = new Html5Qrcode("reader");
+html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, function(){}).catch(function(err) {
+    document.getElementById("result").innerHTML = '<div class="alert alert-warning"><i class="bi bi-camera-video-off"></i> Impossible d\'accéder à la caméra.</div>';
+});
+function onScanSuccess(decodedText) {
+    try {
+        var data = JSON.parse(decodedText);
+        if (data.type !== "visiteur_csig") { showError("QR code non reconnu"); return; }
+        currentVisiteurId = data.id;
+        document.getElementById("result").classList.add("d-none");
+        document.getElementById("visiteurInfo").classList.remove("d-none");
+        document.getElementById("visiteurNom").textContent = data.prenoms + " " + data.nom;
+        document.getElementById("visiteurDetails").textContent = "ID: " + data.id;
+        if (mode === "entree") { document.getElementById("visiteurId").value = data.id; loadMotifs(); loadCorrespondants(); }
+        html5QrCode.pause();
+    } catch (e) { showError("QR code invalide"); }
+}
+function showError(message) { document.getElementById("errorMessage").classList.remove("d-none"); document.getElementById("errorText").textContent = message; setTimeout(function() { document.getElementById("errorMessage").classList.add("d-none"); }, 3000); }
+function showSuccess(message) { document.getElementById("successMessage").classList.remove("d-none"); document.getElementById("successText").textContent = message; }
+function loadMotifs() { fetch(urlMotifs).then(function(r){return r.json();}).then(function(data){ var sel = document.getElementById("motifId"); data.motifs.forEach(function(m){ var opt = document.createElement("option"); opt.value = m.id; opt.textContent = m.libelle; sel.appendChild(opt); }); }); }
+function loadCorrespondants() { fetch(urlCorrespondants).then(function(r){return r.json();}).then(function(data){ var sel = document.getElementById("correspondantId"); data.correspondants.forEach(function(c){ var opt = document.createElement("option"); opt.value = c.id; opt.textContent = c.nom + " - " + c.departement; sel.appendChild(opt); }); }); }
+if (mode === "entree") { var entreeForm = document.getElementById("entreeForm"); if (entreeForm) { entreeForm.addEventListener("submit", function(e) { e.preventDefault(); fetch(urlEntree, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken }, body: JSON.stringify({ visiteur_id: document.getElementById("visiteurId").value, motif_id: document.getElementById("motifId").value, correspondant_id: document.getElementById("correspondantId").value || null }) }).then(function(r){return r.json();}).then(function(result){ if (result.success) { showSuccess(result.message); document.getElementById("visiteurInfo").classList.add("d-none"); setTimeout(function(){ html5QrCode.resume(); document.getElementById("result").classList.remove("d-none"); document.getElementById("successMessage").classList.add("d-none"); }, 2000); } else { showError(result.message); } }); }); } }
+else { var btnSortie = document.getElementById("btnSortie"); if (btnSortie) { btnSortie.addEventListener("click", function() { fetch(urlSortie, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken }, body: JSON.stringify({ visiteur_id: currentVisiteurId }) }).then(function(r){return r.json();}).then(function(result){ if (result.success) { showSuccess(result.message); document.getElementById("visiteurInfo").classList.add("d-none"); setTimeout(function(){ html5QrCode.resume(); document.getElementById("result").classList.remove("d-none"); document.getElementById("successMessage").classList.add("d-none"); }, 2000); } else { showError(result.message); } }); }); } }
+</script>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-graph-up"></i> Statistiques</h2></div></div>
+<div class="row mb-4">
+    <div class="col-md-3"><div class="card bg-primary text-white"><div class="card-body text-center"><h3>{{ stats_globales.total_visiteurs }}</h3><small>Visiteurs</small></div></div></div>
+    <div class="col-md-3"><div class="card bg-success text-white"><div class="card-body text-center"><h3>{{ stats_globales.total_visites }}</h3><small>Total visites</small></div></div></div>
+    <div class="col-md-3"><div class="card bg-info text-white"><div class="card-body text-center"><h3>{{ stats_globales.visites_mois }}</h3><small>Ce mois</small></div></div></div>
+    <div class="col-md-3"><div class="card bg-warning text-dark"><div class="card-body text-center"><h3>{{ stats_globales.visites_jour }}</h3><small>Aujourd'hui</small></div></div></div>
+</div>
+<div class="card mb-4"><div class="card-header"><h6 class="mb-0">Evolution sur 30 jours</h6></div><div class="card-body"><canvas id="chartEvolution" height="100"></canvas></div></div>
+<div class="row">
+    <div class="col-md-6"><div class="card mb-4"><div class="card-header"><h6 class="mb-0">Top visiteurs</h6></div>
+        <div class="card-body p-0"><ul class="list-group list-group-flush">{% for v in top_visiteurs %}<li class="list-group-item d-flex justify-content-between">{{ v.prenoms }} {{ v.nom }}<span class="badge bg-primary">{{ v.nb_visites }}</span></li>{% empty %}<li class="list-group-item text-muted">Aucune donnée</li>{% endfor %}</ul></div>
+    </div></div>
+    <div class="col-md-6"><div class="card mb-4"><div class="card-header"><h6 class="mb-0">Par motif</h6></div>
+        <div class="card-body p-0"><ul class="list-group list-group-flush">{% for item in repartition_motifs %}<li class="list-group-item d-flex justify-content-between">{{ item.motif__libelle }}<span class="badge bg-primary">{{ item.count }}</span></li>{% empty %}<li class="list-group-item text-muted">Aucune donnée</li>{% endfor %}</ul></div>
+    </div></div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script id="evolutionData" type="application/json">{{ evolution|safe }}</script>
+<script>
+var data = JSON.parse(document.getElementById("evolutionData").textContent || "[]");
+var labels = data.map(function(d) { var date = new Date(d.jour); return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }); });
+var values = data.map(function(d) { return d.count; });
+new Chart(document.getElementById("chartEvolution"), { type: "line", data: { labels: labels, datasets: [{ label: "Visites", data: values, fill: true, backgroundColor: "rgba(67, 97, 238, 0.2)", borderColor: "rgba(67, 97, 238, 1)", tension: 0.3 }] }, options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-pencil"></i> Modifier visite</h2></div></div>
+<div class="card"><div class="card-body">
+    <form method="post">{% csrf_token %}
+        <div class="row mb-3">
+            <div class="col-md-6"><label class="form-label">Visiteur</label><input type="text" class="form-control" value="{{ visite.visiteur }}" readonly></div>
+            <div class="col-md-6"><label class="form-label">Motif *</label><select name="motif_id" class="form-select" required>{% for motif in motifs %}<option value="{{ motif.id }}" {% if visite.motif_id == motif.id %}selected{% endif %}>{{ motif.libelle }}</option>{% endfor %}</select></div>
+        </div>
+        <div class="mb-3"><label class="form-label">Correspondant</label><select name="correspondant_id" class="form-select"><option value="">-- Visite libre --</option>{% for c in correspondants %}<option value="{{ c.id }}" {% if visite.correspondant_id == c.id %}selected{% endif %}>{{ c.prenoms }} {{ c.nom }}</option>{% endfor %}</select></div>
+        <div class="mb-3"><label class="form-label">Observations</label><textarea name="observations" class="form-control" rows="3">{{ visite.observations }}</textarea></div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check"></i> Enregistrer</button><a href="{% url 'visites:detail' visite.id %}" class="btn btn-secondary">Annuler</a>
+    </form>
+</div></div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-x-circle"></i> Annuler visite</h2></div></div>
+<div class="card"><div class="card-body">
+    <div class="alert alert-warning"><strong>Attention!</strong> Vous êtes sur le point d'annuler la visite de <strong>{{ visite.visiteur }}</strong>.</div>
+    <form method="post">{% csrf_token %}
+        <div class="mb-3"><label class="form-label">Raison de l'annulation *</label><textarea name="raison" class="form-control" rows="3" required></textarea></div>
+        <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Confirmer l'annulation</button><a href="{% url 'visites:detail' visite.id %}" class="btn btn-secondary">Retour</a>
+    </form>
+</div></div>
+{% endblock %}

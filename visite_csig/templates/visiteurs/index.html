@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-people"></i> Visiteurs</h2>
+    <a href="{% url 'visiteurs:ajouter' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Nouveau visiteur</a>
+</div>
+<div class="card mb-4"><div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-6"><input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ search_term }}"></div>
+        <div class="col-md-2"><button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button></div>
+    </form>
+</div></div>
+<div class="card"><div class="card-body p-0">
+    <table class="table table-hover mb-0">
+        <thead><tr><th>Nom</th><th>Téléphone</th><th>Identité</th><th>Visites</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for v in visiteurs %}
+            <tr><td>{{ v.prenoms }} {{ v.nom }}</td><td>{{ v.telephone|default:"-" }}</td><td>{{ v.numero_identite|default:"-" }}</td><td><span class="badge bg-primary">{{ v.nb_visites }}</span></td>
+                <td><a href="{% url 'visiteurs:historique' v.id %}" class="btn btn-sm btn-outline-info"><i class="bi bi-clock-history"></i></a>
+                    <a href="{% url 'visiteurs:modifier' v.id %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                    <a href="{% url 'visites:nouvelle_visite_visiteur' v.id %}" class="btn btn-sm btn-outline-success"><i class="bi bi-plus"></i></a></td>
+            </tr>
+            {% empty %}<tr><td colspan="5" class="text-center text-muted py-4">Aucun visiteur trouvé</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div></div>
+{% if visiteurs.has_other_pages %}<nav class="mt-4"><ul class="pagination justify-content-center">{% if visiteurs.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ visiteurs.previous_page_number }}&search={{ search_term }}">Précédent</a></li>{% endif %}<li class="page-item disabled"><span class="page-link">Page {{ visiteurs.number }} / {{ visiteurs.paginator.num_pages }}</span></li>{% if visiteurs.has_next %}<li class="page-item"><a class="page-link" href="?page={{ visiteurs.next_page_number }}&search={{ search_term }}">Suivant</a></li>{% endif %}</ul></nav>{% endif %}
+{% endblock %}

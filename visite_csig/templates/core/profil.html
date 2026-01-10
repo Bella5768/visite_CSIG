@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-person"></i> Mon profil</h2></div></div>
+<div class="row"><div class="col-md-6">
+    <div class="card"><div class="card-header"><h5 class="mb-0">Informations personnelles</h5></div>
+        <div class="card-body">
+            <form method="post">{% csrf_token %}
+                <div class="mb-3"><label class="form-label">Nom d'utilisateur</label><input type="text" class="form-control" value="{{ user.nom_utilisateur }}" disabled></div>
+                <div class="mb-3"><label class="form-label">Nom</label><input type="text" name="nom" class="form-control" value="{{ user.nom }}" required></div>
+                <div class="mb-3"><label class="form-label">Prénoms</label><input type="text" name="prenoms" class="form-control" value="{{ user.prenoms }}" required></div>
+                <div class="mb-3"><label class="form-label">Rôle</label><input type="text" class="form-control" value="{{ user.get_role_display }}" disabled></div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check"></i> Enregistrer</button>
+            </form>
+        </div>
+    </div>
+</div></div>
+{% endblock %}

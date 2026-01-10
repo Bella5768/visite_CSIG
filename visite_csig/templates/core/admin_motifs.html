@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-tags"></i> Gestion des motifs</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus"></i> Nouveau motif</button>
+</div>
+<div class="card"><div class="card-body p-0">
+    <table class="table table-hover mb-0">
+        <thead><tr><th>Libellé</th><th>Description</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for motif in motifs %}
+            <tr><td>{{ motif.libelle }}</td><td>{{ motif.description|default:"-"|truncatewords:10 }}</td>
+                <td>{% if motif.actif %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-secondary">Inactif</span>{% endif %}</td>
+                <td><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ motif.id }}" data-libelle="{{ motif.libelle }}" data-description="{{ motif.description }}" data-actif="{{ motif.actif }}"><i class="bi bi-pencil"></i></button></td>
+            </tr>
+            {% empty %}<tr><td colspan="4" class="text-center text-muted">Aucun motif</td></tr>{% endfor %}
+        </tbody>
+    </table>
+</div></div>
+<div class="modal fade" id="addModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="create">
+        <div class="modal-header"><h5 class="modal-title">Nouveau motif</h5></div>
+        <div class="modal-body">
+            <div class="mb-3"><label class="form-label">Libellé *</label><input type="text" name="libelle" class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button><button type="submit" class="btn btn-primary">Créer</button></div>
+    </form>
+</div></div></div>
+<div class="modal fade" id="editModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="update"><input type="hidden" name="motif_id" id="edit_id">
+        <div class="modal-header"><h5 class="modal-title">Modifier motif</h5></div>
+        <div class="modal-body">
+            <div class="mb-3"><label class="form-label">Libellé *</label><input type="text" name="libelle" id="edit_libelle" class="form-control" required></div>
+            <div class="mb-3"><label class="form-label">Description</label><textarea name="description" id="edit_description" class="form-control" rows="2"></textarea></div>
+            <div class="form-check"><input type="checkbox" name="actif" id="edit_actif" class="form-check-input"><label class="form-check-label">Actif</label></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div>
+    </form>
+</div></div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
+    var btn = e.relatedTarget;
+    document.getElementById('edit_id').value = btn.dataset.id;
+    document.getElementById('edit_libelle').value = btn.dataset.libelle;
+    document.getElementById('edit_description').value = btn.dataset.description;
+    document.getElementById('edit_actif').checked = btn.dataset.actif === 'True';
+});
+</script>
+{% endblock %}

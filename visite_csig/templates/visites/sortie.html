@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-box-arrow-right"></i> Enregistrer sortie</h2></div></div>
+<div class="card"><div class="card-header"><h5 class="mb-0">Visites en cours ({{ visites_en_cours|length }})</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Visiteur</th><th>Motif</th><th>Correspondant</th><th>Heure entrée</th><th>Action</th></tr></thead>
+            <tbody>
+                {% for visite in visites_en_cours %}
+                <tr><td>{{ visite.visiteur }}</td><td>{{ visite.motif }}</td><td>{{ visite.correspondant|default:"-" }}</td><td>{{ visite.heure_entree|time:"H:i" }}</td>
+                    <td><form method="post" style="display:inline;">{% csrf_token %}<input type="hidden" name="visite_id" value="{{ visite.id }}"><button type="submit" class="btn btn-warning btn-sm"><i class="bi bi-box-arrow-right"></i> Sortie</button></form></td>
+                </tr>
+                {% empty %}<tr><td colspan="5" class="text-center text-muted py-4">Aucune visite en cours</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
