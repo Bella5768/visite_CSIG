@@ -19,7 +19,7 @@ class UtilisateurManager(BaseUserManager):
 
 
 class Utilisateur(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = [('agent', 'Agent'), ('admin', 'Administrateur')]
+    ROLE_CHOICES = [('agent', 'Agent'), ('admin', 'Administrateur'), ('superadmin', 'Super Administrateur')]
     
     nom_utilisateur = models.CharField(max_length=50, unique=True)
     nom = models.CharField(max_length=100)

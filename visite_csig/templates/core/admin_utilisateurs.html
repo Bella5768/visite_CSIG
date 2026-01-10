@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-people-fill"></i> Gestion des utilisateurs</h2>
+        <div class="subtitle">{{ stats.total }} utilisateurs enregistrés</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'core:admin_utilisateur_create' %}" class="btn-primary-gradient">
+            <i class="bi bi-person-plus"></i> Nouvel utilisateur
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card blue">
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label"><i class="bi bi-people stat-icon"></i> Total</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card purple">
+            <div class="stat-value">{{ stats.admins }}</div>
+            <div class="stat-label"><i class="bi bi-shield-check stat-icon"></i> Administrateurs</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card cyan">
+            <div class="stat-value">{{ stats.agents }}</div>
+            <div class="stat-label"><i class="bi bi-person stat-icon"></i> Agents</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card indigo">
+            <div class="stat-value">{{ stats.actifs }}</div>
+            <div class="stat-label"><i class="bi bi-check-circle stat-icon"></i> Actifs</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+    <div class="table-header">
+        <h3><i class="bi bi-list-ul"></i> Liste des utilisateurs</h3>
+    </div>
+    <table class="table-modern">
+        <thead>
+            <tr>
+                <th>Utilisateur</th>
+                <th>Nom d'utilisateur</th>
+                <th>Rôle</th>
+                <th>Poste</th>
+                <th>Statut</th>
+                <th>Date création</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in utilisateurs %}
+            <tr>
+                <td>
+                    <div class="user-cell">
+                        <div class="user-avatar {% if u.role == 'superadmin' %}orange{% elif u.role == 'admin' %}blue{% else %}green{% endif %}">
+                            {{ u.prenoms|slice:":1"|upper }}{{ u.nom|slice:":1"|upper }}
+                        </div>
+                        <div class="user-info-cell">
+                            <div class="user-name">{{ u.prenoms }} {{ u.nom }}</div>
+                            <div class="user-meta">{{ u.poste|default:"Non défini" }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px;">{{ u.nom_utilisateur }}</code></td>
+                <td>
+                    {% if u.role == 'superadmin' %}
+                        <span class="badge-type" style="background: #fef3c7; color: #d97706;">
+                            <i class="bi bi-shield-fill-check"></i> Super Admin
+                        </span>
+                    {% elif u.role == 'admin' %}
+                        <span class="badge-type passport">
+                            <i class="bi bi-shield-check"></i> Admin
+                        </span>
+                    {% else %}
+                        <span class="badge-type other">
+                            <i class="bi bi-person"></i> Agent
+                        </span>
+                    {% endif %}
+                </td>
+                <td>{{ u.poste|default:"-" }}</td>
+                <td>
+                    {% if u.is_active %}
+                        <span class="badge-status present"><i class="bi bi-circle-fill" style="font-size: 8px;"></i> Actif</span>
+                    {% else %}
+                        <span class="badge-status absent"><i class="bi bi-circle-fill" style="font-size: 8px;"></i> Inactif</span>
+                    {% endif %}
+                </td>
+                <td>{{ u.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="{% url 'core:admin_utilisateur_edit' u.pk %}" class="btn-action-sm primary" title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        {% if u != request.user %}
+                            <a href="{% url 'core:admin_utilisateur_toggle' u.pk %}" class="btn-action-sm {% if u.is_active %}warning{% else %}success{% endif %}" title="{% if u.is_active %}Désactiver{% else %}Activer{% endif %}">
+                                <i class="bi bi-{% if u.is_active %}pause{% else %}play{% endif %}-fill"></i>
+                            </a>
+                            {% if request.user.role == 'superadmin' %}
+                                <a href="{% url 'core:admin_utilisateur_delete' u.pk %}" class="btn-action-sm" style="border-color: #ef4444; color: #ef4444;" title="Supprimer" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7">
+                    <div class="empty-state">
+                        <i class="bi bi-people"></i>
+                        <p>Aucun utilisateur enregistré</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Légende des rôles -->
+<div class="card-section mt-4">
+    <div class="card-header-custom">
+        <i class="bi bi-info-circle"></i> Légende des privilèges
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h6><span class="badge-type" style="background: #fef3c7; color: #d97706;"><i class="bi bi-shield-fill-check"></i> Super Admin</span></h6>
+                <ul style="font-size: 13px; color: #64748b;">
+                    <li>Accès complet au système</li>
+                    <li>Gestion de tous les utilisateurs</li>
+                    <li>Suppression des utilisateurs</li>
+                    <li>Création de Super Admins</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6><span class="badge-type passport"><i class="bi bi-shield-check"></i> Administrateur</span></h6>
+                <ul style="font-size: 13px; color: #64748b;">
+                    <li>Gestion des utilisateurs (agents)</li>
+                    <li>Gestion des motifs et correspondants</li>
+                    <li>Accès aux rapports</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6><span class="badge-type other"><i class="bi bi-person"></i> Agent</span></h6>
+                <ul style="font-size: 13px; color: #64748b;">
+                    <li>Enregistrement des visites</li>
+                    <li>Gestion des visiteurs</li>
+                    <li>Consultation des rapports</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

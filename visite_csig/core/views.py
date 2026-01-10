@@ -88,3 +88,169 @@ def admin_correspondants(request):
             messages.success(request, 'Correspondant modifié')
         return redirect('core:admin_correspondants')
     return render(request, 'core/admin_correspondants.html', {'page_title': 'Correspondants', 'correspondants': Correspondant.objects.all()})
+
+
+def admin_required(view_func):
+    """Décorateur pour vérifier si l'utilisateur est admin ou superadmin"""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('core:login')
+        if request.user.role not in ['admin', 'superadmin']:
+            messages.error(request, 'Accès non autorisé. Privilèges administrateur requis.')
+            return redirect('core:dashboard')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def superadmin_required(view_func):
+    """Décorateur pour vérifier si l'utilisateur est superadmin"""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('core:login')
+        if request.user.role != 'superadmin':
+            messages.error(request, 'Accès non autorisé. Privilèges Super Administrateur requis.')
+            return redirect('core:dashboard')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+@admin_required
+def admin_utilisateurs(request):
+    """Liste des utilisateurs"""
+    utilisateurs = Utilisateur.objects.all().order_by('-date_creation')
+    stats = {
+        'total': utilisateurs.count(),
+        'admins': utilisateurs.filter(role__in=['admin', 'superadmin']).count(),
+        'agents': utilisateurs.filter(role='agent').count(),
+        'actifs': utilisateurs.filter(is_active=True).count(),
+    }
+    return render(request, 'core/admin_utilisateurs.html', {
+        'page_title': 'Gestion des utilisateurs',
+        'utilisateurs': utilisateurs,
+        'stats': stats,
+    })
+
+
+@admin_required
+def admin_utilisateur_create(request):
+    """Créer un utilisateur"""
+    if request.method == 'POST':
+        nom_utilisateur = request.POST.get('nom_utilisateur')
+        password = request.POST.get('password')
+        nom = request.POST.get('nom')
+        prenoms = request.POST.get('prenoms')
+        role = request.POST.get('role', 'agent')
+        poste = request.POST.get('poste', '')
+        
+        # Vérifier si le nom d'utilisateur existe déjà
+        if Utilisateur.objects.filter(nom_utilisateur=nom_utilisateur).exists():
+            messages.error(request, 'Ce nom d\'utilisateur existe déjà')
+            return redirect('core:admin_utilisateur_create')
+        
+        # Seul superadmin peut créer un superadmin
+        if role == 'superadmin' and request.user.role != 'superadmin':
+            messages.error(request, 'Seul un Super Administrateur peut créer un autre Super Administrateur')
+            return redirect('core:admin_utilisateur_create')
+        
+        user = Utilisateur.objects.create_user(
+            nom_utilisateur=nom_utilisateur,
+            password=password,
+            nom=nom,
+            prenoms=prenoms,
+            role=role,
+            poste=poste,
+            is_staff=(role in ['admin', 'superadmin']),
+        )
+        messages.success(request, f'Utilisateur {user.prenoms} {user.nom} créé avec succès')
+        return redirect('core:admin_utilisateurs')
+    
+    roles = Utilisateur.ROLE_CHOICES
+    # Si l'utilisateur n'est pas superadmin, ne pas afficher l'option superadmin
+    if request.user.role != 'superadmin':
+        roles = [r for r in roles if r[0] != 'superadmin']
+    
+    return render(request, 'core/admin_utilisateur_form.html', {
+        'page_title': 'Nouvel utilisateur',
+        'roles': roles,
+        'action': 'create',
+    })
+
+
+@admin_required
+def admin_utilisateur_edit(request, pk):
+    """Modifier un utilisateur"""
+    utilisateur = get_object_or_404(Utilisateur, pk=pk)
+    
+    # Ne pas permettre la modification d'un superadmin par un non-superadmin
+    if utilisateur.role == 'superadmin' and request.user.role != 'superadmin':
+        messages.error(request, 'Vous ne pouvez pas modifier un Super Administrateur')
+        return redirect('core:admin_utilisateurs')
+    
+    if request.method == 'POST':
+        utilisateur.nom = request.POST.get('nom')
+        utilisateur.prenoms = request.POST.get('prenoms')
+        utilisateur.poste = request.POST.get('poste', '')
+        
+        new_role = request.POST.get('role', utilisateur.role)
+        # Seul superadmin peut définir le rôle superadmin
+        if new_role == 'superadmin' and request.user.role != 'superadmin':
+            new_role = utilisateur.role
+        utilisateur.role = new_role
+        utilisateur.is_staff = (new_role in ['admin', 'superadmin'])
+        
+        # Changer le mot de passe si fourni
+        new_password = request.POST.get('password')
+        if new_password:
+            utilisateur.set_password(new_password)
+        
+        utilisateur.save()
+        messages.success(request, f'Utilisateur {utilisateur.prenoms} {utilisateur.nom} modifié')
+        return redirect('core:admin_utilisateurs')
+    
+    roles = Utilisateur.ROLE_CHOICES
+    if request.user.role != 'superadmin':
+        roles = [r for r in roles if r[0] != 'superadmin']
+    
+    return render(request, 'core/admin_utilisateur_form.html', {
+        'page_title': f'Modifier {utilisateur.prenoms} {utilisateur.nom}',
+        'utilisateur': utilisateur,
+        'roles': roles,
+        'action': 'edit',
+    })
+
+
+@admin_required
+def admin_utilisateur_toggle(request, pk):
+    """Activer/Désactiver un utilisateur"""
+    utilisateur = get_object_or_404(Utilisateur, pk=pk)
+    
+    # Ne pas permettre la désactivation d'un superadmin par un non-superadmin
+    if utilisateur.role == 'superadmin' and request.user.role != 'superadmin':
+        messages.error(request, 'Vous ne pouvez pas désactiver un Super Administrateur')
+        return redirect('core:admin_utilisateurs')
+    
+    # Ne pas permettre l'auto-désactivation
+    if utilisateur == request.user:
+        messages.error(request, 'Vous ne pouvez pas vous désactiver vous-même')
+        return redirect('core:admin_utilisateurs')
+    
+    utilisateur.is_active = not utilisateur.is_active
+    utilisateur.save()
+    status = 'activé' if utilisateur.is_active else 'désactivé'
+    messages.success(request, f'Utilisateur {utilisateur.prenoms} {utilisateur.nom} {status}')
+    return redirect('core:admin_utilisateurs')
+
+
+@superadmin_required
+def admin_utilisateur_delete(request, pk):
+    """Supprimer un utilisateur (SuperAdmin uniquement)"""
+    utilisateur = get_object_or_404(Utilisateur, pk=pk)
+    
+    if utilisateur == request.user:
+        messages.error(request, 'Vous ne pouvez pas vous supprimer vous-même')
+        return redirect('core:admin_utilisateurs')
+    
+    nom = f'{utilisateur.prenoms} {utilisateur.nom}'
+    utilisateur.delete()
+    messages.success(request, f'Utilisateur {nom} supprimé')
+    return redirect('core:admin_utilisateurs')

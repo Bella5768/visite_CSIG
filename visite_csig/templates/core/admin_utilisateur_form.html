@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-person-{% if action == 'create' %}plus{% else %}gear{% endif %}-fill"></i> {{ page_title }}</h2>
+        <div class="subtitle">{% if action == 'create' %}Créer un nouveau compte utilisateur{% else %}Modifier les informations de l'utilisateur{% endif %}</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'core:admin_utilisateurs' %}" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card-section">
+            <div class="card-header-custom">
+                <i class="bi bi-person-vcard"></i> Informations de l'utilisateur
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight: 600; color: #374151;">Prénom(s) <span style="color: #ef4444;">*</span></label>
+                            <input type="text" name="prenoms" class="form-control" required
+                                   value="{{ utilisateur.prenoms|default:'' }}"
+                                   placeholder="Entrez le prénom">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight: 600; color: #374151;">Nom <span style="color: #ef4444;">*</span></label>
+                            <input type="text" name="nom" class="form-control" required
+                                   value="{{ utilisateur.nom|default:'' }}"
+                                   placeholder="Entrez le nom">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight: 600; color: #374151;">Nom d'utilisateur <span style="color: #ef4444;">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-at"></i></span>
+                                <input type="text" name="nom_utilisateur" class="form-control" required
+                                       value="{{ utilisateur.nom_utilisateur|default:'' }}"
+                                       placeholder="Identifiant de connexion"
+                                       {% if action == 'edit' %}readonly{% endif %}>
+                            </div>
+                            {% if action == 'edit' %}
+                                <small class="text-muted">Le nom d'utilisateur ne peut pas être modifié</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight: 600; color: #374151;">
+                                Mot de passe {% if action == 'create' %}<span style="color: #ef4444;">*</span>{% endif %}
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" name="password" class="form-control" id="password"
+                                       {% if action == 'create' %}required{% endif %}
+                                       placeholder="{% if action == 'edit' %}Laisser vide pour ne pas changer{% else %}Mot de passe{% endif %}">
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                    <i class="bi bi-eye" id="toggleIcon"></i>
+                                </button>
+                            </div>
+                            {% if action == 'edit' %}
+                                <small class="text-muted">Laissez vide pour conserver le mot de passe actuel</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight: 600; color: #374151;">Rôle <span style="color: #ef4444;">*</span></label>
+                            <select name="role" class="form-select" required>
+                                {% for value, label in roles %}
+                                    <option value="{{ value }}" {% if utilisateur.role == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-weight: 600; color: #374151;">Poste / Fonction</label>
+                            <input type="text" name="poste" class="form-control"
+                                   value="{{ utilisateur.poste|default:'' }}"
+                                   placeholder="Ex: Agent d'accueil">
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn-primary-gradient">
+                            <i class="bi bi-check-lg"></i> 
+                            {% if action == 'create' %}Créer l'utilisateur{% else %}Enregistrer les modifications{% endif %}
+                        </button>
+                        <a href="{% url 'core:admin_utilisateurs' %}" class="btn btn-light">
+                            <i class="bi bi-x-lg"></i> Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Info panel -->
+        <div class="card-section">
+            <div class="card-header-custom">
+                <i class="bi bi-info-circle"></i> Informations
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 style="color: #374151; font-weight: 600;"><i class="bi bi-shield-check text-primary"></i> Rôles disponibles</h6>
+                    <ul style="font-size: 13px; color: #64748b; padding-left: 20px;">
+                        <li><strong>Agent</strong> - Accès basique (visites, visiteurs)</li>
+                        <li><strong>Administrateur</strong> - Gestion des utilisateurs et configurations</li>
+                        {% if request.user.role == 'superadmin' %}
+                            <li><strong>Super Admin</strong> - Accès complet au système</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 style="color: #374151; font-weight: 600;"><i class="bi bi-key text-warning"></i> Mot de passe</h6>
+                    <p style="font-size: 13px; color: #64748b;">
+                        Le mot de passe doit être suffisamment sécurisé. 
+                        Recommandation : au moins 8 caractères avec lettres et chiffres.
+                    </p>
+                </div>
+                
+                {% if action == 'edit' and utilisateur %}
+                <div class="alert alert-light" style="font-size: 13px;">
+                    <strong>Créé le :</strong> {{ utilisateur.date_creation|date:"d/m/Y à H:i" }}<br>
+                    <strong>Statut :</strong> 
+                    {% if utilisateur.is_active %}
+                        <span class="text-success">Actif</span>
+                    {% else %}
+                        <span class="text-danger">Inactif</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword() {
+    const input = document.getElementById('password');
+    const icon = document.getElementById('toggleIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+</script>
+{% endblock %}
