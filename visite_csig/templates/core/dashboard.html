@@ -1,36 +1,136 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="row mb-4"><div class="col-12"><h2><i class="bi bi-speedometer2"></i> Tableau de bord</h2></div></div>
-<div class="row mb-4">
-    <div class="col-md-3"><div class="card bg-primary text-white"><div class="card-body text-center"><h3>{{ visites_jour }}</h3><small>Visites aujourd'hui</small></div></div></div>
-    <div class="col-md-3"><div class="card bg-warning text-dark"><div class="card-body text-center"><h3>{{ visites_en_cours }}</h3><small>En cours</small></div></div></div>
-    <div class="col-md-3"><div class="card bg-success text-white"><div class="card-body text-center"><h3>{{ visites_mois }}</h3><small>Ce mois</small></div></div></div>
-    <div class="col-md-3"><div class="card bg-info text-white"><div class="card-body text-center"><h3>{{ total_visiteurs }}</h3><small>Visiteurs</small></div></div></div>
+<!-- Page Header -->
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h1><i class="bi bi-building"></i> CITÉ DES SCIENCES ET DE L'INNOVATION DE GUINÉE</h1>
+        <p class="welcome-msg">Bienvenue, <strong>{{ user.prenoms }} {{ user.nom }}</strong> - {{ user.bureau|default:"Bureau A" }}</p>
+    </div>
+    <div class="datetime">
+        <div class="date" id="header-datetime"></div>
+        <div class="label">Heure locale</div>
+    </div>
 </div>
+
+<!-- Statistics Cards -->
 <div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card"><div class="card-header"><h5 class="mb-0"><i class="bi bi-lightning"></i> Actions rapides</h5></div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card blue">
+            <div class="stat-value">{{ visites_jour }}</div>
+            <div class="stat-label"><i class="bi bi-calendar-check stat-icon"></i> VISITES AUJOURD'HUI</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card cyan">
+            <div class="stat-value">{{ visites_en_cours }}</div>
+            <div class="stat-label"><i class="bi bi-hourglass-split stat-icon"></i> VISITES EN COURS</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card indigo">
+            <div class="stat-value">{{ total_visiteurs }}</div>
+            <div class="stat-label"><i class="bi bi-people stat-icon"></i> VISITEURS ENREGISTRÉS</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card purple">
+            <div class="stat-value">{{ visites_mois }}</div>
+            <div class="stat-label"><i class="bi bi-calendar-month stat-icon"></i> VISITES CE MOIS</div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions & Visits -->
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <!-- Quick Actions -->
+        <div class="card-section">
+            <div class="card-header-custom">
+                <i class="bi bi-lightning-charge"></i> Actions rapides
+            </div>
             <div class="card-body">
-                <a href="{% url 'visites:nouvelle_visite' %}" class="btn btn-success me-2 mb-2"><i class="bi bi-plus-circle"></i> Nouvelle visite</a>
-                <a href="{% url 'visites:sortie' %}" class="btn btn-warning me-2 mb-2"><i class="bi bi-box-arrow-right"></i> Enregistrer sortie</a>
-                <a href="{% url 'visiteurs:ajouter' %}" class="btn btn-primary me-2 mb-2"><i class="bi bi-person-plus"></i> Nouveau visiteur</a>
-                <a href="{% url 'visites:scanner_qrcode' %}" class="btn btn-secondary me-2 mb-2"><i class="bi bi-qr-code-scan"></i> Scanner QR</a>
+                <a href="{% url 'visites:nouvelle_visite' %}" class="btn-action btn-blue">
+                    <i class="bi bi-plus-circle"></i> Nouvelle visite (Manuelle)
+                </a>
+                <a href="{% url 'visites:scanner_qrcode' %}?mode=entree" class="btn-action btn-green">
+                    <i class="bi bi-qr-code-scan"></i> Scanner QR - Entrée
+                </a>
+                <a href="{% url 'visites:scanner_qrcode' %}?mode=sortie" class="btn-action btn-orange">
+                    <i class="bi bi-qr-code-scan"></i> Scanner QR - Sortie
+                </a>
+                <a href="{% url 'visiteurs:rechercher' %}" class="btn-action btn-outline">
+                    <i class="bi bi-search"></i> Rechercher visiteur
+                </a>
+                <a href="{% url 'visites:sortie' %}" class="btn-action btn-red">
+                    <i class="bi bi-box-arrow-right"></i> Sortie manuelle
+                </a>
+                <a href="{% url 'rapports:rapport_journalier' %}" class="btn-action btn-link">
+                    <i class="bi bi-file-earmark-text"></i> Rapport du jour
+                </a>
+            </div>
+        </div>
+        
+        <!-- System Status -->
+        <div class="card-section">
+            <div class="card-header-custom">
+                <i class="bi bi-info-circle"></i> État du système
+            </div>
+            <div class="system-status">
+                <div class="status-item">
+                    <div class="status-icon ok"><i class="bi bi-check-lg"></i></div>
+                    <div class="status-label">Système OK</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-icon db"><i class="bi bi-database"></i></div>
+                    <div class="status-label">Base de données</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card"><div class="card-header"><h5 class="mb-0"><i class="bi bi-clock-history"></i> Dernières visites</h5></div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>Visiteur</th><th>Motif</th><th>Heure</th><th>Statut</th></tr></thead>
-                    <tbody>
-                        {% for visite in dernieres_visites %}
-                        <tr><td>{{ visite.visiteur }}</td><td>{{ visite.motif }}</td><td>{{ visite.heure_entree|time:"H:i" }}</td>
-                            <td>{% if visite.statut == 'en_cours' %}<span class="badge bg-warning">En cours</span>{% elif visite.statut == 'terminee' %}<span class="badge bg-success">Terminée</span>{% else %}<span class="badge bg-danger">Annulée</span>{% endif %}</td>
-                        </tr>
-                        {% empty %}<tr><td colspan="4" class="text-center text-muted">Aucune visite aujourd'hui</td></tr>{% endfor %}
-                    </tbody>
-                </table>
+    
+    <div class="col-lg-8 mb-4">
+        <!-- Today's Visits -->
+        <div class="card-section">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-clock-history"></i> Dernières visites du jour</div>
+                <a href="{% url 'visites:index' %}" class="btn-voir-toutes">Voir toutes <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="card-body visits-list">
+                {% if dernieres_visites %}
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Visiteur</th>
+                                <th>Motif</th>
+                                <th>Heure</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for visite in dernieres_visites %}
+                            <tr>
+                                <td><strong>{{ visite.visiteur.nom }} {{ visite.visiteur.prenoms }}</strong></td>
+                                <td>{{ visite.motif }}</td>
+                                <td>{{ visite.heure_entree|time:"H:i" }}</td>
+                                <td>
+                                    {% if visite.statut == 'en_cours' %}
+                                        <span class="badge bg-warning text-dark">En cours</span>
+                                    {% elif visite.statut == 'terminee' %}
+                                        <span class="badge bg-success">Terminée</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Annulée</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="visit-empty">
+                        <i class="bi bi-calendar-x"></i>
+                        <p>Aucune visite enregistrée aujourd'hui</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
