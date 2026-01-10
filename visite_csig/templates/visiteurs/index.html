@@ -7,6 +7,9 @@
         <div class="subtitle">{{ visiteurs.paginator.count|default:0 }} visiteurs enregistrés</div>
     </div>
     <div class="actions">
+        <a href="{% url 'visiteurs:importer_excel' %}" class="btn-outline-gradient" style="background: #16a34a; border-color: #16a34a; color: #fff;">
+            <i class="bi bi-file-earmark-excel"></i> Importer Excel
+        </a>
         <a href="{% url 'visiteurs:ajouter' %}" class="btn-primary-gradient">
             <i class="bi bi-person-plus"></i> Nouveau visiteur
         </a>
@@ -49,7 +52,7 @@
 <div class="table-container">
     <div class="table-header">
         <h3><i class="bi bi-list-ul"></i> Liste des visiteurs</h3>
-        <a href="#" class="btn-export"><i class="bi bi-download"></i> Export Excel</a>
+        <a href="{% url 'visiteurs:exporter_excel' %}" class="btn-export"><i class="bi bi-download"></i> Export Excel</a>
     </div>
     <table class="table-modern">
         <thead>
