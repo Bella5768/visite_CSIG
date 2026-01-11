@@ -75,6 +75,17 @@ def api_search(request):
     return JsonResponse({'results': [{'id': v.id, 'nom': v.nom, 'prenoms': v.prenoms, 'telephone': v.telephone} for v in visiteurs]})
 
 
+def normalize_header(h):
+    """Normaliser un en-tête pour le mapping"""
+    if not h:
+        return ''
+    import unicodedata
+    h = str(h).lower().strip()
+    h = unicodedata.normalize('NFD', h)
+    h = ''.join(c for c in h if unicodedata.category(c) != 'Mn')
+    return h
+
+
 @login_required
 def importer_excel(request):
     """Importer des visiteurs depuis un fichier Excel"""
@@ -91,34 +102,53 @@ def importer_excel(request):
             ws = wb.active
             
             # Récupérer les en-têtes (première ligne)
-            headers = [cell.value.lower().strip() if cell.value else '' for cell in ws[1]]
+            headers = [normalize_header(cell.value) for cell in ws[1]]
             
-            # Mapper les colonnes
+            # Mapper les colonnes - recherche plus flexible
             col_map = {}
             for i, h in enumerate(headers):
-                if 'nom' in h and 'prenom' not in h:
+                if not h:
+                    continue
+                # Nom (pas prénom)
+                if h == 'nom' or (h.startswith('nom') and 'prenom' not in h):
                     col_map['nom'] = i
-                elif 'prenom' in h or 'prénom' in h:
+                # Prénoms
+                elif 'prenom' in h:
                     col_map['prenoms'] = i
-                elif 'tel' in h or 'phone' in h or 'téléphone' in h:
+                # Téléphone
+                elif 'tel' in h or 'phone' in h:
                     col_map['telephone'] = i
+                # Email
                 elif 'mail' in h or 'email' in h:
                     col_map['email'] = i
+                # Adresse
                 elif 'adresse' in h:
                     col_map['adresse'] = i
-                elif 'type' in h and 'identite' in h:
+                # Type identité
+                elif 'type' in h:
                     col_map['type_identite'] = i
-                elif 'numero' in h or 'numéro' in h:
+                # Numéro identité
+                elif 'numero' in h or 'n°' in h or 'id' in h:
                     col_map['numero_identite'] = i
             
+            # Si colonnes par position (A=Nom, B=Prénoms)
+            if 'nom' not in col_map and len(headers) >= 2:
+                col_map['nom'] = 0
+                col_map['prenoms'] = 1
+                if len(headers) >= 3:
+                    col_map['telephone'] = 2
+                if len(headers) >= 4:
+                    col_map['email'] = 3
+            
             if 'nom' not in col_map or 'prenoms' not in col_map:
-                messages.error(request, 'Le fichier doit contenir au moins les colonnes "Nom" et "Prénoms"')
+                messages.error(request, f'Colonnes trouvées: {headers}. Le fichier doit contenir "Nom" et "Prénoms"')
                 return redirect('visiteurs:importer_excel')
             
             # Importer les données
             created = 0
             updated = 0
             errors = 0
+            error_details = []
             
             for row_num, row in enumerate(ws.iter_rows(min_row=2), start=2):
                 try:
@@ -128,29 +158,51 @@ def importer_excel(request):
                     if not nom or not prenoms:
                         continue
                     
-                    nom = str(nom).strip()
-                    prenoms = str(prenoms).strip()
+                    nom = str(nom).strip().upper()
+                    prenoms = str(prenoms).strip().title()
                     
                     # Données optionnelles
-                    telephone = str(row[col_map.get('telephone', 0)].value or '').strip() if 'telephone' in col_map else ''
-                    email = str(row[col_map.get('email', 0)].value or '').strip() if 'email' in col_map else ''
-                    adresse = str(row[col_map.get('adresse', 0)].value or '').strip() if 'adresse' in col_map else ''
-                    type_identite = str(row[col_map.get('type_identite', 0)].value or '').strip() if 'type_identite' in col_map else ''
-                    numero_identite = str(row[col_map.get('numero_identite', 0)].value or '').strip() if 'numero_identite' in col_map else ''
+                    telephone = ''
+                    if 'telephone' in col_map:
+                        val = row[col_map['telephone']].value
+                        telephone = str(val).strip() if val else ''
                     
-                    # Vérifier si le visiteur existe déjà (par numéro d'identité ou nom+prénom+téléphone)
+                    email = ''
+                    if 'email' in col_map:
+                        val = row[col_map['email']].value
+                        email = str(val).strip() if val else ''
+                    
+                    adresse = ''
+                    if 'adresse' in col_map:
+                        val = row[col_map['adresse']].value
+                        adresse = str(val).strip() if val else ''
+                    
+                    type_identite = ''
+                    if 'type_identite' in col_map:
+                        val = row[col_map['type_identite']].value
+                        type_identite = str(val).strip() if val else ''
+                    
+                    numero_identite = ''
+                    if 'numero_identite' in col_map:
+                        val = row[col_map['numero_identite']].value
+                        numero_identite = str(val).strip() if val else ''
+                    
+                    # Vérifier si le visiteur existe déjà
                     visiteur = None
                     if numero_identite:
                         visiteur = Visiteur.objects.filter(numero_identite=numero_identite).first()
                     
-                    if not visiteur and telephone:
-                        visiteur = Visiteur.objects.filter(nom__iexact=nom, prenoms__iexact=prenoms, telephone=telephone).first()
+                    if not visiteur:
+                        visiteur = Visiteur.objects.filter(nom__iexact=nom, prenoms__iexact=prenoms).first()
                     
                     if visiteur:
                         # Mettre à jour
-                        visiteur.telephone = telephone or visiteur.telephone
-                        visiteur.email = email or visiteur.email
-                        visiteur.adresse = adresse or visiteur.adresse
+                        if telephone:
+                            visiteur.telephone = telephone
+                        if email:
+                            visiteur.email = email
+                        if adresse:
+                            visiteur.adresse = adresse
                         visiteur.save()
                         updated += 1
                     else:
@@ -168,12 +220,16 @@ def importer_excel(request):
                         
                 except Exception as e:
                     errors += 1
+                    error_details.append(f'Ligne {row_num}: {str(e)}')
                     continue
             
             if created or updated:
                 messages.success(request, f'Import terminé : {created} créé(s), {updated} mis à jour, {errors} erreur(s)')
             else:
-                messages.warning(request, 'Aucun visiteur n\'a été importé')
+                msg = 'Aucun visiteur importé.'
+                if error_details:
+                    msg += f' Erreurs: {"; ".join(error_details[:3])}'
+                messages.warning(request, msg)
                 
         except Exception as e:
             messages.error(request, f'Erreur lors de la lecture du fichier: {str(e)}')
