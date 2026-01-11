@@ -60,6 +60,17 @@ def historique(request, pk):
 
 
 @login_required
+def supprimer(request, pk):
+    visiteur = get_object_or_404(Visiteur, pk=pk)
+    if request.method == 'POST':
+        nom_complet = str(visiteur)
+        visiteur.delete()
+        messages.success(request, f'Visiteur "{nom_complet}" supprimé avec succès')
+        return redirect('visiteurs:index')
+    return render(request, 'visiteurs/supprimer.html', {'page_title': 'Supprimer visiteur', 'visiteur': visiteur})
+
+
+@login_required
 def rechercher(request):
     q = request.GET.get('q', '')
     visiteurs = Visiteur.objects.filter(Q(nom__icontains=q) | Q(prenoms__icontains=q) | Q(telephone__icontains=q)).annotate(nb_visites=Count('visites'))[:20] if q else []

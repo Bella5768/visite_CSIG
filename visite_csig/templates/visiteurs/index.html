@@ -131,6 +131,9 @@
                         <a href="{% url 'visites:nouvelle_visite_visiteur' v.id %}" class="btn-action-sm success" title="Nouvelle visite">
                             <i class="bi bi-plus-lg"></i>
                         </a>
+                        <a href="{% url 'visiteurs:supprimer' v.id %}" class="btn-action-sm danger" title="Supprimer">
+                            <i class="bi bi-trash"></i>
+                        </a>
                     </div>
                 </td>
             </tr>

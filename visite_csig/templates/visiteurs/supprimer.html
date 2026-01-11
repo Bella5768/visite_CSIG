@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-trash text-danger"></i> Supprimer un visiteur</h2>
+        <div class="subtitle">Cette action est irréversible</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visiteurs:index' %}" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card-section">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 64px;"></i>
+                </div>
+                <h4 class="mb-3">Êtes-vous sûr de vouloir supprimer ce visiteur ?</h4>
+                
+                <div class="bg-light rounded p-4 mb-4">
+                    <div class="user-avatar blue mx-auto mb-3" style="width: 60px; height: 60px; font-size: 24px;">
+                        {{ visiteur.prenoms|slice:":1"|upper }}{{ visiteur.nom|slice:":1"|upper }}
+                    </div>
+                    <h5 class="mb-1">{{ visiteur.prenoms }} {{ visiteur.nom }}</h5>
+                    {% if visiteur.telephone %}
+                        <p class="text-muted mb-1"><i class="bi bi-telephone"></i> {{ visiteur.telephone }}</p>
+                    {% endif %}
+                    {% if visiteur.email %}
+                        <p class="text-muted mb-0"><i class="bi bi-envelope"></i> {{ visiteur.email }}</p>
+                    {% endif %}
+                    <p class="text-muted mt-2 mb-0">
+                        <small>{{ visiteur.get_nb_visites }} visite(s) enregistrée(s)</small>
+                    </p>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Attention :</strong> Toutes les visites associées à ce visiteur seront également supprimées.
+                </div>
+                
+                <form method="post" class="d-flex gap-3 justify-content-center mt-4">
+                    {% csrf_token %}
+                    <a href="{% url 'visiteurs:index' %}" class="btn btn-secondary px-4">
+                        <i class="bi bi-x-lg"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="bi bi-trash"></i> Oui, supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
