@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification de rendez-vous</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #e74c3c;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 30px;
+            border: 1px solid #ddd;
+        }
+        .footer {
+            background-color: #ecf0f1;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 5px 5px;
+            font-size: 12px;
+            color: #666;
+        }
+        .info-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .visitor-info {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #e74c3c;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1> Nouveau rendez-vous confirmé</h1>
+        <p>Cité des Sciences et de l'Innovation de Guinée</p>
+    </div>
+    
+    <div class="content">
+        <p>Bonjour {{ correspondant.prenoms }} {{ correspondant.nom }},</p>
+        
+        <p>Un nouveau rendez-vous a été confirmé et vous concerne en tant que correspondant.</p>
+        
+        <div class="info-box">
+            <h3>Détails du rendez-vous</h3>
+            <p><strong>Sujet :</strong> {{ rendez_vous.sujet }}</p>
+            <p><strong>Date :</strong> {{ rendez_vous.date_rendez_vous|date:"d F Y" }}</p>
+            <p><strong>Heure :</strong> {{ rendez_vous.heure_debut|time:"H:i" }} - {{ rendez_vous.heure_fin|time:"H:i" }}</p>
+            <p><strong>Motif :</strong> {{ motif.libelle }}</p>
+            <p><strong>Statut :</strong> {{ rendez_vous.get_statut_display }}</p>
+        </div>
+        
+        <div class="visitor-info">
+            <h3>Informations du visiteur</h3>
+            <p><strong>Nom :</strong> {{ visiteur.prenoms }} {{ visiteur.nom }}</p>
+            {% if visiteur.telephone %}
+            <p><strong>Téléphone :</strong> {{ visiteur.telephone }}</p>
+            {% endif %}
+            {% if visiteur.email %}
+            <p><strong>Email :</strong> {{ visiteur.email }}</p>
+            {% endif %}
+            {% if visiteur.adresse %}
+            <p><strong>Adresse :</strong> {{ visiteur.adresse }}</p>
+            {% endif %}
+        </div>
+        
+        {% if rendez_vous.description %}
+        <p><strong>Description de la demande :</strong></p>
+        <p>{{ rendez_vous.description }}</p>
+        {% endif %}
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ site_url }}" class="btn">Accéder à la plateforme</a>
+        </div>
+        
+        <p>Veuillez préparer votre accueil et vous assurer que toutes les dispositions nécessaires soient prises pour ce rendez-vous.</p>
+        
+        <p>Cordialement,<br>
+        L'équipe de la Cité des Sciences et de l'Innovation de Guinée</p>
+    </div>
+    
+    <div class="footer">
+        <p>Cité des Sciences et de l'Innovation de Guinée (CSIG)</p>
+        <p>Cet email a été généré automatiquement. Merci de ne pas y répondre.</p>
+    </div>
+</body>
+</html>

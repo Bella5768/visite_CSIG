@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar2-week"></i> Gestion des créneaux</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus"></i> Nouveau créneau</button>
+</div>
+
+<div class="card"><div class="card-body p-0">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Motif</th>
+                <th>Date</th>
+                <th>Heure</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in creneaux %}
+            <tr>
+                <td>{{ c.motif.libelle }}</td>
+                <td>{{ c.date|date:"d/m/Y" }}</td>
+                <td>{{ c.heure_debut|time:"H:i" }} - {{ c.heure_fin|time:"H:i" }}</td>
+                <td>{% if c.actif %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-secondary">Inactif</span>{% endif %}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal"
+                        data-id="{{ c.id }}"
+                        data-motif="{{ c.motif.id }}"
+                        data-date="{{ c.date|date:'Y-m-d' }}"
+                        data-debut="{{ c.heure_debut|time:'H:i' }}"
+                        data-fin="{{ c.heure_fin|time:'H:i' }}"
+                        data-actif="{{ c.actif }}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <form method="post" style="display:inline" onsubmit="return confirm('Supprimer ce créneau ?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="creneau_id" value="{{ c.id }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted">Aucun créneau</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div></div>
+
+<div class="modal fade" id="addModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="create">
+        <div class="modal-header"><h5 class="modal-title">Nouveau créneau</h5></div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label">Motif *</label>
+                <select name="motif_id" class="form-select" required>
+                    <option value="">Sélectionner</option>
+                    {% for m in motifs %}
+                    <option value="{{ m.id }}">{{ m.libelle }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3"><label class="form-label">Date *</label><input type="date" name="date" class="form-control" required></div>
+                <div class="col-md-3 mb-3"><label class="form-label">Début *</label><input type="time" name="heure_debut" class="form-control" required></div>
+                <div class="col-md-3 mb-3"><label class="form-label">Fin *</label><input type="time" name="heure_fin" class="form-control" required></div>
+            </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button><button type="submit" class="btn btn-primary">Créer</button></div>
+    </form>
+</div></div></div>
+
+<div class="modal fade" id="editModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <form method="post">{% csrf_token %}
+        <input type="hidden" name="action" value="update">
+        <input type="hidden" name="creneau_id" id="edit_id">
+        <div class="modal-header"><h5 class="modal-title">Modifier créneau</h5></div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label">Motif *</label>
+                <select name="motif_id" class="form-select" id="edit_motif" required>
+                    <option value="">Sélectionner</option>
+                    {% for m in motifs %}
+                    <option value="{{ m.id }}">{{ m.libelle }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3"><label class="form-label">Date *</label><input type="date" name="date" id="edit_date" class="form-control" required></div>
+                <div class="col-md-3 mb-3"><label class="form-label">Début *</label><input type="time" name="heure_debut" id="edit_debut" class="form-control" required></div>
+                <div class="col-md-3 mb-3"><label class="form-label">Fin *</label><input type="time" name="heure_fin" id="edit_fin" class="form-control" required></div>
+            </div>
+            <div class="form-check"><input type="checkbox" name="actif" id="edit_actif" class="form-check-input"><label class="form-check-label">Actif</label></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div>
+    </form>
+</div></div></div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
+    var btn = e.relatedTarget;
+    document.getElementById('edit_id').value = btn.dataset.id;
+    document.getElementById('edit_motif').value = btn.dataset.motif;
+    document.getElementById('edit_date').value = btn.dataset.date;
+    document.getElementById('edit_debut').value = btn.dataset.debut;
+    document.getElementById('edit_fin').value = btn.dataset.fin;
+    document.getElementById('edit_actif').checked = btn.dataset.actif === 'True';
+});
+</script>
+{% endblock %}

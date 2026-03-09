@@ -13,6 +13,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:55006',
     'https://boubacar32.pythonanywhere.com',
     'http://boubacar32.pythonanywhere.com',
+    'http://127.0.0.1:58635',
+    'http://localhost:58635',
 ]
 
 INSTALLED_APPS = [
@@ -70,6 +72,33 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
 ]
+
+# Configuration email multi-fournisseurs
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Configuration principale (Gmail par défaut)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'True'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() == 'True'
+
+# Identifiants
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@csig-guinee.org')
+
+# Configuration pour le développement (commenter pour tester)
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Configurations pré-définies selon le fournisseur
+# Pour Gmail:
+# EMAIL_HOST=smtp.gmail.com, EMAIL_PORT=587, EMAIL_USE_TLS=True
+# Pour Outlook/Hotmail:
+# EMAIL_HOST=smtp-mail.outlook.com, EMAIL_PORT=587, EMAIL_USE_TLS=True
+# Pour Yahoo:
+# EMAIL_HOST=smtp.mail.yahoo.com, EMAIL_PORT=587, EMAIL_USE_TLS=True
+# Pour Orange:
+# EMAIL_HOST=smtp.orange.fr, EMAIL_PORT=587, EMAIL_USE_TLS=True
 
 AUTH_USER_MODEL = 'core.Utilisateur'
 LOGIN_URL = 'core:login'

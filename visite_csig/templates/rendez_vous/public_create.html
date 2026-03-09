@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-calendar-plus"></i> Prendre rendez-vous</h2>
+        <div class="subtitle">Remplissez le formulaire pour demander un rendez-vous</div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+        <!-- Logos officiels -->
+        <div class="text-center mb-4" style="background-color: white; padding: 20px; border-radius: 8px;">
+            <div class="d-inline-block mx-3">
+                <img src="{% static 'images/branding.webp' %}" alt="Branding Guinée" style="max-height: 80px; width: auto;" class="img-fluid">
+            </div>
+            <div class="d-inline-block mx-3">
+                <img src="{% static 'images/simandou.jpeg' %}" alt="Simandou" style="max-height: 80px; width: auto;" class="img-fluid">
+            </div>
+        </div>
+        <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>
+                <strong>Important :</strong> choisissez un <strong>motif</strong>, puis sélectionnez un <strong>créneau disponible</strong>.
+                <div class="small">Les heures sont définies à l'avance par l'administration.</div>
+            </div>
+        </div>
+
+        <div class="card-section">
+            <div class="card-body">
+                <form method="post" id="public_rdv_form">
+                    {% csrf_token %}
+
+                    <div class="card-section mb-4">
+                        <div class="card-header-custom">
+                            <i class="bi bi-person"></i> Informations personnelles
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nom <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                        <input type="text" class="form-control" name="nom" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Prénoms <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                        <input type="text" class="form-control" name="prenoms" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Téléphone</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                        <input type="text" class="form-control" name="telephone" placeholder="Ex: +224 ...">
+                                    </div>
+                                    <div class="form-text">Téléphone ou email requis.</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                        <input type="email" class="form-control" name="email" placeholder="Ex: vous@email.com">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Adresse</label>
+                                <textarea class="form-control" name="adresse" rows="2" placeholder="Quartier, commune, ville..."></textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Type d'identité</label>
+                                    <select class="form-select" name="type_identite">
+                                        <option value="">---</option>
+                                        {% for key, label in types_identite %}
+                                        <option value="{{ key }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Numéro d'identité</label>
+                                    <input type="text" class="form-control" name="numero_identite" placeholder="Optionnel">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-section">
+                        <div class="card-header-custom">
+                            <i class="bi bi-calendar-event"></i> Détails du rendez-vous
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Sujet <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-chat-square-text"></i></span>
+                                    <input type="text" class="form-control" name="sujet" required placeholder="Ex: Demande d'audience">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Motif <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="motif_id" required>
+                                        <option value="">Sélectionner un motif</option>
+                                        {% for motif in motifs %}
+                                        <option value="{{ motif.pk }}">{{ motif.libelle }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Correspondant (optionnel)</label>
+                                    <select class="form-select" name="correspondant_id">
+                                        <option value="">Aucun</option>
+                                        {% for correspondant in correspondants %}
+                                        <option value="{{ correspondant.pk }}">{{ correspondant.prenoms }} {{ correspondant.nom }} - {{ correspondant.departement }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Créneau disponible <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                    <select class="form-select" name="creneau_id" id="creneauSelect" required disabled>
+                                        <option value="">Sélectionnez d'abord un motif</option>
+                                    </select>
+                                </div>
+                                <div class="form-text" id="creneauHelp">Les créneaux sont définis à l'avance par l'administrateur.</div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="description" rows="4" placeholder="Expliquez brièvement votre demande..."></textarea>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                                <div class="text-muted small">Les champs marqués <span class="text-danger">*</span> sont obligatoires.</div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Envoyer ma demande
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('public_rdv_form');
+    const tel = form.querySelector('input[name="telephone"]');
+    const email = form.querySelector('input[name="email"]');
+    const motifSelect = form.querySelector('select[name="motif_id"]');
+    const creneauSelect = document.getElementById('creneauSelect');
+    const creneauHelp = document.getElementById('creneauHelp');
+
+    async function loadCreneaux(motifId) {
+        creneauSelect.innerHTML = '';
+        creneauSelect.disabled = true;
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Chargement des créneaux...';
+        creneauSelect.appendChild(opt);
+
+        try {
+            const url = `/rdv/api/creneaux/?motif_id=${encodeURIComponent(motifId)}`;
+            const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            const data = await resp.json();
+
+            creneauSelect.innerHTML = '';
+            const opt0 = document.createElement('option');
+            opt0.value = '';
+            opt0.textContent = 'Sélectionner un créneau';
+            creneauSelect.appendChild(opt0);
+
+            if (!data.success || !data.creneaux || data.creneaux.length === 0) {
+                creneauSelect.disabled = true;
+                creneauHelp.textContent = 'Aucun créneau disponible pour ce motif.';
+                return;
+            }
+
+            data.creneaux.forEach(c => {
+                const o = document.createElement('option');
+                o.value = c.id;
+                o.textContent = c.label;
+                creneauSelect.appendChild(o);
+            });
+
+            creneauSelect.disabled = false;
+            creneauHelp.textContent = 'Choisissez un créneau parmi ceux disponibles.';
+        } catch (e) {
+            creneauSelect.innerHTML = '';
+            const optErr = document.createElement('option');
+            optErr.value = '';
+            optErr.textContent = 'Erreur lors du chargement des créneaux';
+            creneauSelect.appendChild(optErr);
+            creneauSelect.disabled = true;
+            creneauHelp.textContent = 'Impossible de charger les créneaux. Réessayez.';
+        }
+    }
+
+    motifSelect.addEventListener('change', function() {
+        const motifId = motifSelect.value;
+        if (!motifId) {
+            creneauSelect.innerHTML = '<option value="">Sélectionnez d\'abord un motif</option>';
+            creneauSelect.disabled = true;
+            creneauHelp.textContent = 'Les créneaux sont définis à l\'avance par l\'administrateur.';
+            return;
+        }
+        loadCreneaux(motifId);
+    });
+
+    form.addEventListener('submit', function(e) {
+        if (!tel.value.trim() && !email.value.trim()) {
+            e.preventDefault();
+            alert('Veuillez renseigner un téléphone ou un email');
+            tel.focus();
+            return;
+        }
+
+        if (!motifSelect.value) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un motif');
+            motifSelect.focus();
+            return;
+        }
+
+        if (!creneauSelect.value) {
+            e.preventDefault();
+            alert('Veuillez sélectionner un créneau disponible');
+            creneauSelect.focus();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

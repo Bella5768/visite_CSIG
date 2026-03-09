@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-trash"></i> Supprimer le rendez-vous</h2>
+        <div class="subtitle">Confirmation de suppression</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visites:rendez_vous_detail' rendez_vous.pk %}" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left"></i> Retour aux détails
+        </a>
+    </div>
+</div>
+
+<!-- Confirmation Card -->
+<div class="card-section">
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Attention!</strong> Cette action est irréversible et supprimera définitivement ce rendez-vous.
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <h5>Rendez-vous à supprimer:</h5>
+                <table class="table table-bordered">
+                    <tr>
+                        <th width="150">Sujet:</th>
+                        <td>{{ rendez_vous.sujet }}</td>
+                    </tr>
+                    <tr>
+                        <th>Visiteur:</th>
+                        <td>{{ rendez_vous.visiteur.nom }} {{ rendez_vous.visiteur.prenoms }}</td>
+                    </tr>
+                    <tr>
+                        <th>Date:</th>
+                        <td>{{ rendez_vous.date_rendez_vous|date:"l d F Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Heure:</th>
+                        <td>{{ rendez_vous.heure_debut|time:"H:i" }} - {{ rendez_vous.heure_fin|time:"H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Motif:</th>
+                        <td>{{ rendez_vous.motif.libelle }}</td>
+                    </tr>
+                    {% if rendez_vous.correspondant %}
+                    <tr>
+                        <th>Correspondant:</th>
+                        <td>{{ rendez_vous.correspondant.prenoms }} {{ rendez_vous.correspondant.nom }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Statut:</th>
+                        <td>
+                            {% if rendez_vous.statut == 'planifie' %}
+                            <span class="badge bg-secondary">Planifié</span>
+                            {% elif rendez_vous.statut == 'confirme' %}
+                            <span class="badge bg-info">Confirmé</span>
+                            {% elif rendez_vous.statut == 'en_cours' %}
+                            <span class="badge bg-primary">En cours</span>
+                            {% elif rendez_vous.statut == 'termine' %}
+                            <span class="badge bg-success">Terminé</span>
+                            {% elif rendez_vous.statut == 'annule' %}
+                            <span class="badge bg-danger">Annulé</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+
+                {% if rendez_vous.description %}
+                <h6 class="mt-3">Description:</h6>
+                <p class="text-muted">{{ rendez_vous.description|linebreaks }}</p>
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6><i class="bi bi-info-circle"></i> Informations de création</h6>
+                        <p><strong>Créé le:</strong><br>{{ rendez_vous.date_creation|date:"d/m/Y H:i" }}</p>
+                        {% if rendez_vous.cree_par %}
+                        <p><strong>Créé par:</strong><br>{{ rendez_vous.cree_par.prenoms }} {{ rendez_vous.cree_par.nom }}</p>
+                        {% endif %}
+                        <p><strong>Modifié le:</strong><br>{{ rendez_vous.date_modification|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <form method="post" class="d-inline">
+            {% csrf_token %}
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Oui, supprimer définitivement
+                </button>
+                <a href="{% url 'visites:rendez_vous_detail' rendez_vous.pk %}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Non, conserver ce rendez-vous
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

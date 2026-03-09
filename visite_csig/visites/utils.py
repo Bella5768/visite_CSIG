@@ -5,6 +5,10 @@ from django.http import HttpResponse
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 
 def generate_qrcode_base64(data):
@@ -57,3 +61,73 @@ def generate_badge_pdf(visiteur, visite=None):
     p.save()
     buffer.seek(0)
     return buffer
+
+
+def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
+    """
+    Envoie un email de confirmation au demandeur du rendez-vous
+    """
+    if not rendez_vous.visiteur.email:
+        return False
+    
+    sujet = f"Confirmation de votre rendez-vous - {rendez_vous.sujet}"
+    
+    context = {
+        'rendez_vous': rendez_vous,
+        'visiteur': rendez_vous.visiteur,
+        'motif': rendez_vous.motif,
+        'correspondant': rendez_vous.correspondant,
+        'site_url': request.build_absolute_uri('/'),
+    }
+    
+    html_message = render_to_string('rendez_vous/email_confirmation.html', context)
+    plain_message = strip_tags(html_message)
+    
+    try:
+        send_mail(
+            sujet,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [rendez_vous.visiteur.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Erreur lors de l'envoi de l'email de confirmation: {e}")
+        return False
+
+
+def notifier_correspondant_rendez_vous(rendez_vous, request):
+    """
+    Notifie le correspondant par email lorsqu'un rendez-vous est confirmé
+    """
+    if not rendez_vous.correspondant or not rendez_vous.correspondant.email:
+        return False
+    
+    sujet = f" Nouveau rendez-vous confirmé - {rendez_vous.sujet}"
+    
+    context = {
+        'rendez_vous': rendez_vous,
+        'visiteur': rendez_vous.visiteur,
+        'motif': rendez_vous.motif,
+        'correspondant': rendez_vous.correspondant,
+        'site_url': request.build_absolute_uri('/'),
+    }
+    
+    html_message = render_to_string('rendez_vous/email_notification_correspondant.html', context)
+    plain_message = strip_tags(html_message)
+    
+    try:
+        send_mail(
+            sujet,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [rendez_vous.correspondant.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Erreur lors de l'envoi de l'email au correspondant: {e}")
+        return False

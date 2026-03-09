@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-pencil-square"></i> Modifier le rendez-vous</h2>
+        <div class="subtitle">{{ rendez_vous.sujet }}</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visites:rendez_vous_detail' rendez_vous.pk %}" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left"></i> Retour aux détails
+        </a>
+    </div>
+</div>
+
+<!-- Form -->
+<div class="card-section">
+    <div class="card-body">
+        <form method="post" id="rendez_vous_form">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="sujet" class="form-label">Sujet du rendez-vous *</label>
+                        <input type="text" class="form-control" id="sujet" name="sujet" required 
+                               value="{{ rendez_vous.sujet }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="priorite" class="form-label">Priorité</label>
+                        <select class="form-select" id="priorite" name="priorite">
+                            {% for priorite, label in priorites %}
+                            <option value="{{ priorite }}"{% if priorite == rendez_vous.priorite %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="visiteur_id" class="form-label">Visiteur *</label>
+                        <select class="form-select" id="visiteur_id" name="visiteur_id" required>
+                            <option value="">Sélectionner un visiteur</option>
+                            {% for visiteur in visiteurs %}
+                            <option value="{{ visiteur.pk }}"{% if visiteur.pk == rendez_vous.visiteur.pk %} selected{% endif %}>
+                                {{ visiteur.nom }} {{ visiteur.prenoms }} - {{ visiteur.telephone }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            <a href="{% url 'visiteurs:ajouter' %}" target="_blank">
+                                <i class="bi bi-plus-circle"></i> Ajouter un nouveau visiteur
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="motif_id" class="form-label">Motif de visite *</label>
+                        <select class="form-select" id="motif_id" name="motif_id" required>
+                            <option value="">Sélectionner un motif</option>
+                            {% for motif in motifs %}
+                            <option value="{{ motif.pk }}"{% if motif.pk == rendez_vous.motif.pk %} selected{% endif %}>{{ motif.libelle }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="correspondant_id" class="form-label">Correspondant</label>
+                        <select class="form-select" id="correspondant_id" name="correspondant_id">
+                            <option value="">Aucun correspondant</option>
+                            {% for correspondant in correspondants %}
+                            <option value="{{ correspondant.pk }}"{% if rendez_vous.correspondant and correspondant.pk == rendez_vous.correspondant.pk %} selected{% endif %}>
+                                {{ correspondant.prenoms }} {{ correspondant.nom }} - {{ correspondant.departement }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="date_rendez_vous" class="form-label">Date du rendez-vous *</label>
+                        <input type="date" class="form-control" id="date_rendez_vous" name="date_rendez_vous" required 
+                               value="{{ rendez_vous.date_rendez_vous|date:'Y-m-d' }}"
+                               min="{{ today|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="heure_debut" class="form-label">Heure de début *</label>
+                        <input type="time" class="form-control" id="heure_debut" name="heure_debut" required 
+                               value="{{ rendez_vous.heure_debut|time:'H:i' }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="heure_fin" class="form-label">Heure de fin *</label>
+                        <input type="time" class="form-control" id="heure_fin" name="heure_fin" required 
+                               value="{{ rendez_vous.heure_fin|time:'H:i' }}">
+                        <div class="form-text text-muted">Doit être postérieure à l'heure de début</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4">{{ rendez_vous.description }}</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="notes_confidentielles" class="form-label">
+                    <i class="bi bi-lock"></i> Notes confidentielles
+                </label>
+                <textarea class="form-control" id="notes_confidentielles" name="notes_confidentielles" rows="3">{{ rendez_vous.notes_confidentielles }}</textarea>
+                <div class="form-text text-muted">Ces notes ne seront visibles que par le personnel autorisé</div>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Statut actuel:</strong> 
+                {% if rendez_vous.statut == 'planifie' %}
+                Planifié
+                {% elif rendez_vous.statut == 'confirme' %}
+                Confirmé
+                {% elif rendez_vous.statut == 'en_cours' %}
+                En cours
+                {% elif rendez_vous.statut == 'termine' %}
+                Terminé
+                {% elif rendez_vous.statut == 'annule' %}
+                Annulé
+                {% endif %}
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Enregistrer les modifications
+                </button>
+                <a href="{% url 'visites:rendez_vous_detail' rendez_vous.pk %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('rendez_vous_form');
+    const heureDebut = document.getElementById('heure_debut');
+    const heureFin = document.getElementById('heure_fin');
+    const dateRdv = document.getElementById('date_rendez_vous');
+    
+    // Set minimum date to today (only for future planning)
+    const today = new Date().toISOString().split('T')[0];
+    
+    form.addEventListener('submit', function(e) {
+        // Validate time
+        if (heureDebut.value && heureFin.value) {
+            if (heureFin.value <= heureDebut.value) {
+                e.preventDefault();
+                alert('L\'heure de fin doit être postérieure à l\'heure de début');
+                heureFin.focus();
+                return;
+            }
+        }
+        
+        // For past dates, only allow if it's the existing date
+        if (dateRdv.value && dateRdv.value < today) {
+            const originalDate = '{{ rendez_vous.date_rendez_vous|date:"Y-m-d" }}';
+            if (dateRdv.value !== originalDate) {
+                e.preventDefault();
+                alert('La date du rendez-vous ne peut pas être modifiée pour une date antérieure');
+                dateRdv.focus();
+                return;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

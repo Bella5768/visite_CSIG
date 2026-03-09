@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-calendar-event"></i> Suivi du rendez-vous</h2>
+        <div class="subtitle">{{ rendez_vous.sujet }}</div>
+    </div>
+</div>
+
+<div class="mb-4">
+    {% if rendez_vous.statut == 'planifie' %}
+    <span class="badge bg-secondary fs-6">Planifié</span>
+    {% elif rendez_vous.statut == 'confirme' %}
+    <span class="badge bg-info fs-6">Confirmé</span>
+    {% elif rendez_vous.statut == 'en_cours' %}
+    <span class="badge bg-primary fs-6">En cours</span>
+    {% elif rendez_vous.statut == 'termine' %}
+    <span class="badge bg-success fs-6">Terminé</span>
+    {% elif rendez_vous.statut == 'annule' %}
+    <span class="badge bg-danger fs-6">Annulé</span>
+    {% endif %}
+</div>
+
+<div class="card-section">
+    <div class="card-body">
+        <table class="table table-bordered">
+            <tr>
+                <th width="180">Sujet</th>
+                <td>{{ rendez_vous.sujet }}</td>
+            </tr>
+            <tr>
+                <th>Date</th>
+                <td>{{ rendez_vous.date_rendez_vous|date:"d/m/Y" }}</td>
+            </tr>
+            <tr>
+                <th>Heure</th>
+                <td>{{ rendez_vous.heure_debut|time:"H:i" }} - {{ rendez_vous.heure_fin|time:"H:i" }}</td>
+            </tr>
+            <tr>
+                <th>Motif</th>
+                <td>{{ rendez_vous.motif.libelle }}</td>
+            </tr>
+            {% if rendez_vous.correspondant %}
+            <tr>
+                <th>Correspondant</th>
+                <td>{{ rendez_vous.correspondant.prenoms }} {{ rendez_vous.correspondant.nom }} ({{ rendez_vous.correspondant.departement }})</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <th>Visiteur</th>
+                <td>{{ rendez_vous.visiteur.prenoms }} {{ rendez_vous.visiteur.nom }}</td>
+            </tr>
+            {% if rendez_vous.description %}
+            <tr>
+                <th>Description</th>
+                <td>{{ rendez_vous.description|linebreaks }}</td>
+            </tr>
+            {% endif %}
+        </table>
+
+        <a href="{% url 'rendez_vous_public_create' %}" class="btn btn-outline-primary">
+            <i class="bi bi-calendar-plus"></i> Prendre un autre rendez-vous
+        </a>
+    </div>
+</div>
+{% endblock %}

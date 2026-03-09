@@ -18,4 +18,16 @@ urlpatterns = [
     path('api/sortie/', views.traiter_sortie_qrcode, name='traiter_sortie_qrcode'),
     path('api/motifs/', views.api_motifs, name='api_motifs'),
     path('api/correspondants/', views.api_correspondants, name='api_correspondants'),
+    
+    # Rendez-vous URLs
+    path('rendez-vous/', views.rendez_vous_list, name='rendez_vous_list'),
+    path('rendez-vous/nouveau/', views.rendez_vous_create, name='rendez_vous_create'),
+    path('rendez-vous/nouveau/<int:visiteur_id>/', views.rendez_vous_create, name='rendez_vous_create_visiteur'),
+    path('rendez-vous/<int:pk>/', views.rendez_vous_detail, name='rendez_vous_detail'),
+    path('rendez-vous/<int:pk>/modifier/', views.rendez_vous_update, name='rendez_vous_update'),
+    path('rendez-vous/<int:pk>/supprimer/', views.rendez_vous_delete, name='rendez_vous_delete'),
+    path('rendez-vous/<int:pk>/confirmer/', views.rendez_vous_confirmer, name='rendez_vous_confirmer'),
+    path('rendez-vous/<int:pk>/annuler/', views.rendez_vous_annuler, name='rendez_vous_annuler'),
+    path('rendez-vous/<int:pk>/commencer/', views.rendez_vous_commencer, name='rendez_vous_commencer'),
+    path('rendez-vous/<int:pk>/terminer/', views.rendez_vous_terminer, name='rendez_vous_terminer'),
 ]

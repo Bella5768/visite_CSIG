@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-check-circle"></i> Rendez-vous enregistré</h2>
+        <div class="subtitle">Votre demande a été enregistrée avec succès</div>
+    </div>
+</div>
+
+<div class="card-section">
+    <div class="card-body">
+        <div class="alert alert-success">
+            <strong>Merci !</strong> Votre rendez-vous a été enregistré.
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label"><strong>Lien de suivi (à conserver)</strong></label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="suiviLink" value="{{ suivi_url }}" readonly>
+                <button class="btn btn-outline-secondary" type="button" id="copySuiviLink">
+                    <i class="bi bi-clipboard"></i> Copier
+                </button>
+            </div>
+            <div class="form-text">Partage ce lien pour suivre le statut du rendez-vous sans connexion.</div>
+        </div>
+
+        <table class="table table-bordered">
+            <tr>
+                <th width="180">Sujet</th>
+                <td>{{ rendez_vous.sujet }}</td>
+            </tr>
+            <tr>
+                <th>Date</th>
+                <td>{{ rendez_vous.date_rendez_vous|date:"d/m/Y" }}</td>
+            </tr>
+            <tr>
+                <th>Heure</th>
+                <td>{{ rendez_vous.heure_debut|time:"H:i" }} - {{ rendez_vous.heure_fin|time:"H:i" }}</td>
+            </tr>
+            <tr>
+                <th>Motif</th>
+                <td>{{ rendez_vous.motif.libelle }}</td>
+            </tr>
+            {% if rendez_vous.correspondant %}
+            <tr>
+                <th>Correspondant</th>
+                <td>{{ rendez_vous.correspondant.prenoms }} {{ rendez_vous.correspondant.nom }} ({{ rendez_vous.correspondant.departement }})</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <th>Statut</th>
+                <td><span class="badge bg-secondary">Planifié</span></td>
+            </tr>
+        </table>
+
+        <a href="{% url 'rendez_vous_public_create' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-repeat"></i> Prendre un autre rendez-vous
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('copySuiviLink');
+    const input = document.getElementById('suiviLink');
+    if (!btn || !input) return;
+
+    btn.addEventListener('click', async function() {
+        input.select();
+        input.setSelectionRange(0, 99999);
+        try {
+            await navigator.clipboard.writeText(input.value);
+            btn.innerText = 'Copié';
+            setTimeout(() => btn.innerHTML = '<i class="bi bi-clipboard"></i> Copier', 1500);
+        } catch (e) {
+            document.execCommand('copy');
+            btn.innerText = 'Copié';
+            setTimeout(() => btn.innerHTML = '<i class="bi bi-clipboard"></i> Copier', 1500);
+        }
+    });
+});
+</script>
+{% endblock %}

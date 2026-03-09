@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-calendar-week"></i> Gestion des rendez-vous</h2>
+        <div class="subtitle">{{ rendez_vous.paginator.count|default:0 }} rendez-vous enregistrés</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visites:rendez_vous_create' %}" class="btn-primary-gradient">
+            <i class="bi bi-plus-circle"></i> Nouveau rendez-vous
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card blue">
+            <div class="stat-value">{{ stats.total|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-calendar-check stat-icon"></i> Total</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card cyan">
+            <div class="stat-value">{{ stats.aujourdhui|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-calendar-day stat-icon"></i> Aujourd'hui</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card green">
+            <div class="stat-value">{{ stats.a_venir|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-clock stat-icon"></i> À venir</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card red">
+            <div class="stat-value">{{ stats.en_retard|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-exclamation-triangle stat-icon"></i> En retard</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card-section mb-4">
+    <div class="card-body">
+        <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+            <div class="flex-grow-1">
+                <label class="form-label">Recherche</label>
+                <input type="text" name="search" class="form-control" value="{{ search_query }}" placeholder="Rechercher par sujet, visiteur, motif...">
+            </div>
+            <div>
+                <label class="form-label">Date</label>
+                <input type="date" name="date" class="form-control" value="{{ date_filter }}">
+            </div>
+            <div>
+                <label class="form-label">Statut</label>
+                <select name="statut" class="form-select">
+                    <option value="">Tous les statuts</option>
+                    {% for statut, label in statuts %}
+                    <option value="{{ statut }}" {% if statut_filter == statut %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Priorité</label>
+                <select name="priorite" class="form-select">
+                    <option value="">Toutes les priorités</option>
+                    {% for priorite, label in priorites %}
+                    <option value="{{ priorite }}" {% if priorite_filter == priorite %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Filtrer
+            </button>
+            <a href="{% url 'visites:rendez_vous_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise"></i> Réinitialiser
+            </a>
+        </form>
+    </div>
+</div>
+
+<!-- Rendez-vous List -->
+<div class="card-section">
+    <div class="card-body">
+        {% if rendez_vous %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Sujet</th>
+                        <th>Visiteur</th>
+                        <th>Date</th>
+                        <th>Heure</th>
+                        <th>Durée</th>
+                        <th>Motif</th>
+                        <th>Statut</th>
+                        <th>Priorité</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rdv in rendez_vous %}
+                    <tr class="{% if rdv.est_en_retard %}table-warning{% endif %}">
+                        <td>
+                            <strong>{{ rdv.sujet }}</strong>
+                            {% if rdv.est_en_retard %}
+                            <span class="badge bg-warning ms-2">En retard</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'visiteurs:historique' rdv.visiteur.pk %}">
+                                {{ rdv.visiteur.nom }} {{ rdv.visiteur.prenoms }}
+                            </a>
+                        </td>
+                        <td>{{ rdv.date_rendez_vous|date:"d/m/Y" }}</td>
+                        <td>{{ rdv.heure_debut|time:"H:i" }} - {{ rdv.heure_fin|time:"H:i" }}</td>
+                        <td>{{ rdv.get_duree|default:"-" }}</td>
+                        <td>{{ rdv.motif.libelle }}</td>
+                        <td>
+                            {% if rdv.statut == 'planifie' %}
+                            <span class="badge bg-secondary">Planifié</span>
+                            {% elif rdv.statut == 'confirme' %}
+                            <span class="badge bg-info">Confirmé</span>
+                            {% elif rdv.statut == 'en_cours' %}
+                            <span class="badge bg-primary">En cours</span>
+                            {% elif rdv.statut == 'termine' %}
+                            <span class="badge bg-success">Terminé</span>
+                            {% elif rdv.statut == 'annule' %}
+                            <span class="badge bg-danger">Annulé</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if rdv.priorite == 'basse' %}
+                            <span class="badge bg-light text-dark">Basse</span>
+                            {% elif rdv.priorite == 'normale' %}
+                            <span class="badge bg-success">Normale</span>
+                            {% elif rdv.priorite == 'haute' %}
+                            <span class="badge bg-warning">Haute</span>
+                            {% elif rdv.priorite == 'urgente' %}
+                            <span class="badge bg-danger">Urgente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'visites:rendez_vous_detail' rdv.pk %}" class="btn btn-outline-primary" title="Voir">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'visites:rendez_vous_update' rdv.pk %}" class="btn btn-outline-warning" title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if rdv.statut == 'planifie' %}
+                                <form method="post" action="{% url 'visites:rendez_vous_confirmer' rdv.pk %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-info" title="Confirmer">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if rdv.statut == 'planifie' or rdv.statut == 'confirme' %}
+                                <form method="post" action="{% url 'visites:rendez_vous_annuler' rdv.pk %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger" title="Annuler" onclick="return confirm('Annuler ce rendez-vous ?')">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if rendez_vous.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if rendez_vous.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ rendez_vous.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if priorite_filter %}&priorite={{ priorite_filter }}{% endif %}">Précédent</a>
+                </li>
+                {% endif %}
+                
+                {% for num in rendez_vous.paginator.page_range %}
+                {% if rendez_vous.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > rendez_vous.number|add:'-3' and num < rendez_vous.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if priorite_filter %}&priorite={{ priorite_filter }}{% endif %}">{{ num }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+                
+                {% if rendez_vous.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ rendez_vous.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if statut_filter %}&statut={{ statut_filter }}{% endif %}{% if priorite_filter %}&priorite={{ priorite_filter }}{% endif %}">Suivant</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-x display-1 text-muted"></i>
+            <h4 class="mt-3">Aucun rendez-vous trouvé</h4>
+            <p class="text-muted">Commencez par créer un nouveau rendez-vous.</p>
+            <a href="{% url 'visites:rendez_vous_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Créer un rendez-vous
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

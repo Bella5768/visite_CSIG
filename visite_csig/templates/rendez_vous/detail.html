@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-calendar-event"></i> Détails du rendez-vous</h2>
+        <div class="subtitle">{{ rendez_vous.sujet }}</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visites:rendez_vous_list' %}" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left"></i> Retour à la liste
+        </a>
+        <a href="{% url 'visites:rendez_vous_update' rendez_vous.pk %}" class="btn-warning-gradient">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+    </div>
+</div>
+
+<!-- Status Badge -->
+<div class="mb-4">
+    {% if rendez_vous.statut == 'planifie' %}
+    <span class="badge bg-secondary fs-6">Planifié</span>
+    {% elif rendez_vous.statut == 'confirme' %}
+    <span class="badge bg-info fs-6">Confirmé</span>
+    {% elif rendez_vous.statut == 'en_cours' %}
+    <span class="badge bg-primary fs-6">En cours</span>
+    {% elif rendez_vous.statut == 'termine' %}
+    <span class="badge bg-success fs-6">Terminé</span>
+    {% elif rendez_vous.statut == 'annule' %}
+    <span class="badge bg-danger fs-6">Annulé</span>
+    {% endif %}
+    
+    {% if rendez_vous.priorite == 'basse' %}
+    <span class="badge bg-light text-dark fs-6">Priorité: Basse</span>
+    {% elif rendez_vous.priorite == 'normale' %}
+    <span class="badge bg-success fs-6">Priorité: Normale</span>
+    {% elif rendez_vous.priorite == 'haute' %}
+    <span class="badge bg-warning fs-6">Priorité: Haute</span>
+    {% elif rendez_vous.priorite == 'urgente' %}
+    <span class="badge bg-danger fs-6">Priorité: Urgente</span>
+    {% endif %}
+    
+    {% if rendez_vous.est_en_retard %}
+    <span class="badge bg-warning fs-6">
+        <i class="bi bi-exclamation-triangle"></i> En retard
+    </span>
+    {% endif %}
+</div>
+
+<!-- Details Cards -->
+<div class="row">
+    <div class="col-md-8">
+        <!-- Main Information -->
+        <div class="card-section mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-info-circle"></i> Informations principales</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Sujet:</strong> {{ rendez_vous.sujet }}</p>
+                        <p><strong>Date:</strong> {{ rendez_vous.date_rendez_vous|date:"l d F Y" }}</p>
+                        <p><strong>Heure:</strong> {{ rendez_vous.heure_debut|time:"H:i" }} - {{ rendez_vous.heure_fin|time:"H:i" }}</p>
+                        <p><strong>Durée:</strong> {{ rendez_vous.get_duree|default:"Non définie" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Visiteur:</strong> 
+                            <a href="{% url 'visiteurs:historique' rendez_vous.visiteur.pk %}">
+                                {{ rendez_vous.visiteur.nom }} {{ rendez_vous.visiteur.prenoms }}
+                            </a>
+                        </p>
+                        <p><strong>Téléphone:</strong> {{ rendez_vous.visiteur.telephone }}</p>
+                        <p><strong>Motif:</strong> {{ rendez_vous.motif.libelle }}</p>
+                        {% if rendez_vous.correspondant %}
+                        <p><strong>Correspondant:</strong> 
+                            {{ rendez_vous.correspondant.prenoms }} {{ rendez_vous.correspondant.nom }}
+                            ({{ rendez_vous.correspondant.departement }})
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if rendez_vous.description %}
+                <div class="mt-3">
+                    <h6>Description:</h6>
+                    <p class="text-muted">{{ rendez_vous.description|linebreaks }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Confidential Notes -->
+        {% if rendez_vous.notes_confidentielles %}
+        <div class="card-section mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-lock"></i> Notes confidentielles</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-shield-lock"></i> Informations confidentielles réservées au personnel autorisé
+                </div>
+                <p class="text-muted">{{ rendez_vous.notes_confidentielles|linebreaks }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <!-- Actions -->
+        <div class="card-section mb-4">
+            <div class="card-header">
+                <h5><i class="bi bi-gear"></i> Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if rendez_vous.statut == 'planifie' %}
+                    <form method="post" action="{% url 'visites:rendez_vous_confirmer' rendez_vous.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-info">
+                            <i class="bi bi-check-circle"></i> Confirmer
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if rendez_vous.statut == 'planifie' or rendez_vous.statut == 'confirme' %}
+                    <form method="post" action="{% url 'visites:rendez_vous_commencer' rendez_vous.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-play-circle"></i> Démarrer
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if rendez_vous.statut == 'en_cours' %}
+                    <form method="post" action="{% url 'visites:rendez_vous_terminer' rendez_vous.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Terminer
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if rendez_vous.statut == 'planifie' or rendez_vous.statut == 'confirme' %}
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#annulerModal">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </button>
+                    {% endif %}
+                    
+                    <a href="{% url 'visites:rendez_vous_update' rendez_vous.pk %}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </a>
+                    
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#supprimerModal">
+                        <i class="bi bi-trash"></i> Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="card-section">
+            <div class="card-header">
+                <h5><i class="bi bi-clock-history"></i> Informations système</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Créé le:</strong> {{ rendez_vous.date_creation|date:"d/m/Y H:i" }}</p>
+                {% if rendez_vous.cree_par %}
+                <p><strong>Créé par:</strong> {{ rendez_vous.cree_par.prenoms }} {{ rendez_vous.cree_par.nom }}</p>
+                {% endif %}
+                <p><strong>Modifié le:</strong> {{ rendez_vous.date_modification|date:"d/m/Y H:i" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal fade" id="annulerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Annuler le rendez-vous</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'visites:rendez_vous_annuler' rendez_vous.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir annuler ce rendez-vous ?</p>
+                    <div class="mb-3">
+                        <label for="raison" class="form-label">Raison de l'annulation</label>
+                        <textarea class="form-control" id="raison" name="raison" rows="3" 
+                                  placeholder="Optionnel: précisez la raison de l'annulation..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Non</button>
+                    <button type="submit" class="btn btn-danger">Oui, annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="supprimerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Supprimer le rendez-vous</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'visites:rendez_vous_delete' rendez_vous.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Attention!</strong> Cette action est irréversible.
+                    </div>
+                    <p>Êtes-vous sûr de vouloir supprimer définitivement ce rendez-vous ?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Non</button>
+                    <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

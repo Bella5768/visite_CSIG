@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Page Title Bar -->
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-calendar-plus"></i> Nouveau rendez-vous</h2>
+        <div class="subtitle">Planifier un nouveau rendez-vous</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visites:rendez_vous_list' %}" class="btn-outline-gradient">
+            <i class="bi bi-arrow-left"></i> Retour à la liste
+        </a>
+    </div>
+</div>
+
+<!-- Form -->
+<div class="card-section">
+    <div class="card-body">
+        <form method="post" id="rendez_vous_form">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="sujet" class="form-label">Sujet du rendez-vous *</label>
+                        <input type="text" class="form-control" id="sujet" name="sujet" required 
+                               placeholder="Ex: Réunion de suivi, Consultation, etc.">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="priorite" class="form-label">Priorité</label>
+                        <select class="form-select" id="priorite" name="priorite">
+                            {% for priorite, label in priorites %}
+                            <option value="{{ priorite }}"{% if priorite == 'normale' %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="visiteur_id" class="form-label">Visiteur *</label>
+                        <select class="form-select" id="visiteur_id" name="visiteur_id" required>
+                            <option value="">Sélectionner un visiteur</option>
+                            {% for visiteur in visiteurs %}
+                            <option value="{{ visiteur.pk }}"{% if visiteur_preselect_id and visiteur.pk == visiteur_preselect_id %} selected{% endif %}>
+                                {{ visiteur.nom }} {{ visiteur.prenoms }} - {{ visiteur.telephone }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            <a href="{% url 'visiteurs:ajouter' %}" target="_blank">
+                                <i class="bi bi-plus-circle"></i> Ajouter un nouveau visiteur
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="motif_id" class="form-label">Motif de visite *</label>
+                        <select class="form-select" id="motif_id" name="motif_id" required>
+                            <option value="">Sélectionner un motif</option>
+                            {% for motif in motifs %}
+                            <option value="{{ motif.pk }}">{{ motif.libelle }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="correspondant_id" class="form-label">Correspondant</label>
+                        <select class="form-select" id="correspondant_id" name="correspondant_id">
+                            <option value="">Aucun correspondant</option>
+                            {% for correspondant in correspondants %}
+                            <option value="{{ correspondant.pk }}">
+                                {{ correspondant.prenoms }} {{ correspondant.nom }} - {{ correspondant.departement }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="date_rendez_vous" class="form-label">Date du rendez-vous *</label>
+                        <input type="date" class="form-control" id="date_rendez_vous" name="date_rendez_vous" required 
+                               min="{{ today|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="heure_debut" class="form-label">Heure de début *</label>
+                        <input type="time" class="form-control" id="heure_debut" name="heure_debut" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="heure_fin" class="form-label">Heure de fin *</label>
+                        <input type="time" class="form-control" id="heure_fin" name="heure_fin" required>
+                        <div class="form-text text-muted">Doit être postérieure à l'heure de début</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4" 
+                          placeholder="Description détaillée du rendez-vous..."></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="notes_confidentielles" class="form-label">
+                    <i class="bi bi-lock"></i> Notes confidentielles
+                </label>
+                <textarea class="form-control" id="notes_confidentielles" name="notes_confidentielles" rows="3" 
+                          placeholder="Notes internes confidentielles..."></textarea>
+                <div class="form-text text-muted">Ces notes ne seront visibles que par le personnel autorisé</div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Créer le rendez-vous
+                </button>
+                <a href="{% url 'visites:rendez_vous_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('rendez_vous_form');
+    const heureDebut = document.getElementById('heure_debut');
+    const heureFin = document.getElementById('heure_fin');
+    const dateRdv = document.getElementById('date_rendez_vous');
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    dateRdv.min = today;
+    
+    form.addEventListener('submit', function(e) {
+        // Validate time
+        if (heureDebut.value && heureFin.value) {
+            if (heureFin.value <= heureDebut.value) {
+                e.preventDefault();
+                alert('L\'heure de fin doit être postérieure à l\'heure de début');
+                heureFin.focus();
+                return;
+            }
+        }
+        
+        // Validate date
+        if (dateRdv.value && dateRdv.value < today) {
+            e.preventDefault();
+            alert('La date du rendez-vous ne peut pas être dans le passé');
+            dateRdv.focus();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

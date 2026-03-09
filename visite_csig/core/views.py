@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from .models import Utilisateur, MotifVisite, Correspondant
 from visites.models import Visite
+from visites.models import CreneauDisponibilite
 from visiteurs.models import Visiteur
 
 
@@ -100,6 +101,54 @@ def admin_required(view_func):
             return redirect('core:dashboard')
         return view_func(request, *args, **kwargs)
     return wrapper
+
+
+@admin_required
+def administration(request):
+    return render(request, 'core/administration.html', {
+        'page_title': 'Administration',
+    })
+
+
+@admin_required
+def admin_creneaux(request):
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'create':
+            creneau = CreneauDisponibilite(
+                motif_id=request.POST.get('motif_id'),
+                date=request.POST.get('date'),
+                heure_debut=request.POST.get('heure_debut'),
+                heure_fin=request.POST.get('heure_fin'),
+                capacite=1,
+                actif=True,
+            )
+            creneau.full_clean()
+            creneau.save()
+            messages.success(request, 'Créneau créé')
+        elif action == 'update':
+            creneau = get_object_or_404(CreneauDisponibilite, pk=request.POST.get('creneau_id'))
+            creneau.motif_id = request.POST.get('motif_id')
+            creneau.date = request.POST.get('date')
+            creneau.heure_debut = request.POST.get('heure_debut')
+            creneau.heure_fin = request.POST.get('heure_fin')
+            creneau.actif = request.POST.get('actif') == 'on'
+            creneau.capacite = 1
+            creneau.full_clean()
+            creneau.save()
+            messages.success(request, 'Créneau modifié')
+        elif action == 'delete':
+            creneau = get_object_or_404(CreneauDisponibilite, pk=request.POST.get('creneau_id'))
+            creneau.delete()
+            messages.success(request, 'Créneau supprimé')
+        return redirect('core:admin_creneaux')
+
+    creneaux = CreneauDisponibilite.objects.select_related('motif').all().order_by('-date', '-heure_debut')
+    return render(request, 'core/admin_creneaux.html', {
+        'page_title': 'Gestion des créneaux',
+        'creneaux': creneaux,
+        'motifs': MotifVisite.objects.filter(actif=True),
+    })
 
 
 def superadmin_required(view_func):
