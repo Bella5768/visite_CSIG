@@ -25,7 +25,7 @@
 
   #calendar {
     background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(16, 68, 128, 0.12);
     border-radius: 14px;
     padding: 14px;
   }
@@ -45,33 +45,41 @@
   .fc .fc-button {
     border-radius: 10px;
     padding: 8px 12px;
-    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    border: 1px solid rgba(16, 68, 128, 0.22) !important;
     background: #ffffff !important;
-    color: #0f172a !important;
+    color: var(--primary-blue) !important;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 12px;
   }
 
   .fc .fc-button:hover {
-    background: #f8fafc !important;
+    background: rgba(16, 68, 128, 0.05) !important;
+    border-color: rgba(16, 68, 128, 0.35) !important;
   }
 
   .fc .fc-button:focus,
   .fc .fc-button:active,
   .fc .fc-button.fc-button-active {
-    background: #0f172a !important;
+    background: var(--primary-blue) !important;
     color: #ffffff !important;
-    border-color: #0f172a !important;
-    box-shadow: none !important;
+    border-color: var(--primary-blue) !important;
+    box-shadow: 0 8px 18px rgba(16, 68, 128, 0.25) !important;
   }
 
   .fc .fc-col-header-cell {
-    background: #f8fafc;
+    background: rgba(16, 68, 128, 0.06);
   }
 
   .fc .fc-col-header-cell-cushion {
     padding: 10px 6px;
     font-weight: 700;
-    color: #334155;
+    color: #0f2f57;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 12px;
   }
 
   .fc .fc-timegrid-axis-cushion,
@@ -81,7 +89,7 @@
   }
 
   .fc .fc-scrollgrid {
-    border: 1px solid rgba(15, 23, 42, 0.08) !important;
+    border: 1px solid rgba(16, 68, 128, 0.12) !important;
     border-radius: 12px;
     overflow: hidden;
   }
@@ -93,7 +101,13 @@
   }
 
   .fc .fc-day-today {
-    background: rgba(37, 99, 235, 0.06) !important;
+    background: rgba(16, 68, 128, 0.08) !important;
+  }
+
+  .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    background: rgba(16, 68, 128, 0.10);
+    border-radius: 10px;
+    color: #0f2f57;
   }
 
   .fc .fc-now-indicator-line {
@@ -106,6 +120,12 @@
     padding: 3px 6px;
     font-weight: 700;
     box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  }
+
+  .fc .fc-event:focus,
+  .fc .fc-event:active {
+    outline: 2px solid rgba(16, 68, 128, 0.35);
+    outline-offset: 2px;
   }
 
   .fc .fc-event:hover {
