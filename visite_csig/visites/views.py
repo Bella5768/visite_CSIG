@@ -1,24 +1,27 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
-from django.utils import timezone
-from django.core.paginator import Paginator
-from django.core.exceptions import ValidationError
-from django.core import signing
-from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
+from datetime import date, timedelta
+import io
+import json
+
+import qrcode
 from django.conf import settings
-import qrcode, io, json
-from .utils import generate_badge_pdf
-from datetime import date
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core import signing
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
-from .models import Visite, RendezVous, CreneauDisponibilite
-from visiteurs.models import Visiteur
-from core.models import MotifVisite, Correspondant
-from django.db.models import Q
-
+from core.models import Correspondant, MotifVisite
 from core.permissions import module_permission_required
+from visiteurs.models import Visiteur
+
+from .models import CreneauDisponibilite, RendezVous, Visite
+from .utils import generate_badge_pdf
 
 
 def _get_motif_audience_ministre(require_active=True):
@@ -505,10 +508,25 @@ def rendez_vous_public_ministre(request):
     )
 
 
+def rendez_vous_public_ministre_invite(request, token):
+    try:
+        signing.loads(token, salt='rendez_vous_public_ministre_invite', max_age=60 * 60 * 24 * 90)
+    except Exception:
+        messages.error(request, "Lien invalide ou expiré. Veuillez demander un nouveau lien.")
+        return redirect('rendez_vous_public_create')
+
+    return rendez_vous_public_ministre(request)
+
+
 @module_permission_required('agenda', 'view')
 def agenda_ministre(request):
+    invite_token = signing.dumps({'audience': 'ministre'}, salt='rendez_vous_public_ministre_invite')
+    invite_url = request.build_absolute_uri(
+        reverse('rendez_vous_public_ministre_invite', kwargs={'token': invite_token})
+    )
     return render(request, 'visites/agenda_ministre.html', {
         'page_title': "Agenda du Ministre",
+        'invite_url': invite_url,
     })
 
 
