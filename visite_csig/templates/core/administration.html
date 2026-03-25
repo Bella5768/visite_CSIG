@@ -8,6 +8,28 @@
 </div>
 
 <div class="row">
+    <div class="col-md-12 mb-3">
+        <div class="card-section">
+            <div class="card-header-custom"><i class="bi bi-link-45deg"></i> Lien public Audience Ministre</div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3 align-items-end justify-content-between">
+                    <div class="flex-grow-1" style="min-width: 280px;">
+                        <label class="form-label mb-1">Lien unique à partager</label>
+                        <input id="invite-url" class="form-control" type="text" value="{{ invite_url }}" readonly>
+                        <div class="form-text">Copie ce lien et partage-le. Valable 90 jours.</div>
+                    </div>
+                    <div>
+                        <button id="copy-invite" type="button" class="btn-outline-gradient">
+                            <i class="bi bi-clipboard"></i> Copier
+                        </button>
+                        <a href="{{ invite_url }}" target="_blank" rel="noopener" class="btn-primary-gradient">
+                            <i class="bi bi-box-arrow-up-right"></i> Ouvrir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="col-md-4 mb-3">
         <div class="card-section">
             <div class="card-header-custom"><i class="bi bi-tags"></i> Motifs</div>
@@ -49,4 +71,29 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        var btn = document.getElementById('copy-invite');
+        if (btn) {
+            btn.addEventListener('click', function() {
+                var input = document.getElementById('invite-url');
+                if (!input) return;
+                input.select();
+                input.setSelectionRange(0, 99999);
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(input.value);
+                    } else {
+                        document.execCommand('copy');
+                    }
+                } catch (e) {
+                    try { document.execCommand('copy'); } catch (e2) {}
+                }
+            });
+        }
+    } catch (e) {}
+});
+</script>
 {% endblock %}

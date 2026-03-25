@@ -520,13 +520,8 @@ def rendez_vous_public_ministre_invite(request, token):
 
 @module_permission_required('agenda', 'view')
 def agenda_ministre(request):
-    invite_token = signing.dumps({'audience': 'ministre'}, salt='rendez_vous_public_ministre_invite')
-    invite_url = request.build_absolute_uri(
-        reverse('rendez_vous_public_ministre_invite', kwargs={'token': invite_token})
-    )
     return render(request, 'visites/agenda_ministre.html', {
         'page_title': "Agenda du Ministre",
-        'invite_url': invite_url,
     })
 
 

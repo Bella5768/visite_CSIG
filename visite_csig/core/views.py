@@ -1,14 +1,17 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth.decorators import login_required
+from django.core import signing
+from django.core.exceptions import ValidationError
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from core.permissions import module_permission_required
 
-from .models import Utilisateur, MotifVisite, Correspondant, PermissionUtilisateur
-from visites.models import Visite
-from visites.models import CreneauDisponibilite
+from .models import Correspondant, MotifVisite, PermissionUtilisateur, Utilisateur
+from visites.models import CreneauDisponibilite, Visite
 from visiteurs.models import Visiteur
 
 
@@ -121,8 +124,13 @@ def _save_user_permissions_from_post(utilisateur, post_data):
 
 @module_permission_required('administration', 'view')
 def administration(request):
+    invite_token = signing.dumps({'audience': 'ministre'}, salt='rendez_vous_public_ministre_invite')
+    invite_url = request.build_absolute_uri(
+        reverse('rendez_vous_public_ministre_invite', kwargs={'token': invite_token})
+    )
     return render(request, 'core/administration.html', {
         'page_title': 'Administration',
+        'invite_url': invite_url,
     })
 
 
