@@ -18,6 +18,10 @@ urlpatterns = [
     path('api/sortie/', views.traiter_sortie_qrcode, name='traiter_sortie_qrcode'),
     path('api/motifs/', views.api_motifs, name='api_motifs'),
     path('api/correspondants/', views.api_correspondants, name='api_correspondants'),
+
+    # Agenda Ministre
+    path('agenda/ministre/', views.agenda_ministre, name='agenda_ministre'),
+    path('agenda/ministre/events/', views.agenda_ministre_events, name='agenda_ministre_events'),
     
     # Rendez-vous URLs
     path('rendez-vous/', views.rendez_vous_list, name='rendez_vous_list'),

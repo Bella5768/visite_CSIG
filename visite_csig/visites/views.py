@@ -11,14 +11,33 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import qrcode, io, json
 from .utils import generate_badge_pdf
+from datetime import date
 
 from .models import Visite, RendezVous, CreneauDisponibilite
 from visiteurs.models import Visiteur
 from core.models import MotifVisite, Correspondant
 from django.db.models import Q
 
+from core.permissions import module_permission_required
 
-@login_required
+
+def _get_motif_audience_ministre(require_active=True):
+    qs = MotifVisite.objects.all()
+    if require_active:
+        qs = qs.filter(actif=True)
+
+    motif = (
+        qs.filter(libelle__icontains='audience')
+        .filter(libelle__icontains='ministre')
+        .first()
+    )
+    if motif:
+        return motif
+
+    return qs.filter(libelle__icontains='ministre').first()
+
+
+@module_permission_required('visites', 'view')
 def index(request):
     date_filter = request.GET.get('date', str(timezone.now().date()))
     statut_filter = request.GET.get('statut', '')
@@ -33,7 +52,7 @@ def index(request):
     return render(request, 'visites/index.html', {'page_title': 'Visites', 'visites': paginator.get_page(request.GET.get('page', 1)), 'stats': stats, 'date_filter': date_filter, 'statut_filter': statut_filter, 'statuts': settings.STATUTS_VISITE})
 
 
-@login_required
+@module_permission_required('visites', 'add')
 def nouvelle_visite(request, visiteur_id=None):
     visiteur = get_object_or_404(Visiteur, pk=visiteur_id) if visiteur_id else None
     if request.method == 'POST':
@@ -53,7 +72,7 @@ def nouvelle_visite(request, visiteur_id=None):
     return render(request, 'visites/nouvelle_visite.html', {'page_title': 'Nouvelle visite', 'visiteur': visiteur, 'motifs': MotifVisite.objects.filter(actif=True), 'correspondants': Correspondant.objects.filter(actif=True), 'types_visite': settings.TYPES_VISITE})
 
 
-@login_required
+@module_permission_required('visites', 'change')
 def sortie(request):
     if request.method == 'POST':
         visite = get_object_or_404(Visite, pk=request.POST.get('visite_id'))
@@ -63,12 +82,12 @@ def sortie(request):
     return render(request, 'visites/sortie.html', {'page_title': 'Enregistrer sortie', 'visites_en_cours': Visite.objects.filter(date_visite=timezone.now().date(), statut='en_cours').select_related('visiteur', 'motif')})
 
 
-@login_required
+@module_permission_required('visites', 'view')
 def detail(request, pk):
     return render(request, 'visites/detail.html', {'page_title': f'Visite #{pk}', 'visite': get_object_or_404(Visite.objects.select_related('visiteur', 'motif', 'correspondant'), pk=pk)})
 
 
-@login_required
+@module_permission_required('visites', 'change')
 def modifier(request, pk):
     visite = get_object_or_404(Visite, pk=pk)
     if request.method == 'POST':
@@ -81,7 +100,7 @@ def modifier(request, pk):
     return render(request, 'visites/modifier.html', {'page_title': 'Modifier visite', 'visite': visite, 'motifs': MotifVisite.objects.filter(actif=True), 'correspondants': Correspondant.objects.filter(actif=True)})
 
 
-@login_required
+@module_permission_required('visites', 'delete')
 def annuler(request, pk):
     visite = get_object_or_404(Visite, pk=pk)
     if request.method == 'POST':
@@ -91,7 +110,7 @@ def annuler(request, pk):
     return render(request, 'visites/annuler.html', {'page_title': 'Annuler visite', 'visite': visite})
 
 
-@login_required
+@module_permission_required('visites', 'view')
 def generer_qrcode(request, visiteur_id):
     visiteur = get_object_or_404(Visiteur, pk=visiteur_id)
     data = json.dumps({'type': 'visiteur_csig', 'id': visiteur.id, 'nom': visiteur.nom, 'prenoms': visiteur.prenoms})
@@ -105,13 +124,13 @@ def generer_qrcode(request, visiteur_id):
     return HttpResponse(buffer, content_type='image/png')
 
 
-@login_required
+@module_permission_required('visites', 'view')
 def scanner_qrcode(request):
     mode = request.GET.get('mode', 'entree')
     return render(request, 'visites/scanner_qrcode.html', {'page_title': 'Scanner QR Code', 'mode': mode})
 
 
-@login_required
+@module_permission_required('visites', 'add', json_forbidden=True)
 def traiter_entree_qrcode(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -126,7 +145,7 @@ def traiter_entree_qrcode(request):
     return JsonResponse({'success': False, 'message': 'Méthode non autorisée'})
 
 
-@login_required
+@module_permission_required('visites', 'change', json_forbidden=True)
 def traiter_sortie_qrcode(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -138,17 +157,17 @@ def traiter_sortie_qrcode(request):
     return JsonResponse({'success': False, 'message': 'Méthode non autorisée'})
 
 
-@login_required
+@module_permission_required('visites', 'view', json_forbidden=True)
 def api_motifs(request):
     return JsonResponse({'motifs': [{'id': m.id, 'libelle': m.libelle} for m in MotifVisite.objects.filter(actif=True)]})
 
 
-@login_required
+@module_permission_required('visites', 'view', json_forbidden=True)
 def api_correspondants(request):
     return JsonResponse({'correspondants': [{'id': c.id, 'nom': f"{c.prenoms} {c.nom}", 'departement': c.departement} for c in Correspondant.objects.filter(actif=True)]})
 
 
-@login_required
+@module_permission_required('visites', 'view')
 def imprimer_badge(request, pk):
     visite = get_object_or_404(Visite.objects.select_related('visiteur', 'motif'), pk=pk)
     pdf_buffer = generate_badge_pdf(visite.visiteur, visite)
@@ -157,7 +176,7 @@ def imprimer_badge(request, pk):
     return response
 
 
-@login_required
+@module_permission_required('rendez_vous', 'view')
 def rendez_vous_list(request):
     date_filter = request.GET.get('date', '')
     statut_filter = request.GET.get('statut', '')
@@ -216,7 +235,7 @@ def rendez_vous_list(request):
     return render(request, 'rendez_vous/list.html', context)
 
 
-@login_required
+@module_permission_required('rendez_vous', 'add')
 def rendez_vous_create(request, visiteur_id=None):
     visiteur = get_object_or_404(Visiteur, pk=visiteur_id) if visiteur_id else None
     
@@ -260,7 +279,7 @@ def rendez_vous_create(request, visiteur_id=None):
     return render(request, 'rendez_vous/create.html', context)
 
 
-@login_required
+@module_permission_required('rendez_vous', 'view')
 def rendez_vous_detail(request, pk):
     rendez_vous = get_object_or_404(
         RendezVous.objects.select_related(
@@ -277,7 +296,7 @@ def rendez_vous_detail(request, pk):
     return render(request, 'rendez_vous/detail.html', context)
 
 
-@login_required
+@module_permission_required('rendez_vous', 'change')
 def rendez_vous_update(request, pk):
     rendez_vous = get_object_or_404(RendezVous, pk=pk)
     
@@ -318,7 +337,7 @@ def rendez_vous_update(request, pk):
     return render(request, 'rendez_vous/update.html', context)
 
 
-@login_required
+@module_permission_required('rendez_vous', 'delete')
 def rendez_vous_delete(request, pk):
     rendez_vous = get_object_or_404(RendezVous, pk=pk)
     
@@ -336,7 +355,7 @@ def rendez_vous_delete(request, pk):
     return render(request, 'rendez_vous/delete.html', context)
 
 
-@login_required
+@module_permission_required('rendez_vous', 'change')
 def rendez_vous_confirmer(request, pk):
     rendez_vous = get_object_or_404(RendezVous, pk=pk)
     
@@ -350,7 +369,7 @@ def rendez_vous_confirmer(request, pk):
     return redirect('visites:rendez_vous_detail', pk=pk)
 
 
-def rendez_vous_public_create(request):
+def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_name='rendez_vous_public_create'):
     if request.method == 'POST':
         try:
             nom = (request.POST.get('nom') or '').strip()
@@ -360,11 +379,11 @@ def rendez_vous_public_create(request):
 
             if not nom or not prenoms:
                 messages.error(request, 'Veuillez renseigner votre nom et prénoms')
-                return redirect('rendez_vous_public_create')
+                return redirect(error_redirect_url_name)
 
             if not telephone and not email:
                 messages.error(request, 'Veuillez renseigner un téléphone ou un email')
-                return redirect('rendez_vous_public_create')
+                return redirect(error_redirect_url_name)
 
             visiteur = None
             if telephone:
@@ -383,21 +402,21 @@ def rendez_vous_public_create(request):
                     numero_identite=(request.POST.get('numero_identite') or '').strip() or None,
                 )
 
-            motif_id = request.POST.get('motif_id')
+            motif_id = str(fixed_motif.pk) if fixed_motif else request.POST.get('motif_id')
             creneau_id = request.POST.get('creneau_id')
 
             if not motif_id:
                 messages.error(request, 'Veuillez sélectionner un motif')
-                return redirect('rendez_vous_public_create')
+                return redirect(error_redirect_url_name)
 
             if not creneau_id:
                 messages.error(request, 'Veuillez sélectionner un créneau disponible')
-                return redirect('rendez_vous_public_create')
+                return redirect(error_redirect_url_name)
 
             creneau = get_object_or_404(CreneauDisponibilite, pk=creneau_id, motif_id=motif_id)
             if not creneau.est_disponible():
                 messages.error(request, 'Ce créneau n\'est plus disponible. Veuillez en choisir un autre.')
-                return redirect('rendez_vous_public_create')
+                return redirect(error_redirect_url_name)
 
             rdv = RendezVous(
                 visiteur=visiteur,
@@ -461,7 +480,87 @@ def rendez_vous_public_create(request):
         'correspondants': Correspondant.objects.filter(actif=True),
         'today': timezone.now().date(),
         'types_identite': settings.TYPES_IDENTITE,
+        'fixed_motif': fixed_motif,
     })
+
+
+def rendez_vous_public_create(request):
+    return _rendez_vous_public_create(request)
+
+
+def rendez_vous_public_ministre(request):
+    motif = _get_motif_audience_ministre(require_active=True)
+
+    if not motif:
+        messages.error(
+            request,
+            "Motif 'Audience Ministre' introuvable. Veuillez le créer dans Administration > Motifs et l'activer."
+        )
+        return redirect('rendez_vous_public_create')
+
+    return _rendez_vous_public_create(
+        request,
+        fixed_motif=motif,
+        error_redirect_url_name='rendez_vous_public_ministre',
+    )
+
+
+@module_permission_required('agenda', 'view')
+def agenda_ministre(request):
+    return render(request, 'visites/agenda_ministre.html', {
+        'page_title': "Agenda du Ministre",
+    })
+
+
+@module_permission_required('agenda', 'view', json_forbidden=True)
+def agenda_ministre_events(request):
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+
+    def _to_date(s):
+        if not s:
+            return None
+        try:
+            # FullCalendar can send ISO datetimes (e.g. 2026-03-25T00:00:00Z)
+            # while our field is a DateField.
+            return date.fromisoformat(s[:10])
+        except Exception:
+            return None
+
+    qs = RendezVous.objects.select_related('visiteur', 'motif').filter(statut='confirme')
+    start_date = _to_date(start)
+    end_date = _to_date(end)
+    if start_date:
+        qs = qs.filter(date_rendez_vous__gte=start_date)
+    if end_date:
+        qs = qs.filter(date_rendez_vous__lt=end_date)
+
+    colors = {
+        'planifie': '#2563eb',
+        'confirme': '#16a34a',
+        'en_cours': '#f59e0b',
+        'termine': '#64748b',
+        'annule': '#dc2626',
+    }
+
+    events = []
+    for rdv in qs:
+        start_dt = f"{rdv.date_rendez_vous.isoformat()}T{rdv.heure_debut.strftime('%H:%M:%S')}"
+        end_dt = f"{rdv.date_rendez_vous.isoformat()}T{rdv.heure_fin.strftime('%H:%M:%S')}"
+        motif_label = rdv.motif.libelle if getattr(rdv, 'motif', None) else ''
+        color = colors.get(rdv.statut, '#2563eb')
+        events.append({
+            'id': rdv.pk,
+            'title': f"[{motif_label}] {rdv.sujet} - {rdv.visiteur.prenoms} {rdv.visiteur.nom}" if motif_label else f"{rdv.sujet} - {rdv.visiteur.prenoms} {rdv.visiteur.nom}",
+            'start': start_dt,
+            'end': end_dt,
+            'backgroundColor': color,
+            'borderColor': color,
+            'textColor': '#ffffff',
+            'url': reverse('visites:rendez_vous_detail', kwargs={'pk': rdv.pk}),
+        })
+
+    return JsonResponse({'success': True, 'events': events})
 
 
 def rendez_vous_public_creneaux(request):
@@ -510,7 +609,7 @@ def rendez_vous_public_suivi(request, token):
         }, status=404)
 
 
-@login_required
+@module_permission_required('rendez_vous', 'change')
 def rendez_vous_annuler(request, pk):
     rendez_vous = get_object_or_404(RendezVous, pk=pk)
     
@@ -525,7 +624,7 @@ def rendez_vous_annuler(request, pk):
     return redirect('visites:rendez_vous_detail', pk=pk)
 
 
-@login_required
+@module_permission_required('rendez_vous', 'change')
 def rendez_vous_commencer(request, pk):
     rendez_vous = get_object_or_404(RendezVous, pk=pk)
     
@@ -539,7 +638,7 @@ def rendez_vous_commencer(request, pk):
     return redirect('visites:rendez_vous_detail', pk=pk)
 
 
-@login_required
+@module_permission_required('rendez_vous', 'change')
 def rendez_vous_terminer(request, pk):
     rendez_vous = get_object_or_404(RendezVous, pk=pk)
     

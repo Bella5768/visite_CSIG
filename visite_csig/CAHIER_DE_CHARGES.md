@@ -24,7 +24,7 @@ La Cité des Sciences et de l'Innovation de Guinée (CSIG) souhaite mettre en pl
 - **Formulaire en ligne** : Interface accessible sans authentification
 - **Sélection par motif** : Choix du type de visite
 - **Affichage des créneaux** : Voir uniquement les disponibilités
-- **Validation automatique** : Vérification en temps réel
+- **Validation automatique** : Vérification en temps réel      
 - **Confirmation immédiate** : Email de confirmation envoyé
 
 ### 2.3 Module de Suivi

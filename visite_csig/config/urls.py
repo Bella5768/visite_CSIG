@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
     path('rdv/', visites_views.rendez_vous_public_create, name='rendez_vous_public_create'),
+    path('rdv/ministre/', visites_views.rendez_vous_public_ministre, name='rendez_vous_public_ministre'),
     path('rdv/api/creneaux/', visites_views.rendez_vous_public_creneaux, name='rendez_vous_public_creneaux'),
     path('rdv/suivi/<str:token>/', visites_views.rendez_vous_public_suivi, name='rendez_vous_public_suivi'),
     path('visites/', include('visites.urls')),

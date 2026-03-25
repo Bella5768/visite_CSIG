@@ -4,7 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 
-from .models import Utilisateur, MotifVisite, Correspondant
+from core.permissions import module_permission_required
+
+from .models import Utilisateur, MotifVisite, Correspondant, PermissionUtilisateur
 from visites.models import Visite
 from visites.models import CreneauDisponibilite
 from visiteurs.models import Visiteur
@@ -103,14 +105,28 @@ def admin_required(view_func):
     return wrapper
 
 
-@admin_required
+def _save_user_permissions_from_post(utilisateur, post_data):
+    for module_code, _label in PermissionUtilisateur.MODULE_CHOICES:
+        PermissionUtilisateur.objects.update_or_create(
+            utilisateur=utilisateur,
+            module=module_code,
+            defaults={
+                'can_view': post_data.get(f'perm_{module_code}_view') == 'on',
+                'can_add': post_data.get(f'perm_{module_code}_add') == 'on',
+                'can_change': post_data.get(f'perm_{module_code}_change') == 'on',
+                'can_delete': post_data.get(f'perm_{module_code}_delete') == 'on',
+            },
+        )
+
+
+@module_permission_required('administration', 'view')
 def administration(request):
     return render(request, 'core/administration.html', {
         'page_title': 'Administration',
     })
 
 
-@admin_required
+@module_permission_required('administration', 'view')
 def admin_creneaux(request):
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -123,9 +139,15 @@ def admin_creneaux(request):
                 capacite=1,
                 actif=True,
             )
-            creneau.full_clean()
-            creneau.save()
-            messages.success(request, 'Créneau créé')
+            try:
+                creneau.full_clean()
+                creneau.save()
+                messages.success(request, 'Créneau créé')
+            except ValidationError as e:
+                msg = str(e)
+                if hasattr(e, 'message_dict') and e.message_dict:
+                    msg = ' | '.join(['; '.join(v) for v in e.message_dict.values()])
+                messages.error(request, msg)
         elif action == 'update':
             creneau = get_object_or_404(CreneauDisponibilite, pk=request.POST.get('creneau_id'))
             creneau.motif_id = request.POST.get('motif_id')
@@ -134,9 +156,15 @@ def admin_creneaux(request):
             creneau.heure_fin = request.POST.get('heure_fin')
             creneau.actif = request.POST.get('actif') == 'on'
             creneau.capacite = 1
-            creneau.full_clean()
-            creneau.save()
-            messages.success(request, 'Créneau modifié')
+            try:
+                creneau.full_clean()
+                creneau.save()
+                messages.success(request, 'Créneau modifié')
+            except ValidationError as e:
+                msg = str(e)
+                if hasattr(e, 'message_dict') and e.message_dict:
+                    msg = ' | '.join(['; '.join(v) for v in e.message_dict.values()])
+                messages.error(request, msg)
         elif action == 'delete':
             creneau = get_object_or_404(CreneauDisponibilite, pk=request.POST.get('creneau_id'))
             creneau.delete()
@@ -163,7 +191,7 @@ def superadmin_required(view_func):
     return wrapper
 
 
-@admin_required
+@module_permission_required('utilisateurs', 'view')
 def admin_utilisateurs(request):
     """Liste des utilisateurs"""
     utilisateurs = Utilisateur.objects.all().order_by('-date_creation')
@@ -180,7 +208,7 @@ def admin_utilisateurs(request):
     })
 
 
-@admin_required
+@module_permission_required('utilisateurs', 'add')
 def admin_utilisateur_create(request):
     """Créer un utilisateur"""
     if request.method == 'POST':
@@ -210,6 +238,10 @@ def admin_utilisateur_create(request):
             poste=poste,
             is_staff=(role in ['admin', 'superadmin']),
         )
+
+        if request.user.role == 'superadmin':
+            _save_user_permissions_from_post(user, request.POST)
+
         messages.success(request, f'Utilisateur {user.prenoms} {user.nom} créé avec succès')
         return redirect('core:admin_utilisateurs')
     
@@ -222,10 +254,11 @@ def admin_utilisateur_create(request):
         'page_title': 'Nouvel utilisateur',
         'roles': roles,
         'action': 'create',
+        'perm_modules': PermissionUtilisateur.MODULE_CHOICES,
     })
 
 
-@admin_required
+@module_permission_required('utilisateurs', 'change')
 def admin_utilisateur_edit(request, pk):
     """Modifier un utilisateur"""
     utilisateur = get_object_or_404(Utilisateur, pk=pk)
@@ -253,6 +286,10 @@ def admin_utilisateur_edit(request, pk):
             utilisateur.set_password(new_password)
         
         utilisateur.save()
+
+        if request.user.role == 'superadmin':
+            _save_user_permissions_from_post(utilisateur, request.POST)
+
         messages.success(request, f'Utilisateur {utilisateur.prenoms} {utilisateur.nom} modifié')
         return redirect('core:admin_utilisateurs')
     
@@ -265,10 +302,12 @@ def admin_utilisateur_edit(request, pk):
         'utilisateur': utilisateur,
         'roles': roles,
         'action': 'edit',
+        'perm_modules': PermissionUtilisateur.MODULE_CHOICES,
+        'existing_perms': {p.module: p for p in utilisateur.permissions.all()},
     })
 
 
-@admin_required
+@module_permission_required('utilisateurs', 'change')
 def admin_utilisateur_toggle(request, pk):
     """Activer/Désactiver un utilisateur"""
     utilisateur = get_object_or_404(Utilisateur, pk=pk)
@@ -290,7 +329,7 @@ def admin_utilisateur_toggle(request, pk):
     return redirect('core:admin_utilisateurs')
 
 
-@superadmin_required
+@module_permission_required('utilisateurs', 'delete')
 def admin_utilisateur_delete(request, pk):
     """Supprimer un utilisateur (SuperAdmin uniquement)"""
     utilisateur = get_object_or_404(Utilisateur, pk=pk)

@@ -48,7 +48,7 @@ html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250,
 function onScanSuccess(decodedText) {
     try {
         var data = JSON.parse(decodedText);
-        if (data.type !== "visiteur_csig") { showError("QR code non reconnu"); return; }
+        if (data.type !== "visiteur_mena_etfp") { showError("QR code non reconnu"); return; }
         currentVisiteurId = data.id;
         document.getElementById("result").classList.add("d-none");
         document.getElementById("visiteurInfo").classList.remove("d-none");

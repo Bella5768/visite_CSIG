@@ -10,8 +10,10 @@ import openpyxl
 from openpyxl import Workbook
 from io import BytesIO
 
+from core.permissions import module_permission_required
 
-@login_required
+
+@module_permission_required('visiteurs', 'view')
 def index(request):
     search = request.GET.get('search', '')
     visiteurs = Visiteur.objects.annotate(nb_visites=Count('visites'))
@@ -21,7 +23,7 @@ def index(request):
     return render(request, 'visiteurs/index.html', {'page_title': 'Visiteurs', 'visiteurs': paginator.get_page(request.GET.get('page', 1)), 'search_term': search})
 
 
-@login_required
+@module_permission_required('visiteurs', 'add')
 def ajouter(request):
     if request.method == 'POST':
         visiteur = Visiteur.objects.create(
@@ -38,7 +40,7 @@ def ajouter(request):
     return render(request, 'visiteurs/ajouter.html', {'page_title': 'Nouveau visiteur', 'types_identite': settings.TYPES_IDENTITE})
 
 
-@login_required
+@module_permission_required('visiteurs', 'change')
 def modifier(request, pk):
     visiteur = get_object_or_404(Visiteur, pk=pk)
     if request.method == 'POST':
@@ -53,13 +55,13 @@ def modifier(request, pk):
     return render(request, 'visiteurs/modifier.html', {'page_title': 'Modifier visiteur', 'visiteur': visiteur, 'types_identite': settings.TYPES_IDENTITE})
 
 
-@login_required
+@module_permission_required('visiteurs', 'view')
 def historique(request, pk):
     visiteur = get_object_or_404(Visiteur, pk=pk)
     return render(request, 'visiteurs/historique.html', {'page_title': f'Historique - {visiteur}', 'visiteur': visiteur, 'visites': visiteur.visites.select_related('motif', 'correspondant')})
 
 
-@login_required
+@module_permission_required('visiteurs', 'delete')
 def supprimer(request, pk):
     visiteur = get_object_or_404(Visiteur, pk=pk)
     if request.method == 'POST':
@@ -70,14 +72,14 @@ def supprimer(request, pk):
     return render(request, 'visiteurs/supprimer.html', {'page_title': 'Supprimer visiteur', 'visiteur': visiteur})
 
 
-@login_required
+@module_permission_required('visiteurs', 'view')
 def rechercher(request):
     q = request.GET.get('q', '')
     visiteurs = Visiteur.objects.filter(Q(nom__icontains=q) | Q(prenoms__icontains=q) | Q(telephone__icontains=q)).annotate(nb_visites=Count('visites'))[:20] if q else []
     return render(request, 'visiteurs/rechercher.html', {'page_title': 'Rechercher', 'visiteurs': visiteurs, 'search_term': q})
 
 
-@login_required
+@module_permission_required('visiteurs', 'view', json_forbidden=True)
 def api_search(request):
     q = request.GET.get('q', '')
     if len(q) < 2:
@@ -97,7 +99,7 @@ def normalize_header(h):
     return h
 
 
-@login_required
+@module_permission_required('visiteurs', 'add')
 def importer_excel(request):
     """Importer des visiteurs depuis un fichier Excel"""
     if request.method == 'POST' and request.FILES.get('fichier_excel'):
@@ -253,7 +255,7 @@ def importer_excel(request):
     })
 
 
-@login_required
+@module_permission_required('visiteurs', 'view')
 def telecharger_modele_excel(request):
     """Télécharger un modèle Excel pour l'importation"""
     wb = Workbook()
@@ -294,7 +296,7 @@ def telecharger_modele_excel(request):
     return response
 
 
-@login_required
+@module_permission_required('visiteurs', 'view')
 def exporter_excel(request):
     """Exporter tous les visiteurs en Excel"""
     wb = Workbook()

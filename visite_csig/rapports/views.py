@@ -10,8 +10,10 @@ from visites.models import Visite
 from visiteurs.models import Visiteur
 from .utils import export_rapport_pdf
 
+from core.permissions import module_permission_required
 
-@login_required
+
+@module_permission_required('rapports', 'view')
 def rapport_journalier(request):
     date = request.GET.get('date', str(timezone.now().date()))
     visites = Visite.objects.filter(date_visite=date).select_related('visiteur', 'motif', 'correspondant')
@@ -25,7 +27,7 @@ def rapport_journalier(request):
     return render(request, 'rapports/rapport_journalier.html', {'page_title': 'Rapport journalier', 'date': date, 'visites': visites, 'stats': stats, 'par_motif': par_motif})
 
 
-@login_required
+@module_permission_required('rapports', 'view')
 def statistiques(request):
     today = timezone.now().date()
     stats_globales = {

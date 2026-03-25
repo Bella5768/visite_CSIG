@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.db.utils import OperationalError
 
 
 class UtilisateurManager(BaseUserManager):
@@ -43,6 +44,52 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     @property
     def is_admin(self):
         return self.role == 'admin'
+
+    def has_module_permission(self, module_code, action):
+        if self.role == 'superadmin':
+            return True
+        if not self.is_active:
+            return False
+        if action not in ['view', 'add', 'change', 'delete']:
+            return False
+        perm = getattr(self, 'permissions', None)
+        if perm is None:
+            return False
+        try:
+            p = perm.filter(module=module_code).first()
+        except OperationalError:
+            # Migrations not applied yet: fall back to role-based access to avoid crashing.
+            return self.role in ['admin', 'superadmin']
+        if not p:
+            return False
+        return getattr(p, f"can_{action}")
+
+
+class PermissionUtilisateur(models.Model):
+    MODULE_CHOICES = [
+        ('visites', 'Visites'),
+        ('rendez_vous', 'Rendez-vous'),
+        ('visiteurs', 'Visiteurs'),
+        ('rapports', 'Rapports'),
+        ('agenda', 'Agenda'),
+        ('administration', 'Administration'),
+        ('utilisateurs', 'Utilisateurs'),
+    ]
+
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='permissions')
+    module = models.CharField(max_length=50, choices=MODULE_CHOICES)
+    can_view = models.BooleanField(default=False)
+    can_add = models.BooleanField(default=False)
+    can_change = models.BooleanField(default=False)
+    can_delete = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('utilisateur', 'module')
+        verbose_name = 'Permission utilisateur'
+        verbose_name_plural = 'Permissions utilisateurs'
+
+    def __str__(self):
+        return f"{self.utilisateur} - {self.module}"
 
 
 class MotifVisite(models.Model):

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% load static %}
     <title>{% block title %}{{ page_title|default:"Accueil" }}{% endblock %} - {{ APP_NAME }}</title>
-    <link rel="icon" type="image/png" href="{% static 'images/logocsig-Br6bYCQd.png' %}">
-    <link rel="shortcut icon" type="image/png" href="{% static 'images/logocsig-Br6bYCQd.png' %}">
-    <link rel="apple-touch-icon" href="{% static 'images/logocsig-Br6bYCQd.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/mena-etfp.png' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/mena-etfp.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/mena-etfp.png' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,8 +15,13 @@
     <style>
         :root {
             --primary-blue: #104480;
-            --primary-gradient: linear-gradient(135deg, #1565a8 0%, #104480 100%);
-            --accent-gold: #f59e0b;
+            --primary-gradient: linear-gradient(135deg, #104480 0%, #104480 100%);
+            --accent-gold: #b45309;
+            --surface: #ffffff;
+            --surface-2: #f8fafc;
+            --border-soft: rgba(15, 23, 42, 0.10);
+            --text-1: #0f172a;
+            --text-2: #475569;
         }
         * { font-family: 'Inter', 'Segoe UI', sans-serif; }
         body { background-color: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; }
@@ -33,8 +38,8 @@
         
         .header-main { max-width: 1400px; margin: 0 auto; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         .header-brand { display: flex; align-items: center; gap: 15px; text-decoration: none; }
-        .header-logo { width: 55px; height: 55px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); overflow: hidden; }
-        .header-logo img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
+        .header-logo { width: 120px; height: 80px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); overflow: hidden; }
+        .header-logo img { width: 100%; height: 100%; object-fit: contain; padding: 0; transform: scale(1.25); transform-origin: center; }
         .header-logo i { font-size: 28px; color: #104480; }
         .header-brand-text { color: #fff; }
         .header-brand-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
@@ -65,31 +70,46 @@
         .welcome-msg strong { color: #1e3a8a; }
         
         /* Stats Cards */
-        .stat-card { border-radius: 16px; padding: 28px; text-align: center; color: #fff; transition: all 0.3s; border: none; position: relative; overflow: hidden; }
-        .stat-card::before { content: ''; position: absolute; top: -50%; right: -50%; width: 100%; height: 100%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
-        .stat-card .stat-value { font-size: 48px; font-weight: 700; margin-bottom: 8px; }
-        .stat-card .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
-        .stat-card .stat-icon { margin-right: 6px; }
-        .stat-card.blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
-        .stat-card.cyan { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
-        .stat-card.indigo { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
-        .stat-card.purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        .stat-card { border-radius: 16px; padding: 22px; text-align: left; color: var(--text-1); transition: all 0.2s; background: var(--surface); border: 1px solid var(--border-soft); position: relative; overflow: hidden; }
+        .stat-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15, 23, 42, 0.02) 0%, transparent 55%); pointer-events: none; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(2, 6, 23, 0.08); }
+        .stat-card .stat-value { font-size: 40px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.6px; }
+        .stat-card .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-2); }
+        .stat-card .stat-icon { margin-right: 6px; color: var(--primary-blue); }
+        .stat-card.blue { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none; }
+        .stat-card.cyan { background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%); border: none; }
+        .stat-card.indigo { background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); border: none; }
+        .stat-card.purple { background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); border: none; }
+
+        .stat-card.blue,
+        .stat-card.cyan,
+        .stat-card.indigo,
+        .stat-card.purple { color: #ffffff; }
+
+        .stat-card.blue .stat-label,
+        .stat-card.cyan .stat-label,
+        .stat-card.indigo .stat-label,
+        .stat-card.purple .stat-label { color: rgba(255,255,255,0.85); }
+
+        .stat-card.blue .stat-icon,
+        .stat-card.cyan .stat-icon,
+        .stat-card.indigo .stat-icon,
+        .stat-card.purple .stat-icon { color: rgba(255,255,255,0.95); }
         
         /* Card Sections */
-        .card-section { background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 24px; }
-        .card-section .card-header-custom { background: var(--primary-gradient); color: #fff; padding: 18px 24px; font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 10px; }
+        .card-section { background: var(--surface); border-radius: 16px; box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06); overflow: hidden; margin-bottom: 24px; border: 1px solid var(--border-soft); }
+        .card-section .card-header-custom { background: var(--surface-2); color: var(--text-1); padding: 18px 24px; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-soft); }
         .card-section .card-body { padding: 24px; }
         
         /* Action Buttons */
-        .btn-action { width: 100%; padding: 15px 20px; border-radius: 12px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; border: none; font-size: 14px; text-decoration: none !important; }
-        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
-        .btn-action.btn-blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #fff; }
-        .btn-action.btn-green { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #fff; }
-        .btn-action.btn-orange { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #fff; }
-        .btn-action.btn-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; }
-        .btn-action.btn-outline { background: #fff; border: 2px solid #e2e8f0; color: #475569; }
-        .btn-action.btn-outline:hover { border-color: #3b82f6; color: #3b82f6; background: #f8fafc; }
+        .btn-action { width: 100%; padding: 14px 18px; border-radius: 12px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.15s; border: 1px solid var(--border-soft); font-size: 14px; text-decoration: none !important; background: var(--surface); color: var(--text-1); }
+        .btn-action:hover { transform: translateY(-1px); box-shadow: 0 10px 25px rgba(2, 6, 23, 0.08); }
+        .btn-action.btn-blue { background: #0f2f57; border-color: #0f2f57; color: #fff; }
+        .btn-action.btn-green { background: #14532d; border-color: #14532d; color: #fff; }
+        .btn-action.btn-orange { background: #7c2d12; border-color: #7c2d12; color: #fff; }
+        .btn-action.btn-red { background: #7f1d1d; border-color: #7f1d1d; color: #fff; }
+        .btn-action.btn-outline { background: var(--surface); border: 1px solid var(--border-soft); color: var(--text-2); }
+        .btn-action.btn-outline:hover { border-color: rgba(16, 68, 128, 0.35); color: var(--primary-blue); background: var(--surface-2); }
         .btn-action.btn-link { background: transparent; color: #64748b; }
         .btn-action.btn-link:hover { color: #1e40af; }
         
@@ -150,6 +170,25 @@
         .dropdown-item { padding: 10px 16px; border-radius: 8px; font-size: 14px; }
         .dropdown-item:hover { background: #f1f5f9; }
         .dropdown-item i { margin-right: 10px; color: #64748b; }
+
+        /* ========== TABLE HEADERS (GLOBAL) ========== */
+        .table thead th {
+            background: linear-gradient(135deg, #0f2f57 0%, #104480 100%);
+            color: #ffffff;
+            font-weight: 700;
+            border-bottom: none;
+            padding: 14px 16px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            vertical-align: middle;
+        }
+        .table thead th:first-child { border-top-left-radius: 12px; }
+        .table thead th:last-child { border-top-right-radius: 12px; }
+        .table tbody td { padding: 14px 16px; vertical-align: middle; }
+        .table-hover tbody tr:hover { background-color: rgba(15, 47, 87, 0.04); }
+        .table { border-collapse: separate; border-spacing: 0; }
+        .table > :not(caption) > * > * { box-shadow: none; }
         
         /* ========== MODERN TABLES ========== */
         .table-container { background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; }
@@ -241,7 +280,7 @@
             <div class="header-top-inner">
                 <div class="header-contact">
                     <a href="tel:+224621057698"><i class="bi bi-telephone"></i> +224 621 05 76 98</a>
-                    <a href="mailto:bella@csig.edu.gn"><i class="bi bi-envelope"></i> bella@csig.edu.gn</a>
+                    <a href="mailto:contact@mena-etfp.gov.gn"><i class="bi bi-envelope"></i> contact@mena-etfp.gov.gn</a>
                     <a href="#"><i class="bi bi-geo-alt"></i> Conakry, Guinée</a>
                 </div>
                 <div class="header-datetime">
@@ -253,11 +292,11 @@
         <div class="header-main">
             <a href="{% url 'core:dashboard' %}" class="header-brand">
                 <div class="header-logo">
-                    <img src="{% static 'images/logocsig-Br6bYCQd.png' %}" alt="CSIG">
+                    <img src="{% static 'images/mena-etfp.png' %}" alt="MENA-ETFP">
                 </div>
                 <div class="header-brand-text">
-                    <div class="header-brand-title">CSIG</div>
-                    <div class="header-brand-subtitle">Gestion des Visites</div>
+                    <div class="header-brand-title">MENA-ETFP</div>
+                    <div class="header-brand-subtitle">Ministère de l'Éducation Nationale, de l'Alphabétisation, de l'Enseignement Technique et de la Formation Professionnelle</div>
                 </div>
             </a>
             
@@ -265,19 +304,32 @@
                 <a href="{% url 'core:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <i class="bi bi-house-door-fill"></i> Accueil
                 </a>
+                {% if user.role == 'superadmin' or user_perms.visites.view %}
                 <a href="{% url 'visites:index' %}" class="nav-link">
                     <i class="bi bi-calendar-check-fill"></i> Visites
                 </a>
+                {% endif %}
+                {% if user.role == 'superadmin' or user_perms.rendez_vous.view %}
                 <a href="{% url 'visites:rendez_vous_list' %}" class="nav-link">
                     <i class="bi bi-calendar-week"></i> Rendez-vous
                 </a>
+                {% endif %}
+                {% if user.role == 'superadmin' or user_perms.visiteurs.view %}
                 <a href="{% url 'visiteurs:index' %}" class="nav-link">
                     <i class="bi bi-people-fill"></i> Visiteurs
                 </a>
+                {% endif %}
+                {% if user.role == 'superadmin' or user_perms.rapports.view %}
                 <a href="{% url 'rapports:rapport_journalier' %}" class="nav-link">
                     <i class="bi bi-file-earmark-bar-graph-fill"></i> Rapports
                 </a>
-                {% if user.role == 'admin' or user.role == 'superadmin' %}
+                {% endif %}
+                {% if user.role == 'superadmin' or user_perms.agenda.view %}
+                <a href="{% url 'visites:agenda_ministre' %}" class="nav-link">
+                    <i class="bi bi-calendar2-week-fill"></i> Agenda Ministre
+                </a>
+                {% endif %}
+                {% if user.role == 'superadmin' or user_perms.administration.view %}
                 <a href="{% url 'core:administration' %}" class="nav-link">
                     <i class="bi bi-gear-fill"></i> Administration
                 </a>
@@ -326,8 +378,8 @@
                             <i class="bi bi-building"></i>
                         </div>
                         <div class="footer-brand-text">
-                            <h3>Cité des Sciences et de l'Innovation</h3>
-                            <p>Système de Gestion des Visites<br>République de Guinée</p>
+                            <h3>MENA-ETFP</h3>
+                            <p>Ministère de l'Éducation Nationale, de l'Alphabétisation, de l'Enseignement Technique et de la Formation Professionnelle<br>République de Guinée</p>
                         </div>
                     </div>
                     <div class="footer-links">
@@ -349,7 +401,7 @@
                         <h4>Contact</h4>
                         <ul>
                             <li><a href="tel:+224620000000"><i class="bi bi-telephone"></i> +224 620 00 00 00</a></li>
-                            <li><a href="mailto:contact@csig.gov.gn"><i class="bi bi-envelope"></i> contact@csig.gov.gn</a></li>
+                            <li><a href="mailto:contact@mena-etfp.gov.gn"><i class="bi bi-envelope"></i> contact@mena-etfp.gov.gn</a></li>
                             <li><a href="#"><i class="bi bi-geo-alt"></i> Conakry, Guinée</a></li>
                         </ul>
                     </div>
@@ -357,7 +409,7 @@
             </div>
             <div class="footer-bottom">
                 <div class="footer-copyright">
-                    &copy; 2026 <a href="#">CSIG</a> - Tous droits réservés | Version {{ APP_VERSION }}
+                    &copy; 2026 <a href="#">MENA-ETFP</a> - Tous droits réservés | Version {{ APP_VERSION }}
                 </div>
                 <div class="footer-meta">
                     <span><i class="bi bi-person-fill"></i> {{ user.prenoms }} {{ user.nom }}</span>

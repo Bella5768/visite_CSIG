@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load dict_extras %}
 {% block content %}
 <!-- Page Title Bar -->
 <div class="page-title-bar">
@@ -89,6 +90,55 @@
                                    placeholder="Ex: Agent d'accueil">
                         </div>
                     </div>
+
+                    {% if request.user.role == 'superadmin' %}
+                    <hr class="my-4">
+
+                    <div class="mb-3">
+                        <h6 style="color: #374151; font-weight: 700; margin-bottom: 10px;">
+                            <i class="bi bi-shield-lock"></i> Privilèges (Contrôle total)
+                        </h6>
+                        <div class="table-responsive" style="border: 1px solid rgba(15, 23, 42, 0.10); border-radius: 12px; overflow: hidden;">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Module</th>
+                                        <th class="text-center">Voir</th>
+                                        <th class="text-center">Créer</th>
+                                        <th class="text-center">Modifier</th>
+                                        <th class="text-center">Supprimer</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for module_code, module_label in perm_modules %}
+                                    <tr>
+                                        <td style="font-weight: 600; color: #0f172a;">{{ module_label }}</td>
+                                        <td class="text-center">
+                                            <input class="form-check-input" type="checkbox" name="perm_{{ module_code }}_view"
+                                                {% if existing_perms and existing_perms|get_item:module_code and existing_perms|get_item:module_code.can_view %}checked{% endif %}>
+                                        </td>
+                                        <td class="text-center">
+                                            <input class="form-check-input" type="checkbox" name="perm_{{ module_code }}_add"
+                                                {% if existing_perms and existing_perms|get_item:module_code and existing_perms|get_item:module_code.can_add %}checked{% endif %}>
+                                        </td>
+                                        <td class="text-center">
+                                            <input class="form-check-input" type="checkbox" name="perm_{{ module_code }}_change"
+                                                {% if existing_perms and existing_perms|get_item:module_code and existing_perms|get_item:module_code.can_change %}checked{% endif %}>
+                                        </td>
+                                        <td class="text-center">
+                                            <input class="form-check-input" type="checkbox" name="perm_{{ module_code }}_delete"
+                                                {% if existing_perms and existing_perms|get_item:module_code and existing_perms|get_item:module_code.can_delete %}checked{% endif %}>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-muted" style="font-size: 12px; margin-top: 8px;">
+                            Les permissions s'appliquent immédiatement au menu et à l'accès aux pages.
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     <hr class="my-4">
                     

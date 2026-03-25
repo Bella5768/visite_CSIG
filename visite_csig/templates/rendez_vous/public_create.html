@@ -13,6 +13,9 @@
         <!-- Logos officiels -->
         <div class="text-center mb-4" style="background-color: white; padding: 20px; border-radius: 8px;">
             <div class="d-inline-block mx-3">
+                <img src="{% static 'images/mena-etfp-transparent.png' %}" alt="MENA-ETFP" style="max-height: 120px; width: auto;" class="img-fluid">
+            </div>
+            <div class="d-inline-block mx-3">
                 <img src="{% static 'images/branding.webp' %}" alt="Branding Guinée" style="max-height: 80px; width: auto;" class="img-fluid">
             </div>
             <div class="d-inline-block mx-3">
@@ -111,12 +114,17 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Motif <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="motif_id" required>
-                                        <option value="">Sélectionner un motif</option>
-                                        {% for motif in motifs %}
-                                        <option value="{{ motif.pk }}">{{ motif.libelle }}</option>
-                                        {% endfor %}
-                                    </select>
+                                    {% if fixed_motif %}
+                                        <input type="hidden" name="motif_id" value="{{ fixed_motif.pk }}">
+                                        <input type="text" class="form-control" value="{{ fixed_motif.libelle }}" disabled>
+                                    {% else %}
+                                        <select class="form-select" name="motif_id" required>
+                                            <option value="">Sélectionner un motif</option>
+                                            {% for motif in motifs %}
+                                            <option value="{{ motif.pk }}">{{ motif.libelle }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Correspondant (optionnel)</label>
@@ -134,7 +142,7 @@
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-clock"></i></span>
                                     <select class="form-select" name="creneau_id" id="creneauSelect" required disabled>
-                                        <option value="">Sélectionnez d'abord un motif</option>
+                                        <option value="">{% if fixed_motif %}Chargement des créneaux...{% else %}Sélectionnez d'abord un motif{% endif %}</option>
                                     </select>
                                 </div>
                                 <div class="form-text" id="creneauHelp">Les créneaux sont définis à l'avance par l'administrateur.</div>
@@ -165,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const tel = form.querySelector('input[name="telephone"]');
     const email = form.querySelector('input[name="email"]');
     const motifSelect = form.querySelector('select[name="motif_id"]');
+    const fixedMotifId = form.querySelector('input[name="motif_id"]') ? form.querySelector('input[name="motif_id"]').value : '';
     const creneauSelect = document.getElementById('creneauSelect');
     const creneauHelp = document.getElementById('creneauHelp');
 
@@ -213,16 +222,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    motifSelect.addEventListener('change', function() {
-        const motifId = motifSelect.value;
-        if (!motifId) {
-            creneauSelect.innerHTML = '<option value="">Sélectionnez d\'abord un motif</option>';
-            creneauSelect.disabled = true;
-            creneauHelp.textContent = 'Les créneaux sont définis à l\'avance par l\'administrateur.';
-            return;
-        }
-        loadCreneaux(motifId);
-    });
+    if (motifSelect) {
+        motifSelect.addEventListener('change', function() {
+            const motifId = motifSelect.value;
+            if (!motifId) {
+                creneauSelect.innerHTML = '<option value="">Sélectionnez d\'abord un motif</option>';
+                creneauSelect.disabled = true;
+                creneauHelp.textContent = 'Les créneaux sont définis à l\'avance par l\'administrateur.';
+                return;
+            }
+            loadCreneaux(motifId);
+        });
+    }
+
+    if (fixedMotifId) {
+        loadCreneaux(fixedMotifId);
+    }
 
     form.addEventListener('submit', function(e) {
         if (!tel.value.trim() && !email.value.trim()) {
@@ -232,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        if (!motifSelect.value) {
+        if (!fixedMotifId && motifSelect && !motifSelect.value) {
             e.preventDefault();
             alert('Veuillez sélectionner un motif');
             motifSelect.focus();

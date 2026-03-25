@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-calendar2-week"></i> Agenda du Ministre</h2>
+        <div class="subtitle">Calendrier des audiences (MENA-ETFP)</div>
+    </div>
+</div>
+
+<div class="card-section">
+    <div class="card-body">
+        <div id="calendar" style="min-height: 700px;"></div>
+        <div id="events-debug" class="mt-3" style="display:none;"></div>
+    </div>
+</div>
+
+<style>
+  .fc a { text-decoration: none; }
+  .fc .fc-event,
+  .fc .fc-event .fc-event-title,
+  .fc .fc-event .fc-event-time,
+  .fc .fc-event a { color: #fff !important; }
+  .fc .fc-daygrid-event { display: block; }
+  .fc .fc-event-title { display: inline !important; font-size: 12px !important; white-space: normal; }
+
+  #calendar {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    color: #0f172a;
+  }
+
+  .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
+  .fc .fc-button {
+    border-radius: 10px;
+    padding: 8px 12px;
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .fc .fc-button:hover {
+    background: #f8fafc !important;
+  }
+
+  .fc .fc-button:focus,
+  .fc .fc-button:active,
+  .fc .fc-button.fc-button-active {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border-color: #0f172a !important;
+    box-shadow: none !important;
+  }
+
+  .fc .fc-col-header-cell {
+    background: #f8fafc;
+  }
+
+  .fc .fc-col-header-cell-cushion {
+    padding: 10px 6px;
+    font-weight: 700;
+    color: #334155;
+  }
+
+  .fc .fc-timegrid-axis-cushion,
+  .fc .fc-timegrid-slot-label-cushion {
+    color: #475569;
+    font-weight: 600;
+  }
+
+  .fc .fc-scrollgrid {
+    border: 1px solid rgba(15, 23, 42, 0.08) !important;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .fc .fc-daygrid-day-number {
+    padding: 10px;
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .fc .fc-day-today {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .fc .fc-now-indicator-line {
+    border-color: #ef4444;
+    border-width: 2px;
+  }
+
+  .fc .fc-event {
+    border-radius: 10px;
+    padding: 3px 6px;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  }
+
+  .fc .fc-event:hover {
+    filter: brightness(0.98);
+    transform: translateY(-1px);
+    transition: all 120ms ease;
+  }
+
+  .fc .fc-daygrid-event-harness {
+    margin: 2px 2px;
+  }
+
+  .fc .fc-timegrid-event {
+    padding: 6px 8px;
+  }
+
+  #events-debug {
+    background: #f8fafc;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 12px;
+    padding: 12px;
+    color: #0f172a;
+  }
+</style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        locale: 'fr',
+        eventDisplay: 'block',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        navLinks: true,
+        nowIndicator: true,
+        selectable: false,
+        eventTimeFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+            fetch("{% url 'visites:agenda_ministre_events' %}?start=" + encodeURIComponent(fetchInfo.startStr) + "&end=" + encodeURIComponent(fetchInfo.endStr), {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data || data.success === false) {
+                    failureCallback();
+                    return;
+                }
+                try {
+                    var dbg = document.getElementById('events-debug');
+                    if (dbg) {
+                        var items = (data.events || []).map(function(ev) { return '<li>' + (ev.title || '(sans titre)') + '</li>'; }).join('');
+                        dbg.innerHTML = '<div class="fw-semibold">Événements chargés:</div><ul class="mb-0">' + items + '</ul>';
+                        dbg.style.display = 'block';
+                    }
+                } catch (e) {}
+                successCallback(data.events || []);
+            })
+            .catch(function() {
+                failureCallback();
+            });
+        },
+        eventClick: function(info) {
+            if (info.event.url) {
+                info.jsEvent.preventDefault();
+                window.location.href = info.event.url;
+            }
+        }
+    });
+
+    calendar.render();
+});
+</script>
+{% endblock %}

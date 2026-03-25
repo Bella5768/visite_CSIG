@@ -115,7 +115,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-APP_NAME = 'Visite CSIG'
+APP_NAME = 'MENA-ETFP'
 APP_VERSION = '2.0'
 
 TYPES_IDENTITE = [

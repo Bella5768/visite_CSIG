@@ -108,5 +108,35 @@ document.getElementById('editModal').addEventListener('show.bs.modal', function(
     document.getElementById('edit_fin').value = btn.dataset.fin;
     document.getElementById('edit_actif').checked = btn.dataset.actif === 'True';
 });
+
+function timeToMinutes(t) {
+    if (!t) return null;
+    var parts = t.split(':');
+    if (parts.length < 2) return null;
+    return (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10);
+}
+
+function validateCreneau(form) {
+    var debut = form.querySelector('input[name="heure_debut"]');
+    var fin = form.querySelector('input[name="heure_fin"]');
+    if (!debut || !fin) return true;
+    var d = timeToMinutes(debut.value);
+    var f = timeToMinutes(fin.value);
+    if (d === null || f === null) return true;
+    if (f <= d) {
+        alert("L'heure de fin doit être postérieure à l'heure de début");
+        fin.focus();
+        return false;
+    }
+    return true;
+}
+
+document.querySelector('#addModal form').addEventListener('submit', function(e) {
+    if (!validateCreneau(e.target)) e.preventDefault();
+});
+
+document.querySelector('#editModal form').addEventListener('submit', function(e) {
+    if (!validateCreneau(e.target)) e.preventDefault();
+});
 </script>
 {% endblock %}
