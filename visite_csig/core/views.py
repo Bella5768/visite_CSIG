@@ -128,9 +128,13 @@ def administration(request):
     invite_url = request.build_absolute_uri(
         reverse('rendez_vous_public_ministre_invite', kwargs={'token': invite_token})
     )
+    public_rdv_url = request.build_absolute_uri(
+        reverse('rendez_vous_public_create')
+    )
     return render(request, 'core/administration.html', {
         'page_title': 'Administration',
         'invite_url': invite_url,
+        'public_rdv_url': public_rdv_url,
     })
 
 

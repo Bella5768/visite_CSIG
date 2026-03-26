@@ -30,6 +30,28 @@
             </div>
         </div>
     </div>
+    <div class="col-md-12 mb-3">
+        <div class="card-section">
+            <div class="card-header-custom"><i class="bi bi-link-45deg"></i> Lien public (tous les motifs)</div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3 align-items-end justify-content-between">
+                    <div class="flex-grow-1" style="min-width: 280px;">
+                        <label class="form-label mb-1">Lien à partager</label>
+                        <input id="public-rdv-url" class="form-control" type="text" value="{{ public_rdv_url }}" readonly>
+                        <div class="form-text">Copie ce lien et partage-le. La personne pourra choisir le motif.</div>
+                    </div>
+                    <div>
+                        <button id="copy-public-rdv" type="button" class="btn-outline-gradient">
+                            <i class="bi bi-clipboard"></i> Copier
+                        </button>
+                        <a href="{{ public_rdv_url }}" target="_blank" rel="noopener" class="btn-primary-gradient">
+                            <i class="bi bi-box-arrow-up-right"></i> Ouvrir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="col-md-4 mb-3">
         <div class="card-section">
             <div class="card-header-custom"><i class="bi bi-tags"></i> Motifs</div>
@@ -85,6 +107,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         navigator.clipboard.writeText(input.value);
+                    } else {
+                        document.execCommand('copy');
+                    }
+                } catch (e) {
+                    try { document.execCommand('copy'); } catch (e2) {}
+                }
+            });
+        }
+    } catch (e) {}
+
+    try {
+        var btn2 = document.getElementById('copy-public-rdv');
+        if (btn2) {
+            btn2.addEventListener('click', function() {
+                var input2 = document.getElementById('public-rdv-url');
+                if (!input2) return;
+                input2.select();
+                input2.setSelectionRange(0, 99999);
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(input2.value);
                     } else {
                         document.execCommand('copy');
                     }
