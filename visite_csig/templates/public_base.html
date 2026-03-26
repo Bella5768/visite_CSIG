@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <title>{% block title %}{{ page_title|default:"Prendre rendez-vous" }}{% endblock %} - {{ APP_NAME }}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/mena-etfp.png' %}?v={{ APP_VERSION }}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/mena-etfp.png' %}?v={{ APP_VERSION }}">
+    <link rel="apple-touch-icon" href="{% static 'images/mena-etfp.png' %}?v={{ APP_VERSION }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #104480;
+            --surface: #ffffff;
+            --surface-2: #f8fafc;
+            --border-soft: rgba(15, 23, 42, 0.10);
+            --text-1: #0f172a;
+            --text-2: #475569;
+        }
+        * { font-family: 'Inter', 'Segoe UI', sans-serif; }
+        body { background: #f1f5f9; min-height: 100vh; }
+        .public-shell { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+        .public-header { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 16px; box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06); margin-bottom: 18px; }
+        .public-header .logo { width: 84px; height: 56px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(15, 23, 42, 0.08); }
+        .public-header .logo img { width: 100%; height: 100%; object-fit: contain; transform: scale(1.12); }
+        .public-header .brand { text-align: left; }
+        .public-header .brand-title { font-weight: 800; letter-spacing: -0.3px; margin: 0; color: var(--primary-blue); font-size: 18px; line-height: 1.1; }
+        .public-header .brand-subtitle { margin: 2px 0 0; color: var(--text-2); font-size: 12px; }
+        .main-card { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 16px; box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06); padding: 18px; }
+        .page-title-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .page-title-bar h2 { margin: 0; font-size: 20px; font-weight: 800; color: var(--primary-blue); display: flex; align-items: center; gap: 10px; }
+        .page-title-bar .subtitle { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+        .card-section { background: var(--surface); border-radius: 16px; overflow: hidden; margin-bottom: 24px; border: 1px solid var(--border-soft); }
+        .card-section .card-header-custom { background: var(--surface-2); color: var(--text-1); padding: 18px 24px; font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-soft); }
+        .card-section .card-body { padding: 24px; }
+        .footer { text-align: center; color: #94a3b8; font-size: 12px; margin-top: 18px; }
+    </style>
+</head>
+<body>
+    <div class="public-shell">
+        <div class="public-header">
+            <div class="logo">
+                <img src="{% static 'images/mena-etfp.png' %}" alt="MENA-ETFP">
+            </div>
+            <div class="brand">
+                <p class="brand-title">{{ APP_NAME }}</p>
+                <p class="brand-subtitle">Prise de rendez-vous (page publique)</p>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div class="mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} mb-2" role="alert">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="main-card">
+            {% block content %}{% endblock %}
+        </div>
+
+        <div class="footer">
+            © {{ APP_NAME }}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
