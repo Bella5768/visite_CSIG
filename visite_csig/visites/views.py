@@ -658,6 +658,82 @@ def rendez_vous_public_ministre_invite(request, token):
     return rendez_vous_public_ministre(request)
 
 
+def agenda_ministre_public(request, token):
+    try:
+        signing.loads(token, salt='agenda_ministre_public', max_age=60 * 60 * 24 * 90)
+    except Exception:
+        return render(request, 'rendez_vous/public_invalid_link.html', {
+            'page_title': 'Lien invalide',
+        }, status=404)
+
+    return render(request, 'visites/agenda_ministre_public.html', {
+        'page_title': "Agenda du Ministre",
+        'agenda_token': token,
+    })
+
+
+def agenda_ministre_public_events(request, token):
+    try:
+        signing.loads(token, salt='agenda_ministre_public', max_age=60 * 60 * 24 * 90)
+    except Exception:
+        return JsonResponse({'success': False, 'message': 'Lien invalide ou expiré'}, status=403)
+
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+
+    def _to_date(s):
+        if not s:
+            return None
+        try:
+            return date.fromisoformat(s[:10])
+        except Exception:
+            return None
+
+    qs = RendezVous.objects.select_related('visiteur', 'motif').filter(statut='confirme')
+    start_date = _to_date(start)
+    end_date = _to_date(end)
+    if start_date:
+        qs = qs.filter(date_rendez_vous__gte=start_date)
+    if end_date:
+        qs = qs.filter(date_rendez_vous__lt=end_date)
+
+    colors = {
+        'planifie': '#2563eb',
+        'confirme': '#16a34a',
+        'en_cours': '#f59e0b',
+        'termine': '#64748b',
+        'annule': '#dc2626',
+    }
+
+    events = []
+    for rdv in qs:
+        start_dt = f"{rdv.date_rendez_vous.isoformat()}T{rdv.heure_debut.strftime('%H:%M:%S')}"
+        end_dt = f"{rdv.date_rendez_vous.isoformat()}T{rdv.heure_fin.strftime('%H:%M:%S')}"
+        motif_label = rdv.motif.libelle if getattr(rdv, 'motif', None) else ''
+        color = colors.get(rdv.statut, '#2563eb')
+        events.append({
+            'id': rdv.pk,
+            'title': f"[{motif_label}] {rdv.sujet} - {rdv.visiteur.prenoms} {rdv.visiteur.nom}" if motif_label else f"{rdv.sujet} - {rdv.visiteur.prenoms} {rdv.visiteur.nom}",
+            'start': start_dt,
+            'end': end_dt,
+            'backgroundColor': color,
+            'borderColor': color,
+            'textColor': '#ffffff',
+            'extendedProps': {
+                'sujet': rdv.sujet,
+                'motif': motif_label,
+                'visiteur': f"{rdv.visiteur.prenoms} {rdv.visiteur.nom}".strip(),
+                'statut_code': rdv.statut,
+                'statut': rdv.get_statut_display() if hasattr(rdv, 'get_statut_display') else rdv.statut,
+                'heure_debut': rdv.heure_debut.strftime('%H:%M'),
+                'heure_fin': rdv.heure_fin.strftime('%H:%M'),
+                'date': rdv.date_rendez_vous.strftime('%d/%m/%Y'),
+            },
+        })
+
+    return JsonResponse({'success': True, 'events': events})
+
+
 @module_permission_required('agenda', 'view')
 def agenda_ministre(request):
     return render(request, 'visites/agenda_ministre.html', {

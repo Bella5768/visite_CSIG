@@ -128,12 +128,17 @@ def administration(request):
     invite_url = request.build_absolute_uri(
         reverse('rendez_vous_public_ministre_invite', kwargs={'token': invite_token})
     )
+    agenda_token = signing.dumps({'audience': 'ministre'}, salt='agenda_ministre_public')
+    agenda_url = request.build_absolute_uri(
+        reverse('agenda_ministre_public', kwargs={'token': agenda_token})
+    )
     public_rdv_url = request.build_absolute_uri(
         reverse('rendez_vous_public_create')
     )
     return render(request, 'core/administration.html', {
         'page_title': 'Administration',
         'invite_url': invite_url,
+        'agenda_url': agenda_url,
         'public_rdv_url': public_rdv_url,
     })
 

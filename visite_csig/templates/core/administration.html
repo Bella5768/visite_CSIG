@@ -32,6 +32,28 @@
     </div>
     <div class="col-md-12 mb-3">
         <div class="card-section">
+            <div class="card-header-custom"><i class="bi bi-calendar2-week"></i> Lien Agenda Ministre (lecture seule)</div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3 align-items-end justify-content-between">
+                    <div class="flex-grow-1" style="min-width: 280px;">
+                        <label class="form-label mb-1">Lien à partager au ministre</label>
+                        <input id="agenda-url" class="form-control" type="text" value="{{ agenda_url }}" readonly>
+                        <div class="form-text">Copie ce lien, le ministre peut l'épingler sur son téléphone. Valable 90 jours.</div>
+                    </div>
+                    <div>
+                        <button id="copy-agenda" type="button" class="btn-outline-gradient">
+                            <i class="bi bi-clipboard"></i> Copier
+                        </button>
+                        <a href="{{ agenda_url }}" target="_blank" rel="noopener" class="btn-primary-gradient">
+                            <i class="bi bi-box-arrow-up-right"></i> Ouvrir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12 mb-3">
+        <div class="card-section">
             <div class="card-header-custom"><i class="bi bi-link-45deg"></i> Lien public (tous les motifs)</div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-3 align-items-end justify-content-between">
@@ -128,6 +150,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         navigator.clipboard.writeText(input2.value);
+                    } else {
+                        document.execCommand('copy');
+                    }
+                } catch (e) {
+                    try { document.execCommand('copy'); } catch (e2) {}
+                }
+            });
+        }
+    } catch (e) {}
+
+    try {
+        var btn3 = document.getElementById('copy-agenda');
+        if (btn3) {
+            btn3.addEventListener('click', function() {
+                var input3 = document.getElementById('agenda-url');
+                if (!input3) return;
+                input3.select();
+                input3.setSelectionRange(0, 99999);
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(input3.value);
                     } else {
                         document.execCommand('copy');
                     }

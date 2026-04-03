@@ -1,0 +1,150 @@
+{% extends 'public_base.html' %}
+{% block content %}
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-calendar2-week"></i> Agenda du Ministre</h2>
+        <div class="subtitle">Lecture seule</div>
+    </div>
+</div>
+
+<div class="card-section">
+    <div class="card-body">
+        <div id="calendar" style="min-height: 640px;"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="agendaPublicModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="agendaPublicModalTitle">Détails</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body" id="agendaPublicModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .fc a { text-decoration: none; }
+  .fc .fc-event,
+  .fc .fc-event .fc-event-title,
+  .fc .fc-event .fc-event-time,
+  .fc .fc-event a { color: #fff !important; }
+
+  #calendar {
+    background: #ffffff;
+    border: 1px solid rgba(16, 68, 128, 0.12);
+    border-radius: 14px;
+    padding: 12px;
+  }
+
+  .fc .fc-toolbar-title {
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: -0.2px;
+    color: #0f172a;
+  }
+
+  .fc .fc-button {
+    border-radius: 12px;
+    border: 0;
+    padding: 8px 10px;
+    font-weight: 900;
+  }
+
+  .fc .fc-event {
+    border-radius: 10px;
+    padding: 4px 8px;
+    font-weight: 900;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+    border-width: 0 !important;
+  }
+
+  .fc .fc-daygrid-day-number {
+    font-weight: 900;
+  }
+
+  @media (max-width: 576px) {
+    .fc .fc-toolbar.fc-header-toolbar { flex-wrap: wrap; gap: 10px; }
+    .fc .fc-toolbar-title { width: 100%; text-align: left; }
+  }
+</style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+
+    function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderEventDetails(ev) {
+        var p = ev.extendedProps || {};
+        var motif = p.motif ? `<div class="mb-2"><span class="badge bg-secondary">${escapeHtml(p.motif)}</span></div>` : '';
+        var dateLine = (p.date || ev.startStr || '');
+        var timeLine = (p.heure_debut && p.heure_fin) ? `${escapeHtml(p.heure_debut)} - ${escapeHtml(p.heure_fin)}` : '';
+        return `
+            ${motif}
+            <div class="mb-2 text-muted" style="font-weight: 800;">
+                <i class="bi bi-calendar-event"></i> ${escapeHtml(dateLine)} ${timeLine ? '• ' + escapeHtml(timeLine) : ''}
+            </div>
+            <div style="font-weight: 900; font-size: 16px;">${escapeHtml(p.sujet || ev.title || '')}</div>
+            <div class="mt-2"><i class="bi bi-person"></i> ${escapeHtml(p.visiteur || '')}</div>
+        `;
+    }
+
+    function showModal(title, bodyHtml) {
+        var titleEl = document.getElementById('agendaPublicModalTitle');
+        var bodyEl = document.getElementById('agendaPublicModalBody');
+        if (titleEl) titleEl.textContent = title || 'Détails';
+        if (bodyEl) bodyEl.innerHTML = bodyHtml || '';
+        try {
+            var modalEl = document.getElementById('agendaPublicModal');
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        } catch (e) {}
+    }
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        locale: 'fr',
+        nowIndicator: true,
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine', day: 'Jour', list: 'Liste' },
+        events: {
+            url: "{% url 'agenda_ministre_public_events' token=agenda_token %}",
+            method: 'GET',
+            failure: function() {
+                showModal('Erreur', '<div class="alert alert-warning mb-0">Impossible de charger les rendez-vous.</div>');
+            }
+        },
+        eventClick: function(info) {
+            info.jsEvent.preventDefault();
+            var ev = info.event;
+            var title = (ev.extendedProps && ev.extendedProps.sujet) ? ev.extendedProps.sujet : ev.title;
+            showModal(title, renderEventDetails(ev));
+        }
+    });
+
+    calendar.render();
+});
+</script>
+{% endblock %}
