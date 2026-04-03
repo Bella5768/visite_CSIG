@@ -398,8 +398,8 @@ def rendez_vous_confirmer(request, pk):
                 email_sent = envoyer_email_confirmation_rendez_vous(rendez_vous, request)
                 if not email_sent:
                     messages.warning(request, "Le rendez-vous est confirmé, mais l'email de confirmation n'a pas pu être envoyé (adresse email manquante ou configuration email).")
-            except Exception:
-                messages.warning(request, "Le rendez-vous est confirmé, mais une erreur est survenue lors de l'envoi de l'email de confirmation.")
+            except Exception as e:
+                messages.warning(request, f"Le rendez-vous est confirmé, mais une erreur est survenue lors de l'envoi de l'email de confirmation: {str(e)}")
         except Exception as e:
             messages.error(request, f'Erreur lors de la confirmation: {str(e)}')
     
