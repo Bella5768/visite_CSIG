@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+import csv
 import io
 import json
 
@@ -618,6 +619,76 @@ def agenda_ministre_events(request):
         })
 
     return JsonResponse({'success': True, 'events': events})
+
+
+@module_permission_required('agenda', 'view')
+def agenda_ministre_export(request):
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+
+    def _to_date(s):
+        if not s:
+            return None
+        try:
+            return date.fromisoformat(s[:10])
+        except Exception:
+            return None
+
+    start_date = _to_date(start)
+    end_date = _to_date(end)
+
+    qs = RendezVous.objects.select_related('visiteur', 'motif', 'correspondant').filter(statut='confirme')
+    if start_date:
+        qs = qs.filter(date_rendez_vous__gte=start_date)
+    if end_date:
+        qs = qs.filter(date_rendez_vous__lt=end_date)
+
+    qs = qs.order_by('date_rendez_vous', 'heure_debut')
+
+    filename = 'rendez_vous_confirmes.csv'
+    if start_date and end_date:
+        filename = f"rendez_vous_confirmes_{start_date.isoformat()}_{(end_date - timedelta(days=1)).isoformat()}.csv"
+    elif start_date:
+        filename = f"rendez_vous_confirmes_{start_date.isoformat()}.csv"
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    response.write('\ufeff')
+    writer = csv.writer(response, delimiter=';')
+    writer.writerow([
+        'Date',
+        'Heure début',
+        'Heure fin',
+        'Sujet',
+        'Description',
+        'Motif',
+        'Visiteur',
+        'Téléphone',
+        'Email',
+        'Correspondant',
+        'Statut',
+    ])
+
+    for rdv in qs:
+        visiteur = getattr(rdv, 'visiteur', None)
+        correspondant = getattr(rdv, 'correspondant', None)
+        motif = getattr(rdv, 'motif', None)
+        writer.writerow([
+            rdv.date_rendez_vous.strftime('%d/%m/%Y') if rdv.date_rendez_vous else '',
+            rdv.heure_debut.strftime('%H:%M') if rdv.heure_debut else '',
+            rdv.heure_fin.strftime('%H:%M') if rdv.heure_fin else '',
+            rdv.sujet or '',
+            (rdv.description or '').replace('\n', ' ').strip(),
+            getattr(motif, 'libelle', '') or '',
+            f"{getattr(visiteur, 'prenoms', '')} {getattr(visiteur, 'nom', '')}".strip(),
+            getattr(visiteur, 'telephone', '') or '',
+            getattr(visiteur, 'email', '') or '',
+            f"{getattr(correspondant, 'prenoms', '')} {getattr(correspondant, 'nom', '')}".strip() if correspondant else '',
+            rdv.get_statut_display() if hasattr(rdv, 'get_statut_display') else (rdv.statut or ''),
+        ])
+
+    return response
 
 
 def rendez_vous_public_creneaux(request):

@@ -20,6 +20,7 @@ urlpatterns = [
     # Agenda Ministre
     path('agenda/ministre/', views.agenda_ministre, name='agenda_ministre'),
     path('agenda/ministre/events/', views.agenda_ministre_events, name='agenda_ministre_events'),
+    path('agenda/ministre/export/', views.agenda_ministre_export, name='agenda_ministre_export'),
     
     # Rendez-vous URLs
     path('rendez-vous/', views.rendez_vous_list, name='rendez_vous_list'),

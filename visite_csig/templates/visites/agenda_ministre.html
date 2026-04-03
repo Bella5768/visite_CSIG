@@ -5,6 +5,11 @@
         <h2><i class="bi bi-calendar2-week"></i> Agenda du Ministre</h2>
         <div class="subtitle">Calendrier des audiences (MENA-ETFP)</div>
     </div>
+    <div class="actions">
+        <a href="#" class="btn-outline-gradient" id="agendaExportBtn">
+            <i class="bi bi-download"></i> Exporter (CSV)
+        </a>
+    </div>
 </div>
 
 <div class="card-section">
@@ -420,6 +425,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
     var lastModalTitle = '';
+    var exportBtn = document.getElementById('agendaExportBtn');
 
     function escapeHtml(value) {
         if (value === null || value === undefined) return '';
@@ -638,6 +644,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     calendar.render();
+
+    function updateExportLink() {
+        if (!exportBtn) return;
+        try {
+            var view = calendar.view;
+            var start = view.activeStart ? view.activeStart.toISOString().slice(0, 10) : '';
+            var end = view.activeEnd ? view.activeEnd.toISOString().slice(0, 10) : '';
+            var url = "{% url 'visites:agenda_ministre_export' %}" + "?start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end);
+            exportBtn.setAttribute('href', url);
+        } catch (e) {}
+    }
+
+    updateExportLink();
+    calendar.on('datesSet', function() {
+        updateExportLink();
+    });
 
     try {
         var printBtn = document.getElementById('agendaPrintBtn');
