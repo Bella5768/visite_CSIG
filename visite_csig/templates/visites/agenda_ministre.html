@@ -14,6 +14,21 @@
     </div>
 </div>
 
+<div class="modal fade" id="agendaModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="agendaModalTitle">Détails</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body" id="agendaModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
   .fc a { text-decoration: none; }
   .fc .fc-event,
@@ -158,6 +173,57 @@
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
 
+    function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function showAgendaModal(title, htmlBody) {
+        var titleEl = document.getElementById('agendaModalTitle');
+        var bodyEl = document.getElementById('agendaModalBody');
+        if (titleEl) titleEl.textContent = title || 'Détails';
+        if (bodyEl) bodyEl.innerHTML = htmlBody || '';
+        try {
+            var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('agendaModal'));
+            modal.show();
+        } catch (e) {
+            alert(title + "\n\n" + (bodyEl ? bodyEl.textContent : ''));
+        }
+    }
+
+    function renderEventDetails(event) {
+        var p = event.extendedProps || {};
+        var lines = [
+            '<div class="row g-3">',
+            '  <div class="col-md-6">',
+            '    <div class="p-3" style="background:#f8fafc;border:1px solid rgba(15,23,42,0.08);border-radius:14px;">',
+            '      <div class="fw-bold mb-2">Rendez-vous</div>',
+            '      <div><span class="text-muted">Sujet:</span> <span class="fw-semibold">' + escapeHtml(p.sujet || event.title) + '</span></div>',
+            '      <div><span class="text-muted">Motif:</span> ' + escapeHtml(p.motif || '-') + '</div>',
+            '      <div><span class="text-muted">Date:</span> ' + escapeHtml(p.date || '-') + '</div>',
+            '      <div><span class="text-muted">Heure:</span> ' + escapeHtml((p.heure_debut || '') + ' - ' + (p.heure_fin || '')) + '</div>',
+            '      <div><span class="text-muted">Statut:</span> ' + escapeHtml(p.statut || '-') + '</div>',
+            '    </div>',
+            '  </div>',
+            '  <div class="col-md-6">',
+            '    <div class="p-3" style="background:#ffffff;border:1px solid rgba(15,23,42,0.08);border-radius:14px;">',
+            '      <div class="fw-bold mb-2">Demandeur</div>',
+            '      <div><span class="text-muted">Nom:</span> <span class="fw-semibold">' + escapeHtml(p.visiteur || '-') + '</span></div>',
+            '      <div><span class="text-muted">Téléphone:</span> ' + escapeHtml(p.telephone || '-') + '</div>',
+            '      <div><span class="text-muted">Email:</span> ' + escapeHtml(p.email || '-') + '</div>',
+            '      <div><span class="text-muted">Correspondant:</span> ' + escapeHtml(p.correspondant || '-') + '</div>',
+            '    </div>',
+            '  </div>',
+            '</div>'
+        ];
+        return lines.join('');
+    }
+
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         height: 'auto',
@@ -201,10 +267,61 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         },
         eventClick: function(info) {
-            if (info.event.url) {
-                info.jsEvent.preventDefault();
-                window.location.href = info.event.url;
+            info.jsEvent.preventDefault();
+            var title = (info.event.extendedProps && info.event.extendedProps.sujet) ? info.event.extendedProps.sujet : info.event.title;
+            showAgendaModal(title, renderEventDetails(info.event));
+        },
+        dateClick: function(info) {
+            var clicked = info.dateStr;
+            var events = calendar.getEvents().filter(function(ev) {
+                try {
+                    return ev.start && ev.start.toISOString().slice(0, 10) === clicked;
+                } catch (e) {
+                    return false;
+                }
+            });
+
+            if (!events.length) {
+                showAgendaModal('Agenda du ' + clicked, '<div class="alert alert-info mb-0">Aucun rendez-vous confirmé pour cette date.</div>');
+                return;
             }
+
+            var items = events
+                .sort(function(a, b) { return (a.start || 0) - (b.start || 0); })
+                .map(function(ev) {
+                    var p = ev.extendedProps || {};
+                    var time = '';
+                    try {
+                        time = ev.start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    } catch (e) {}
+                    return (
+                        '<div class="p-3 mb-2" style="border:1px solid rgba(15,23,42,0.08);border-radius:14px;background:#fff;">'
+                        + '<div class="d-flex justify-content-between align-items-start gap-2">'
+                        + '  <div>'
+                        + '    <div class="fw-bold">' + escapeHtml(p.sujet || ev.title) + '</div>'
+                        + '    <div class="text-muted" style="font-size: 13px;">' + escapeHtml((p.motif || '-') + ' • ' + (p.visiteur || '-') ) + '</div>'
+                        + '  </div>'
+                        + '  <div class="fw-semibold" style="white-space:nowrap;">' + escapeHtml(time) + '</div>'
+                        + '</div>'
+                        + '<div class="mt-2"><button type="button" class="btn btn-sm btn-outline-primary" data-ev-id="' + escapeHtml(ev.id) + '"><i class="bi bi-eye"></i> Détails</button></div>'
+                        + '</div>'
+                    );
+                })
+                .join('');
+
+            showAgendaModal('Agenda du ' + clicked, items);
+
+            try {
+                document.querySelectorAll('#agendaModalBody [data-ev-id]').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var id = btn.getAttribute('data-ev-id');
+                        var ev = calendar.getEventById(id);
+                        if (!ev) return;
+                        var title = (ev.extendedProps && ev.extendedProps.sujet) ? ev.extendedProps.sujet : ev.title;
+                        showAgendaModal(title, renderEventDetails(ev));
+                    });
+                });
+            } catch (e) {}
         }
     });
 

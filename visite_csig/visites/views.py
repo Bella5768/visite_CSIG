@@ -587,6 +587,12 @@ def agenda_ministre_events(request):
         end_dt = f"{rdv.date_rendez_vous.isoformat()}T{rdv.heure_fin.strftime('%H:%M:%S')}"
         motif_label = rdv.motif.libelle if getattr(rdv, 'motif', None) else ''
         color = colors.get(rdv.statut, '#2563eb')
+        correspondant_label = None
+        try:
+            if getattr(rdv, 'correspondant', None):
+                correspondant_label = f"{rdv.correspondant.prenoms} {rdv.correspondant.nom}".strip()
+        except Exception:
+            correspondant_label = None
         events.append({
             'id': rdv.pk,
             'title': f"[{motif_label}] {rdv.sujet} - {rdv.visiteur.prenoms} {rdv.visiteur.nom}" if motif_label else f"{rdv.sujet} - {rdv.visiteur.prenoms} {rdv.visiteur.nom}",
@@ -595,7 +601,18 @@ def agenda_ministre_events(request):
             'backgroundColor': color,
             'borderColor': color,
             'textColor': '#ffffff',
-            'url': reverse('visites:rendez_vous_detail', kwargs={'pk': rdv.pk}),
+            'extendedProps': {
+                'sujet': rdv.sujet,
+                'motif': motif_label,
+                'visiteur': f"{rdv.visiteur.prenoms} {rdv.visiteur.nom}".strip(),
+                'telephone': getattr(rdv.visiteur, 'telephone', '') or '',
+                'email': getattr(rdv.visiteur, 'email', '') or '',
+                'correspondant': correspondant_label or '',
+                'statut': rdv.get_statut_display() if hasattr(rdv, 'get_statut_display') else rdv.statut,
+                'heure_debut': rdv.heure_debut.strftime('%H:%M'),
+                'heure_fin': rdv.heure_fin.strftime('%H:%M'),
+                'date': rdv.date_rendez_vous.strftime('%d/%m/%Y'),
+            },
         })
 
     return JsonResponse({'success': True, 'events': events})
