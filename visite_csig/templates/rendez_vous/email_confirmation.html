@@ -51,10 +51,16 @@
         .btn:hover {
             background-color: #2980b9;
         }
+        .logos { display: flex; justify-content: center; align-items: center; gap: 14px; margin-bottom: 12px; }
+        .logos img { height: 44px; width: auto; background: #fff; border-radius: 8px; padding: 6px; }
     </style>
 </head>
 <body>
     <div class="header">
+        <div class="logos">
+            <img src="{{ site_url }}static/images/mena-etfp.png" alt="MENA-ETFP">
+            <img src="{{ site_url }}static/images/simandou.jpeg" alt="Simandou">
+        </div>
         <h1>Confirmation de rendez-vous</h1>
         <p>MENA-ETFP</p>
     </div>
@@ -84,6 +90,11 @@
         
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{ site_url }}" class="btn">Accéder au site MENA-ETFP</a>
+        </div>
+
+        <div style="text-align: center; margin: 0 0 30px 0;">
+            <a href="{{ preuve_url }}" class="btn">Imprimer la preuve (PDF)</a>
+            <div style="font-size: 12px; color: #666; margin-top: 8px;">Présente cette preuve à l'accueil si on te la demande.</div>
         </div>
         
         <p>En cas d'empêchement, nous vous prions de nous en informer au plus tard 24 heures avant le rendez-vous.</p>

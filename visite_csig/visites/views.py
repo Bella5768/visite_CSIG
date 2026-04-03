@@ -860,6 +860,31 @@ def rendez_vous_public_suivi(request, token):
         }, status=404)
 
 
+def rendez_vous_public_preuve(request, token):
+    try:
+        data = signing.loads(token, salt='rendez_vous_public_preuve', max_age=60 * 60 * 24 * 180)
+        rdv_id = data.get('rdv_id')
+    except Exception:
+        return render(request, 'rendez_vous/public_invalid_link.html', {
+            'page_title': 'Lien invalide',
+        }, status=404)
+
+    rendez_vous = get_object_or_404(
+        RendezVous.objects.select_related('visiteur', 'motif', 'correspondant'),
+        pk=rdv_id,
+    )
+
+    if getattr(rendez_vous, 'statut', None) != 'confirme':
+        return render(request, 'rendez_vous/public_invalid_link.html', {
+            'page_title': 'Lien invalide',
+        }, status=404)
+
+    return render(request, 'rendez_vous/public_preuve.html', {
+        'page_title': 'Preuve de rendez-vous',
+        'rendez_vous': rendez_vous,
+    })
+
+
 @module_permission_required('rendez_vous', 'change')
 def rendez_vous_annuler(request, pk):
     rendez_vous = get_object_or_404(RendezVous, pk=pk)

@@ -72,12 +72,21 @@ def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
     
     sujet = f"Confirmation de votre rendez-vous - {rendez_vous.sujet}"
     
+    from django.core import signing
+    from django.urls import reverse
+
+    preuve_token = signing.dumps({'rdv_id': rendez_vous.pk}, salt='rendez_vous_public_preuve')
+    preuve_url = request.build_absolute_uri(
+        reverse('rendez_vous_public_preuve', kwargs={'token': preuve_token})
+    )
+
     context = {
         'rendez_vous': rendez_vous,
         'visiteur': rendez_vous.visiteur,
         'motif': rendez_vous.motif,
         'correspondant': rendez_vous.correspondant,
         'site_url': request.build_absolute_uri('/'),
+        'preuve_url': preuve_url,
     }
     
     html_message = render_to_string('rendez_vous/email_confirmation.html', context)

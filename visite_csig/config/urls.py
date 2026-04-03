@@ -25,6 +25,7 @@ urlpatterns = [
     path('rdv/', visites_views.rendez_vous_public_create, name='rendez_vous_public_create'),
     path('rdv/ministre/', visites_views.rendez_vous_public_ministre, name='rendez_vous_public_ministre'),
     path('rdv/ministre/<str:token>/', visites_views.rendez_vous_public_ministre_invite, name='rendez_vous_public_ministre_invite'),
+    path('rdv/preuve/<str:token>/', visites_views.rendez_vous_public_preuve, name='rendez_vous_public_preuve'),
     path('agenda/ministre/<str:token>/', visites_views.agenda_ministre_public, name='agenda_ministre_public'),
     path('agenda/ministre/<str:token>/events/', visites_views.agenda_ministre_public_events, name='agenda_ministre_public_events'),
     path('rdv/api/creneaux/', visites_views.rendez_vous_public_creneaux, name='rendez_vous_public_creneaux'),

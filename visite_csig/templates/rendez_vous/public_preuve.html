@@ -1,0 +1,96 @@
+{% extends 'public_base.html' %}
+{% load static %}
+{% block content %}
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-file-earmark-check"></i> Preuve de rendez-vous</h2>
+        <div class="subtitle">À présenter à l'accueil si nécessaire</div>
+    </div>
+    <div class="actions d-print-none">
+        <button type="button" class="btn-primary-gradient" id="printProofBtn">
+            <i class="bi bi-printer"></i> Imprimer / PDF
+        </button>
+    </div>
+</div>
+
+<div class="card-section" id="proofDoc">
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap" style="border-bottom: 2px solid rgba(15, 23, 42, 0.10); padding-bottom: 12px; margin-bottom: 14px;">
+            <div class="d-flex align-items-center gap-2">
+                <img src="{% static 'images/mena-etfp.png' %}" alt="MENA-ETFP" style="height:46px; width:auto; background:#fff; border:1px solid rgba(15, 23, 42, 0.10); border-radius: 10px; padding:6px;">
+                <img src="{% static 'images/simandou.jpeg' %}" alt="Simandou" style="height:46px; width:auto; background:#fff; border:1px solid rgba(15, 23, 42, 0.10); border-radius: 10px; padding:6px;">
+            </div>
+            <div class="text-end" style="min-width:220px;">
+                <div style="font-weight: 900; color: var(--primary-blue);">MENA-ETFP</div>
+                <div class="text-muted" style="font-weight: 700; font-size: 12px;">Document généré automatiquement</div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card-section" style="margin-bottom: 0;">
+                    <div class="card-header-custom"><i class="bi bi-info-circle"></i> Rendez-vous</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <tr><th width="160">Sujet</th><td>{{ rendez_vous.sujet }}</td></tr>
+                                <tr><th>Date</th><td>{{ rendez_vous.date_rendez_vous|date:"d/m/Y" }}</td></tr>
+                                <tr><th>Heure</th><td>{{ rendez_vous.heure_debut|time:"H:i" }} - {{ rendez_vous.heure_fin|time:"H:i" }}</td></tr>
+                                <tr><th>Motif</th><td>{{ rendez_vous.motif.libelle }}</td></tr>
+                                <tr><th>Statut</th><td><span class="badge bg-success">Confirmé</span></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card-section" style="margin-bottom: 0;">
+                    <div class="card-header-custom"><i class="bi bi-person"></i> Demandeur</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <tr><th width="160">Nom</th><td>{{ rendez_vous.visiteur.prenoms }} {{ rendez_vous.visiteur.nom }}</td></tr>
+                                <tr><th>Téléphone</th><td>{{ rendez_vous.visiteur.telephone|default:"-" }}</td></tr>
+                                <tr><th>Email</th><td>{{ rendez_vous.visiteur.email|default:"-" }}</td></tr>
+                                <tr><th>Correspondant</th><td>{% if rendez_vous.correspondant %}{{ rendez_vous.correspondant.prenoms }} {{ rendez_vous.correspondant.nom }}{% else %}-{% endif %}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if rendez_vous.description %}
+        <div class="card-section mt-3" style="margin-bottom: 0;">
+            <div class="card-header-custom"><i class="bi bi-chat-left-text"></i> Description</div>
+            <div class="card-body">
+                <div style="white-space: pre-wrap;">{{ rendez_vous.description }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mt-3 text-muted" style="font-size: 12px; font-weight: 700;">
+            <div><i class="bi bi-shield-check"></i> Présente ce document et une pièce d'identité à l'accueil.</div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+  .public-header, .footer, .d-print-none { display: none !important; }
+  body { background: #fff !important; }
+  .main-card { box-shadow: none !important; border: 0 !important; padding: 0 !important; }
+  .card-section { page-break-inside: avoid; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('printProofBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+        window.print();
+    });
+});
+</script>
+{% endblock %}
