@@ -401,7 +401,6 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
             rdv = RendezVous(
                 visiteur=visiteur,
                 motif_id=motif_id,
-                correspondant_id=request.POST.get('correspondant_id') or None,
                 creneau=creneau,
                 date_rendez_vous=creneau.date,
                 heure_debut=creneau.heure_debut,
@@ -415,7 +414,7 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
             rdv.save()
 
             # Envoyer les emails de notification
-            from .utils import envoyer_email_confirmation_rendez_vous, notifier_correspondant_rendez_vous
+            from .utils import envoyer_email_confirmation_rendez_vous
             
             # Email de confirmation au demandeur
             try:
@@ -428,14 +427,7 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
                 print(f"[ERREUR] Exception lors de l'envoi de l'email de confirmation: {e}")
             
             # Notification au correspondant
-            try:
-                notif_sent = notifier_correspondant_rendez_vous(rdv, request)
-                if notif_sent:
-                    print(f"[OK] Notification envoyee au correspondant {rdv.correspondant.email if rdv.correspondant else 'N/A'}")
-                else:
-                    print(f"[ERREUR] Erreur lors de l'envoi de la notification au correspondant")
-            except Exception as e:
-                print(f"[ERREUR] Exception lors de l'envoi de la notification au correspondant: {e}")
+            # (désactivée pour la page publique: le demandeur ne choisit pas de correspondant)
 
             suivi_token = signing.dumps({'rdv_id': rdv.pk}, salt='rendez_vous_public_suivi')
             suivi_url = request.build_absolute_uri(
@@ -457,7 +449,6 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
     return render(request, 'rendez_vous/public_create.html', {
         'page_title': 'Prendre rendez-vous',
         'motifs': MotifVisite.objects.filter(actif=True),
-        'correspondants': Correspondant.objects.filter(actif=True),
         'today': timezone.now().date(),
         'types_identite': settings.TYPES_IDENTITE,
         'fixed_motif': fixed_motif,

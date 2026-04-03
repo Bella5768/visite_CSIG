@@ -112,7 +112,7 @@
                             </div>
 
                             <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-12 mb-3">
                                     <label class="form-label">Motif <span class="text-danger">*</span></label>
                                     {% if fixed_motif %}
                                         <input type="hidden" name="motif_id" value="{{ fixed_motif.pk }}">
@@ -125,15 +125,6 @@
                                             {% endfor %}
                                         </select>
                                     {% endif %}
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Correspondant (optionnel)</label>
-                                    <select class="form-select" name="correspondant_id">
-                                        <option value="">Aucun</option>
-                                        {% for correspondant in correspondants %}
-                                        <option value="{{ correspondant.pk }}">{{ correspondant.prenoms }} {{ correspondant.nom }} - {{ correspondant.departement }}</option>
-                                        {% endfor %}
-                                    </select>
                                 </div>
                             </div>
 
