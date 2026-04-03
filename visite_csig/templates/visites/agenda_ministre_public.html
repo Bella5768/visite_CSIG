@@ -14,13 +14,16 @@
 </div>
 
 <div class="modal fade" id="agendaPublicModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="agendaPublicModalTitle">Détails</h5>
+      <div class="modal-header agenda-modal-header">
+        <h5 class="modal-title d-flex align-items-center gap-2" id="agendaPublicModalTitle">
+          <span class="agenda-modal-icon"><i class="bi bi-calendar2-event"></i></span>
+          <span>Détails</span>
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
-      <div class="modal-body" id="agendaPublicModalBody"></div>
+      <div class="modal-body agenda-modal-body" id="agendaPublicModalBody"></div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
       </div>
@@ -34,38 +37,207 @@
   .fc .fc-event .fc-event-title,
   .fc .fc-event .fc-event-time,
   .fc .fc-event a { color: #fff !important; }
+  .fc .fc-daygrid-event { display: block; }
+  .fc .fc-event-title { display: inline !important; font-size: 12px !important; white-space: normal; }
 
   #calendar {
     background: #ffffff;
     border: 1px solid rgba(16, 68, 128, 0.12);
     border-radius: 14px;
-    padding: 12px;
+    padding: 14px;
   }
 
   .fc .fc-toolbar-title {
-    font-size: 16px;
-    font-weight: 900;
+    font-size: 18px;
+    font-weight: 700;
     letter-spacing: -0.2px;
     color: #0f172a;
   }
 
+  .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+
   .fc .fc-button {
+    border-radius: 10px;
+    padding: 8px 12px;
+    border: 1px solid rgba(16, 68, 128, 0.22) !important;
+    background: #ffffff !important;
+    color: var(--primary-blue) !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 12px;
+  }
+
+  .fc .fc-button:hover {
+    background: rgba(16, 68, 128, 0.05) !important;
+    border-color: rgba(16, 68, 128, 0.35) !important;
+  }
+
+  .fc .fc-button:focus,
+  .fc .fc-button:active,
+  .fc .fc-button.fc-button-active {
+    background: var(--primary-blue) !important;
+    color: #ffffff !important;
+    border-color: var(--primary-blue) !important;
+    box-shadow: 0 8px 18px rgba(16, 68, 128, 0.25) !important;
+  }
+
+  .fc .fc-col-header-cell {
+    background: rgba(16, 68, 128, 0.06);
+  }
+
+  .fc .fc-col-header-cell-cushion {
+    padding: 10px 6px;
+    font-weight: 700;
+    color: #0f2f57;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 12px;
+  }
+
+  .fc .fc-scrollgrid {
+    border: 1px solid rgba(16, 68, 128, 0.12) !important;
     border-radius: 12px;
-    border: 0;
-    padding: 8px 10px;
+    overflow: hidden;
+  }
+
+  .fc .fc-now-indicator-line {
+    border-color: #ef4444;
+    border-width: 2px;
+  }
+
+  /* ======= GRID POLISH (MONTH/WEEK/DAY) ======= */
+  .fc .fc-scrollgrid-section-body td,
+  .fc .fc-scrollgrid-section-body th {
+    border-color: rgba(15, 23, 42, 0.10) !important;
+  }
+
+  .fc .fc-daygrid-day-frame,
+  .fc .fc-timegrid-col-frame {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .fc .fc-daygrid-day {
+    background: #ffffff;
+    transition: background 120ms ease;
+  }
+
+  .fc .fc-daygrid-day:hover {
+    background: rgba(16, 68, 128, 0.03);
+  }
+
+  .fc .fc-day-sat,
+  .fc .fc-day-sun {
+    background: rgba(2, 6, 23, 0.015);
+  }
+
+  .fc .fc-daygrid-day-top {
+    padding: 8px 10px 4px;
+  }
+
+  .fc .fc-daygrid-day-number {
+    padding: 6px 10px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 28px;
+    line-height: 1;
     font-weight: 900;
+    color: #0f172a;
+    background: rgba(15, 23, 42, 0.03);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+  }
+
+  .fc .fc-day-today {
+    background: rgba(16, 68, 128, 0.06) !important;
+  }
+
+  .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    background: rgba(16, 68, 128, 0.12);
+    border-color: rgba(16, 68, 128, 0.25);
+    color: #0d3a6e;
+  }
+
+  .fc .fc-daygrid-day-events {
+    padding: 2px 6px 8px;
   }
 
   .fc .fc-event {
     border-radius: 10px;
-    padding: 4px 8px;
-    font-weight: 900;
+    padding: 3px 6px;
+    font-weight: 700;
     box-shadow: 0 1px 2px rgba(0,0,0,0.12);
     border-width: 0 !important;
   }
 
-  .fc .fc-daygrid-day-number {
+  .fc .fc-event:hover {
+    filter: brightness(0.98);
+    transform: translateY(-1px);
+    transition: all 120ms ease;
+  }
+
+  .fc .fc-daygrid-event-harness {
+    margin: 2px 2px;
+  }
+
+  .fc .fc-daygrid-event {
+    padding: 6px 10px;
+    border-radius: 12px;
+    margin: 4px 2px;
+    box-shadow: 0 10px 20px rgba(2, 6, 23, 0.08);
+  }
+
+  .fc .fc-daygrid-event .fc-event-title {
     font-weight: 900;
+    letter-spacing: -0.2px;
+  }
+
+  .fc .fc-daygrid-event .fc-event-time {
+    opacity: 0.95;
+    font-weight: 900;
+  }
+
+  .fc .fc-list {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+  }
+
+  .fc .fc-list-day-cushion {
+    background: rgba(16, 68, 128, 0.06);
+    font-weight: 900;
+    color: #0f2f57;
+  }
+
+  .fc .fc-list-event:hover td {
+    background: rgba(16, 68, 128, 0.04);
+  }
+
+  .agenda-modal-header {
+    background: linear-gradient(135deg, rgba(13, 58, 110, 0.10) 0%, rgba(16, 68, 128, 0.08) 55%, rgba(21, 101, 168, 0.10) 100%);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .agenda-modal-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(16, 68, 128, 0.10);
+    color: #0f2f57;
+  }
+
+  .agenda-modal-body {
+    background: #ffffff;
   }
 
   @media (max-width: 576px) {
@@ -75,6 +247,43 @@
 </style>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+<style>
+  /* Overrides placed after FullCalendar CSS to match internal agenda */
+  .fc .fc-button,
+  .fc .fc-button-primary,
+  .fc .fc-button-primary:not(:disabled) {
+    border-radius: 10px;
+    padding: 8px 12px;
+    border: 1px solid rgba(16, 68, 128, 0.22) !important;
+    background: #ffffff !important;
+    color: var(--primary-blue) !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 12px;
+  }
+
+  .fc .fc-button:hover,
+  .fc .fc-button-primary:hover {
+    background: rgba(16, 68, 128, 0.05) !important;
+    border-color: rgba(16, 68, 128, 0.35) !important;
+    color: var(--primary-blue) !important;
+  }
+
+  .fc .fc-button:focus,
+  .fc .fc-button:active,
+  .fc .fc-button.fc-button-active,
+  .fc .fc-button-primary:focus,
+  .fc .fc-button-primary:active,
+  .fc .fc-button-primary.fc-button-active,
+  .fc .fc-button-primary:not(:disabled).fc-button-active {
+    background: var(--primary-blue) !important;
+    color: #ffffff !important;
+    border-color: var(--primary-blue) !important;
+    box-shadow: 0 8px 18px rgba(16, 68, 128, 0.25) !important;
+  }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
 <script>
