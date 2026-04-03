@@ -25,6 +25,9 @@
       </div>
       <div class="modal-body agenda-modal-body" id="agendaPublicModalBody"></div>
       <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="agendaPublicPrintBtn">
+          <i class="bi bi-printer"></i> Imprimer / PDF
+        </button>
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
       </div>
     </div>
@@ -38,6 +41,9 @@
   .fc .fc-event .fc-event-time,
   .fc .fc-event a { color: #fff !important; }
   .fc .fc-daygrid-event { display: block; }
+  .fc .fc-daygrid-dot-event { display: block; }
+  .fc .fc-daygrid-dot-event .fc-event-title { font-weight: 900; }
+  .fc .fc-daygrid-dot-event .fc-event-time { font-weight: 900; }
   .fc .fc-event-title { display: inline !important; font-size: 12px !important; white-space: normal; }
 
   #calendar {
@@ -240,9 +246,82 @@
     background: #ffffff;
   }
 
+  .agenda-modal-card {
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 22px rgba(2, 6, 23, 0.06);
+  }
+
+  .agenda-modal-card .card-head {
+    background: rgba(16, 68, 128, 0.06);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    padding: 12px 14px;
+  }
+
+  .agenda-modal-card .card-title {
+    margin: 0;
+    font-weight: 900;
+    color: #0f2f57;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .agenda-modal-card .card-body-in {
+    padding: 14px;
+  }
+
+  .agenda-kv {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 8px 12px;
+  }
+
+  .agenda-kv .k {
+    color: #64748b;
+    font-weight: 900;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .agenda-kv .v {
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 13px;
+  }
+
+  .agenda-desc {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
+    background: #f8fafc;
+  }
+
+  .agenda-desc .title {
+    font-weight: 900;
+    margin-bottom: 6px;
+    color: #0f2f57;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .agenda-desc .text {
+    margin: 0;
+    white-space: pre-wrap;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
   @media (max-width: 576px) {
     .fc .fc-toolbar.fc-header-toolbar { flex-wrap: wrap; gap: 10px; }
     .fc .fc-toolbar-title { width: 100%; text-align: left; }
+    .agenda-kv { grid-template-columns: 1fr; }
   }
 </style>
 
@@ -289,6 +368,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
+    var lastModalTitle = '';
 
     function escapeHtml(value) {
         if (value === null || value === undefined) return '';
@@ -300,29 +380,54 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/'/g, '&#039;');
     }
 
-    function renderEventDetails(ev) {
-        var p = ev.extendedProps || {};
-        var motif = p.motif ? `<div class="mb-2"><span class="badge bg-secondary">${escapeHtml(p.motif)}</span></div>` : '';
-        var dateLine = (p.date || ev.startStr || '');
-        var timeLine = (p.heure_debut && p.heure_fin) ? `${escapeHtml(p.heure_debut)} - ${escapeHtml(p.heure_fin)}` : '';
-        var contact = '';
-        if (p.telephone || p.email) {
-            var parts = [];
-            if (p.telephone) parts.push(`<span><i class="bi bi-telephone"></i> ${escapeHtml(p.telephone)}</span>`);
-            if (p.email) parts.push(`<span><i class="bi bi-envelope"></i> ${escapeHtml(p.email)}</span>`);
-            contact = `<div class="mt-2 text-muted" style="font-weight: 800; display:flex; gap:10px; flex-wrap:wrap;">${parts.join('')}</div>`;
+    function renderEventDetails(event) {
+        var p = event.extendedProps || {};
+        var desc = (p.description || '').trim();
+        var lines = [
+            '<div class="row g-3">',
+            '  <div class="col-md-6">',
+            '    <div class="agenda-modal-card">',
+            '      <div class="card-head">',
+            '        <p class="card-title"><i class="bi bi-info-circle"></i> Rendez-vous</p>',
+            '      </div>',
+            '      <div class="card-body-in">',
+            '        <div class="agenda-kv">',
+            '          <div class="k"><i class="bi bi-card-text"></i> Sujet</div><div class="v">' + escapeHtml(p.sujet || event.title) + '</div>',
+            '          <div class="k"><i class="bi bi-tag"></i> Motif</div><div class="v">' + escapeHtml(p.motif || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-calendar3"></i> Date</div><div class="v">' + escapeHtml(p.date || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-clock"></i> Heure</div><div class="v">' + escapeHtml((p.heure_debut || '') + ' - ' + (p.heure_fin || '')) + '</div>',
+            '          <div class="k"><i class="bi bi-check2-circle"></i> Statut</div><div class="v">' + escapeHtml(p.statut || 'Confirmé') + '</div>',
+            '        </div>',
+            '      </div>',
+            '    </div>',
+            '  </div>',
+            '  <div class="col-md-6">',
+            '    <div class="agenda-modal-card">',
+            '      <div class="card-head">',
+            '        <p class="card-title"><i class="bi bi-person"></i> Demandeur</p>',
+            '      </div>',
+            '      <div class="card-body-in">',
+            '        <div class="agenda-kv">',
+            '          <div class="k"><i class="bi bi-person-badge"></i> Nom</div><div class="v">' + escapeHtml(p.visiteur || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-telephone"></i> Téléphone</div><div class="v">' + escapeHtml(p.telephone || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-envelope"></i> Email</div><div class="v">' + escapeHtml(p.email || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-building"></i> Correspondant</div><div class="v">' + escapeHtml(p.correspondant || '-') + '</div>',
+            '        </div>',
+            '      </div>',
+            '    </div>',
+            '  </div>',
+            '</div>'
+        ];
+
+        if (desc) {
+            lines.push(
+                '<div class="mt-3 agenda-desc">'
+                + '<div class="title"><i class="bi bi-chat-left-text"></i> Description</div>'
+                + '<p class="text">' + escapeHtml(desc) + '</p>'
+                + '</div>'
+            );
         }
-        var description = p.description ? `<div class="mt-2" style="white-space: pre-wrap;">${escapeHtml(p.description)}</div>` : '';
-        return `
-            ${motif}
-            <div class="mb-2 text-muted" style="font-weight: 800;">
-                <i class="bi bi-calendar-event"></i> ${escapeHtml(dateLine)} ${timeLine ? '• ' + escapeHtml(timeLine) : ''}
-            </div>
-            <div style="font-weight: 900; font-size: 16px;">${escapeHtml(p.sujet || ev.title || '')}</div>
-            <div class="mt-2"><i class="bi bi-person"></i> ${escapeHtml(p.visiteur || '')}</div>
-            ${contact}
-            ${description}
-        `;
+        return lines.join('');
     }
 
     function showModal(title, bodyHtml) {
@@ -330,6 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var bodyEl = document.getElementById('agendaPublicModalBody');
         if (titleEl) titleEl.textContent = title || 'Détails';
         if (bodyEl) bodyEl.innerHTML = bodyHtml || '';
+        lastModalTitle = title || 'Détails';
         try {
             var modalEl = document.getElementById('agendaPublicModal');
             var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -337,17 +443,48 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {}
     }
 
+    function openPrintWindow() {
+        var bodyEl = document.getElementById('agendaPublicModalBody');
+        if (!bodyEl) return;
+        var html = bodyEl.innerHTML || '';
+        var title = lastModalTitle || 'Agenda';
+        var w = window.open('', '_blank');
+        if (!w) return;
+        w.document.open();
+        w.document.write(
+            '<!DOCTYPE html><html><head><meta charset="utf-8">'
+            + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            + '<title>' + escapeHtml(title) + '</title>'
+            + '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">'
+            + '<style>body{padding:24px;font-family:Inter,Segoe UI,sans-serif;} .agenda-modal-card{border:1px solid rgba(15,23,42,.10);border-radius:14px;overflow:hidden;margin-bottom:12px;} .card-head{background:rgba(16,68,128,.06);border-bottom:1px solid rgba(15,23,42,.08);padding:12px 14px;} .card-title{margin:0;font-weight:900;color:#0f2f57;} .card-body-in{padding:14px;} .agenda-kv{display:grid;grid-template-columns:120px 1fr;gap:8px 12px;} .agenda-kv .k{color:#64748b;font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.4px;} .agenda-kv .v{color:#0f172a;font-weight:800;font-size:13px;} .agenda-desc{border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:12px 14px;background:#f8fafc;} .agenda-desc .title{font-weight:900;margin-bottom:6px;color:#0f2f57;} .agenda-desc .text{margin:0;white-space:pre-wrap;} </style>'
+            + '</head><body>'
+            + '<h3 class="mb-3">' + escapeHtml(title) + '</h3>'
+            + html
+            + '<script>window.onload=function(){window.print();};<\\/script>'
+            + '</body></html>'
+        );
+        w.document.close();
+    }
+
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         height: 'auto',
         locale: 'fr',
+        eventDisplay: 'block',
+        navLinks: true,
         nowIndicator: true,
+        selectable: false,
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
         },
         buttonText: { today: "Aujourd'hui", month: 'Mois', week: 'Semaine', day: 'Jour', list: 'Liste' },
+        eventTimeFormat: {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        },
         events: function(fetchInfo, successCallback, failureCallback) {
             var url = "{% url 'agenda_ministre_public_events' token=agenda_token %}" + "?start=" + encodeURIComponent(fetchInfo.startStr) + "&end=" + encodeURIComponent(fetchInfo.endStr);
             fetch(url)
@@ -371,10 +508,75 @@ document.addEventListener('DOMContentLoaded', function() {
             var ev = info.event;
             var title = (ev.extendedProps && ev.extendedProps.sujet) ? ev.extendedProps.sujet : ev.title;
             showModal(title, renderEventDetails(ev));
+        },
+        dateClick: function(info) {
+            var clicked = info.dateStr;
+            var events = calendar.getEvents().filter(function(ev) {
+                try {
+                    return ev.start && ev.start.toISOString().slice(0, 10) === clicked;
+                } catch (e) {
+                    return false;
+                }
+            });
+
+            if (!events.length) {
+                showModal('Agenda du ' + clicked, '<div class="alert alert-info mb-0">Aucun rendez-vous confirmé pour cette date.</div>');
+                return;
+            }
+
+            var items = events
+                .sort(function(a, b) { return (a.start || 0) - (b.start || 0); })
+                .map(function(ev) {
+                    var p = ev.extendedProps || {};
+                    var time = '';
+                    try {
+                        time = ev.start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                    } catch (e) {}
+                    return (
+                        '<div class="agenda-modal-card mb-2">'
+                        + '  <div class="card-body-in">'
+                        + '    <div class="d-flex justify-content-between align-items-start gap-2">'
+                        + '      <div>'
+                        + '        <div class="fw-bold" style="font-size: 14px;">' + escapeHtml(p.sujet || ev.title) + '</div>'
+                        + '        <div class="text-muted" style="font-size: 13px;">' + escapeHtml((p.motif || '-') + ' • ' + (p.visiteur || '-') ) + '</div>'
+                        + '      </div>'
+                        + '      <div class="fw-semibold" style="white-space:nowrap;">' + escapeHtml(time) + '</div>'
+                        + '    </div>'
+                        + '    <div class="mt-2">'
+                        + '      <button type="button" class="btn btn-sm btn-outline-primary" data-ev-id="' + escapeHtml(ev.id) + '"><i class="bi bi-eye"></i> Détails</button>'
+                        + '    </div>'
+                        + '  </div>'
+                        + '</div>'
+                    );
+                })
+                .join('');
+
+            showModal('Agenda du ' + clicked, items);
+
+            try {
+                document.querySelectorAll('#agendaPublicModalBody [data-ev-id]').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var id = btn.getAttribute('data-ev-id');
+                        var ev = calendar.getEventById(id);
+                        if (!ev) return;
+                        var title = (ev.extendedProps && ev.extendedProps.sujet) ? ev.extendedProps.sujet : ev.title;
+                        showModal(title, renderEventDetails(ev));
+                    });
+                });
+            } catch (e) {}
         }
     });
 
     calendar.render();
+
+    try {
+        var printBtn = document.getElementById('agendaPublicPrintBtn');
+        if (printBtn) {
+            printBtn.addEventListener('click', function() {
+                openPrintWindow();
+            });
+        }
+    } catch (e) {}
 });
 </script>
 {% endblock %}
