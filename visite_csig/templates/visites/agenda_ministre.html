@@ -17,11 +17,14 @@
 <div class="modal fade" id="agendaModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="agendaModalTitle">Détails</h5>
+      <div class="modal-header agenda-modal-header">
+        <h5 class="modal-title d-flex align-items-center gap-2" id="agendaModalTitle">
+          <span class="agenda-modal-icon"><i class="bi bi-calendar2-event"></i></span>
+          <span>Détails</span>
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
-      <div class="modal-body" id="agendaModalBody"></div>
+      <div class="modal-body agenda-modal-body" id="agendaModalBody"></div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
       </div>
@@ -164,6 +167,121 @@
     padding: 12px;
     color: #0f172a;
   }
+
+  .agenda-modal-header {
+    background: linear-gradient(135deg, rgba(13, 58, 110, 0.10) 0%, rgba(16, 68, 128, 0.08) 55%, rgba(21, 101, 168, 0.10) 100%);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .agenda-modal-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #0d3a6e;
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(16, 68, 128, 0.20);
+  }
+
+  .agenda-modal-body {
+    background: #f1f5f9;
+  }
+
+  .agenda-modal-card {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+    overflow: hidden;
+  }
+
+  .agenda-modal-card .card-head {
+    padding: 14px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .agenda-modal-card .card-title {
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: -0.2px;
+    color: #0f172a;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .agenda-modal-card .card-title i {
+    color: #0d3a6e;
+    font-size: 16px;
+  }
+
+  .agenda-modal-card .card-body-in {
+    padding: 16px;
+  }
+
+  .agenda-kv {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 10px 14px;
+    font-size: 13px;
+  }
+
+  .agenda-kv .k {
+    color: #64748b;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .agenda-kv .k i {
+    color: rgba(16, 68, 128, 0.85);
+  }
+
+  .agenda-kv .v {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .agenda-desc {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+    padding: 16px;
+  }
+
+  .agenda-desc .title {
+    font-weight: 900;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .agenda-desc .title i {
+    color: #0d3a6e;
+  }
+
+  .agenda-desc .text {
+    color: #475569;
+    font-weight: 600;
+    white-space: pre-wrap;
+    margin: 0;
+  }
+
+  @media (max-width: 576px) {
+    .agenda-kv { grid-template-columns: 1fr; }
+  }
 </style>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
@@ -202,22 +320,34 @@ document.addEventListener('DOMContentLoaded', function() {
         var lines = [
             '<div class="row g-3">',
             '  <div class="col-md-6">',
-            '    <div class="p-3" style="background:#f8fafc;border:1px solid rgba(15,23,42,0.08);border-radius:14px;">',
-            '      <div class="fw-bold mb-2">Rendez-vous</div>',
-            '      <div><span class="text-muted">Sujet:</span> <span class="fw-semibold">' + escapeHtml(p.sujet || event.title) + '</span></div>',
-            '      <div><span class="text-muted">Motif:</span> ' + escapeHtml(p.motif || '-') + '</div>',
-            '      <div><span class="text-muted">Date:</span> ' + escapeHtml(p.date || '-') + '</div>',
-            '      <div><span class="text-muted">Heure:</span> ' + escapeHtml((p.heure_debut || '') + ' - ' + (p.heure_fin || '')) + '</div>',
-            '      <div><span class="text-muted">Statut:</span> ' + escapeHtml(p.statut || '-') + '</div>',
+            '    <div class="agenda-modal-card">',
+            '      <div class="card-head">',
+            '        <p class="card-title"><i class="bi bi-bookmark-star"></i> Rendez-vous</p>',
+            '      </div>',
+            '      <div class="card-body-in">',
+            '        <div class="agenda-kv">',
+            '          <div class="k"><i class="bi bi-card-text"></i> Sujet</div><div class="v">' + escapeHtml(p.sujet || event.title) + '</div>',
+            '          <div class="k"><i class="bi bi-tag"></i> Motif</div><div class="v">' + escapeHtml(p.motif || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-calendar3"></i> Date</div><div class="v">' + escapeHtml(p.date || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-clock"></i> Heure</div><div class="v">' + escapeHtml((p.heure_debut || '') + ' - ' + (p.heure_fin || '')) + '</div>',
+            '          <div class="k"><i class="bi bi-check2-circle"></i> Statut</div><div class="v">' + escapeHtml(p.statut || '-') + '</div>',
+            '        </div>',
+            '      </div>',
             '    </div>',
             '  </div>',
             '  <div class="col-md-6">',
-            '    <div class="p-3" style="background:#ffffff;border:1px solid rgba(15,23,42,0.08);border-radius:14px;">',
-            '      <div class="fw-bold mb-2">Demandeur</div>',
-            '      <div><span class="text-muted">Nom:</span> <span class="fw-semibold">' + escapeHtml(p.visiteur || '-') + '</span></div>',
-            '      <div><span class="text-muted">Téléphone:</span> ' + escapeHtml(p.telephone || '-') + '</div>',
-            '      <div><span class="text-muted">Email:</span> ' + escapeHtml(p.email || '-') + '</div>',
-            '      <div><span class="text-muted">Correspondant:</span> ' + escapeHtml(p.correspondant || '-') + '</div>',
+            '    <div class="agenda-modal-card">',
+            '      <div class="card-head">',
+            '        <p class="card-title"><i class="bi bi-person"></i> Demandeur</p>',
+            '      </div>',
+            '      <div class="card-body-in">',
+            '        <div class="agenda-kv">',
+            '          <div class="k"><i class="bi bi-person-badge"></i> Nom</div><div class="v">' + escapeHtml(p.visiteur || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-telephone"></i> Téléphone</div><div class="v">' + escapeHtml(p.telephone || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-envelope"></i> Email</div><div class="v">' + escapeHtml(p.email || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-building"></i> Correspondant</div><div class="v">' + escapeHtml(p.correspondant || '-') + '</div>',
+            '        </div>',
+            '      </div>',
             '    </div>',
             '  </div>',
             '</div>'
@@ -225,9 +355,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (desc) {
             lines.push(
-                '<div class="mt-3 p-3" style="background:#ffffff;border:1px solid rgba(15,23,42,0.08);border-radius:14px;">'
-                + '<div class="fw-bold mb-2">Description</div>'
-                + '<div class="text-muted" style="white-space:pre-wrap;">' + escapeHtml(desc) + '</div>'
+                '<div class="mt-3 agenda-desc">'
+                + '<div class="title"><i class="bi bi-chat-left-text"></i> Description</div>'
+                + '<p class="text">' + escapeHtml(desc) + '</p>'
                 + '</div>'
             );
         }
@@ -305,15 +435,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         time = ev.start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                     } catch (e) {}
                     return (
-                        '<div class="p-3 mb-2" style="border:1px solid rgba(15,23,42,0.08);border-radius:14px;background:#fff;">'
-                        + '<div class="d-flex justify-content-between align-items-start gap-2">'
-                        + '  <div>'
-                        + '    <div class="fw-bold">' + escapeHtml(p.sujet || ev.title) + '</div>'
-                        + '    <div class="text-muted" style="font-size: 13px;">' + escapeHtml((p.motif || '-') + ' • ' + (p.visiteur || '-') ) + '</div>'
+                        '<div class="agenda-modal-card mb-2">'
+                        + '  <div class="card-body-in">'
+                        + '    <div class="d-flex justify-content-between align-items-start gap-2">'
+                        + '      <div>'
+                        + '        <div class="fw-bold" style="font-size: 14px;">' + escapeHtml(p.sujet || ev.title) + '</div>'
+                        + '        <div class="text-muted" style="font-size: 13px;">' + escapeHtml((p.motif || '-') + ' • ' + (p.visiteur || '-') ) + '</div>'
+                        + '      </div>'
+                        + '      <div class="fw-semibold" style="white-space:nowrap;">' + escapeHtml(time) + '</div>'
+                        + '    </div>'
+                        + '    <div class="mt-2">'
+                        + '      <button type="button" class="btn btn-sm btn-outline-primary" data-ev-id="' + escapeHtml(ev.id) + '"><i class="bi bi-eye"></i> Détails</button>'
+                        + '    </div>'
                         + '  </div>'
-                        + '  <div class="fw-semibold" style="white-space:nowrap;">' + escapeHtml(time) + '</div>'
-                        + '</div>'
-                        + '<div class="mt-2"><button type="button" class="btn btn-sm btn-outline-primary" data-ev-id="' + escapeHtml(ev.id) + '"><i class="bi bi-eye"></i> Détails</button></div>'
                         + '</div>'
                     );
                 })
