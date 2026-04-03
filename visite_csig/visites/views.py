@@ -609,6 +609,7 @@ def agenda_ministre_events(request):
                 'telephone': getattr(rdv.visiteur, 'telephone', '') or '',
                 'email': getattr(rdv.visiteur, 'email', '') or '',
                 'correspondant': correspondant_label or '',
+                'statut_code': rdv.statut,
                 'statut': rdv.get_statut_display() if hasattr(rdv, 'get_statut_display') else rdv.statut,
                 'heure_debut': rdv.heure_debut.strftime('%H:%M'),
                 'heure_fin': rdv.heure_fin.strftime('%H:%M'),

@@ -26,6 +26,9 @@
       </div>
       <div class="modal-body agenda-modal-body" id="agendaModalBody"></div>
       <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="agendaPrintBtn">
+          <i class="bi bi-printer"></i> Imprimer / PDF
+        </button>
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
       </div>
     </div>
@@ -279,6 +282,27 @@
     margin: 0;
   }
 
+  .agenda-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .agenda-badge i { font-size: 12px; }
+
+  .agenda-badge.confirme { background: #dcfce7; color: #166534; }
+  .agenda-badge.en_cours { background: #fef3c7; color: #92400e; }
+  .agenda-badge.annule { background: #fee2e2; color: #991b1b; }
+  .agenda-badge.planifie { background: #e2e8f0; color: #334155; }
+  .agenda-badge.termine { background: #e0f2fe; color: #075985; }
+
   @media (max-width: 576px) {
     .agenda-kv { grid-template-columns: 1fr; }
   }
@@ -290,6 +314,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
+    var lastModalTitle = '';
 
     function escapeHtml(value) {
         if (value === null || value === undefined) return '';
@@ -306,6 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var bodyEl = document.getElementById('agendaModalBody');
         if (titleEl) titleEl.textContent = title || 'Détails';
         if (bodyEl) bodyEl.innerHTML = htmlBody || '';
+        lastModalTitle = title || 'Détails';
         try {
             var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('agendaModal'));
             modal.show();
@@ -314,15 +340,52 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function openPrintWindow() {
+        var bodyEl = document.getElementById('agendaModalBody');
+        if (!bodyEl) return;
+        var printHtml = bodyEl.innerHTML;
+        var w = window.open('', '_blank');
+        if (!w) return;
+
+        var css = `
+            body{font-family:Inter,Segoe UI,Arial,sans-serif;margin:24px;color:#0f172a;}
+            h1{font-size:18px;margin:0 0 14px 0;}
+            .agenda-modal-card,.agenda-desc{border:1px solid rgba(15,23,42,0.12);border-radius:14px;box-shadow:none !important;}
+            .agenda-modal-card .card-head{background:#f8fafc;}
+            .agenda-badge{padding:6px 10px;border-radius:999px;font-weight:900;font-size:11px;text-transform:uppercase;}
+            .row{display:flex;gap:12px;}
+            .col-md-6{flex:1;}
+            .mt-3{margin-top:12px;}
+            .mb-2{margin-bottom:10px;}
+            @media print{body{margin:0;} }
+        `;
+
+        w.document.open();
+        w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(lastModalTitle)}</title><style>${css}</style></head><body><h1>${escapeHtml(lastModalTitle)}</h1>${printHtml}</body></html>`);
+        w.document.close();
+        w.focus();
+        w.print();
+        w.close();
+    }
+
     function renderEventDetails(event) {
         var p = event.extendedProps || {};
         var desc = (p.description || '').trim();
+        var statutCode = (p.statut_code || '').trim();
+        var badgeClass = (statutCode || '').replace('-', '_') || 'confirme';
+        var badgeLabel = p.statut || statutCode || '-';
+        var badgeIcon = 'bi-check2-circle';
+        if (badgeClass === 'en_cours') badgeIcon = 'bi-hourglass-split';
+        if (badgeClass === 'annule') badgeIcon = 'bi-x-circle';
+        if (badgeClass === 'planifie') badgeIcon = 'bi-calendar2';
+        if (badgeClass === 'termine') badgeIcon = 'bi-check-circle';
         var lines = [
             '<div class="row g-3">',
             '  <div class="col-md-6">',
             '    <div class="agenda-modal-card">',
             '      <div class="card-head">',
             '        <p class="card-title"><i class="bi bi-bookmark-star"></i> Rendez-vous</p>',
+            '        <span class="agenda-badge ' + escapeHtml(badgeClass) + '"><i class="bi ' + escapeHtml(badgeIcon) + '"></i> ' + escapeHtml(badgeLabel) + '</span>',
             '      </div>',
             '      <div class="card-body-in">',
             '        <div class="agenda-kv">',
@@ -330,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '          <div class="k"><i class="bi bi-tag"></i> Motif</div><div class="v">' + escapeHtml(p.motif || '-') + '</div>',
             '          <div class="k"><i class="bi bi-calendar3"></i> Date</div><div class="v">' + escapeHtml(p.date || '-') + '</div>',
             '          <div class="k"><i class="bi bi-clock"></i> Heure</div><div class="v">' + escapeHtml((p.heure_debut || '') + ' - ' + (p.heure_fin || '')) + '</div>',
-            '          <div class="k"><i class="bi bi-check2-circle"></i> Statut</div><div class="v">' + escapeHtml(p.statut || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-check2-circle"></i> Statut</div><div class="v">' + escapeHtml(badgeLabel) + '</div>',
             '        </div>',
             '      </div>',
             '    </div>',
@@ -470,6 +533,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     calendar.render();
+
+    try {
+        var printBtn = document.getElementById('agendaPrintBtn');
+        if (printBtn) {
+            printBtn.addEventListener('click', function() {
+                openPrintWindow();
+            });
+        }
+    } catch (e) {}
 });
 </script>
 {% endblock %}
