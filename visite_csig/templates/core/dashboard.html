@@ -55,14 +55,8 @@
                 <a href="{% url 'visites:scanner_qrcode' %}?mode=entree" class="btn-action btn-green">
                     <i class="bi bi-qr-code-scan"></i> Scanner QR - Entrée
                 </a>
-                <a href="{% url 'visites:scanner_qrcode' %}?mode=sortie" class="btn-action btn-orange">
-                    <i class="bi bi-qr-code-scan"></i> Scanner QR - Sortie
-                </a>
                 <a href="{% url 'visiteurs:rechercher' %}" class="btn-action btn-outline">
                     <i class="bi bi-search"></i> Rechercher visiteur
-                </a>
-                <a href="{% url 'visites:sortie' %}" class="btn-action btn-red">
-                    <i class="bi bi-box-arrow-right"></i> Sortie manuelle
                 </a>
                 <a href="{% url 'rapports:rapport_journalier' %}" class="btn-action btn-link">
                     <i class="bi bi-file-earmark-text"></i> Rapport du jour

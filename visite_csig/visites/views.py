@@ -75,16 +75,6 @@ def nouvelle_visite(request, visiteur_id=None):
     return render(request, 'visites/nouvelle_visite.html', {'page_title': 'Nouvelle visite', 'visiteur': visiteur, 'motifs': MotifVisite.objects.filter(actif=True), 'correspondants': Correspondant.objects.filter(actif=True), 'types_visite': settings.TYPES_VISITE})
 
 
-@module_permission_required('visites', 'change')
-def sortie(request):
-    if request.method == 'POST':
-        visite = get_object_or_404(Visite, pk=request.POST.get('visite_id'))
-        visite.enregistrer_sortie(f"{request.user.prenoms} {request.user.nom}")
-        messages.success(request, 'Sortie enregistrée')
-        return redirect('visites:sortie')
-    return render(request, 'visites/sortie.html', {'page_title': 'Enregistrer sortie', 'visites_en_cours': Visite.objects.filter(date_visite=timezone.now().date(), statut='en_cours').select_related('visiteur', 'motif')})
-
-
 @module_permission_required('visites', 'view')
 def detail(request, pk):
     return render(request, 'visites/detail.html', {'page_title': f'Visite #{pk}', 'visite': get_object_or_404(Visite.objects.select_related('visiteur', 'motif', 'correspondant'), pk=pk)})
@@ -129,8 +119,7 @@ def generer_qrcode(request, visiteur_id):
 
 @module_permission_required('visites', 'view')
 def scanner_qrcode(request):
-    mode = request.GET.get('mode', 'entree')
-    return render(request, 'visites/scanner_qrcode.html', {'page_title': 'Scanner QR Code', 'mode': mode})
+    return render(request, 'visites/scanner_qrcode.html', {'page_title': 'Scanner QR Code'})
 
 
 @module_permission_required('visites', 'add', json_forbidden=True)
@@ -145,18 +134,6 @@ def traiter_entree_qrcode(request):
             agent_entree=f"{request.user.prenoms} {request.user.nom}"
         )
         return JsonResponse({'success': True, 'message': f'Entrée enregistrée pour {visiteur}'})
-    return JsonResponse({'success': False, 'message': 'Méthode non autorisée'})
-
-
-@module_permission_required('visites', 'change', json_forbidden=True)
-def traiter_sortie_qrcode(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        visite = Visite.objects.filter(visiteur_id=data.get('visiteur_id'), statut='en_cours', date_visite=timezone.now().date()).first()
-        if visite:
-            visite.enregistrer_sortie(f"{request.user.prenoms} {request.user.nom}")
-            return JsonResponse({'success': True, 'message': 'Sortie enregistrée'})
-        return JsonResponse({'success': False, 'message': 'Aucune visite en cours'})
     return JsonResponse({'success': False, 'message': 'Méthode non autorisée'})
 
 

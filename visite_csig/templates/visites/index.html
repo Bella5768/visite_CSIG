@@ -10,9 +10,6 @@
         <a href="{% url 'visites:nouvelle_visite' %}" class="btn-primary-gradient">
             <i class="bi bi-plus-circle"></i> Nouvelle visite
         </a>
-        <a href="{% url 'visites:sortie' %}" class="btn-outline-gradient">
-            <i class="bi bi-box-arrow-right"></i> Enregistrer sortie
-        </a>
     </div>
 </div>
 
@@ -118,16 +115,9 @@
                     {% endif %}
                 </td>
                 <td>
-                    <div class="actions-cell">
-                        <a href="{% url 'visites:detail' visite.id %}" class="btn-action-sm primary" title="Voir détails">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        {% if visite.statut == 'en_cours' %}
-                        <a href="{% url 'visites:sortie' %}?visite={{ visite.id }}" class="btn-action-sm warning" title="Enregistrer sortie">
-                            <i class="bi bi-box-arrow-right"></i>
-                        </a>
-                        {% endif %}
-                    </div>
+                    <a href="{% url 'visites:detail' visite.id %}" class="btn-action-sm" title="Voir détails">
+                        <i class="bi bi-eye"></i>
+                    </a>
                 </td>
             </tr>
             {% empty %}
