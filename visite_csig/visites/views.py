@@ -282,6 +282,20 @@ def rendez_vous_update(request, pk):
     
     if request.method == 'POST':
         try:
+            old_motif = rendez_vous.motif
+            old_correspondant = rendez_vous.correspondant
+            original = {
+                'visiteur_id': rendez_vous.visiteur_id,
+                'motif_id': rendez_vous.motif_id,
+                'correspondant_id': rendez_vous.correspondant_id,
+                'date_rendez_vous': rendez_vous.date_rendez_vous,
+                'heure_debut': rendez_vous.heure_debut,
+                'heure_fin': rendez_vous.heure_fin,
+                'sujet': rendez_vous.sujet,
+                'description': rendez_vous.description,
+                'priorite': rendez_vous.priorite,
+            }
+
             rendez_vous.visiteur_id = request.POST.get('visiteur_id')
             rendez_vous.motif_id = request.POST.get('motif_id')
             rendez_vous.correspondant_id = request.POST.get('correspondant_id') or None
@@ -292,9 +306,43 @@ def rendez_vous_update(request, pk):
             rendez_vous.description = request.POST.get('description', '')
             rendez_vous.notes_confidentielles = request.POST.get('notes_confidentielles', '')
             rendez_vous.priorite = request.POST.get('priorite', 'normale')
+
+            if rendez_vous.creneau_id:
+                c = rendez_vous.creneau
+                if (
+                    str(rendez_vous.motif_id) != str(c.motif_id)
+                    or rendez_vous.date_rendez_vous != c.date
+                    or rendez_vous.heure_debut != c.heure_debut
+                    or rendez_vous.heure_fin != c.heure_fin
+                ):
+                    rendez_vous.creneau = None
             
             rendez_vous.full_clean()
             rendez_vous.save()
+
+            try:
+                from .utils import notifier_visiteur_modification_rendez_vous
+
+                changes = []
+                if original['sujet'] != rendez_vous.sujet:
+                    changes.append({'label': 'Sujet', 'old': original['sujet'], 'new': rendez_vous.sujet})
+                if original['date_rendez_vous'] != rendez_vous.date_rendez_vous:
+                    changes.append({'label': 'Date', 'old': original['date_rendez_vous'], 'new': rendez_vous.date_rendez_vous})
+                if original['heure_debut'] != rendez_vous.heure_debut:
+                    changes.append({'label': 'Heure début', 'old': original['heure_debut'], 'new': rendez_vous.heure_debut})
+                if original['heure_fin'] != rendez_vous.heure_fin:
+                    changes.append({'label': 'Heure fin', 'old': original['heure_fin'], 'new': rendez_vous.heure_fin})
+                if str(original['motif_id']) != str(rendez_vous.motif_id):
+                    changes.append({'label': 'Motif', 'old': old_motif, 'new': rendez_vous.motif})
+                if str(original['correspondant_id'] or '') != str(rendez_vous.correspondant_id or ''):
+                    changes.append({'label': 'Correspondant', 'old': old_correspondant or '-', 'new': rendez_vous.correspondant or '-'})
+                if original['priorite'] != rendez_vous.priorite:
+                    changes.append({'label': 'Priorité', 'old': original['priorite'], 'new': rendez_vous.priorite})
+
+                if changes:
+                    notifier_visiteur_modification_rendez_vous(rendez_vous, request, changes=changes)
+            except Exception:
+                pass
             
             messages.success(request, 'Rendez-vous mis à jour avec succès')
             return redirect('visites:rendez_vous_detail', pk=rendez_vous.pk)

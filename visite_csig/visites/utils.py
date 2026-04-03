@@ -131,3 +131,39 @@ def notifier_correspondant_rendez_vous(rendez_vous, request):
     except Exception as e:
         print(f"Erreur lors de l'envoi de l'email au correspondant: {e}")
         return False
+
+
+def notifier_visiteur_modification_rendez_vous(rendez_vous, request, changes=None):
+    """
+    Notifie le visiteur par email lorsqu'un rendez-vous est modifié.
+    """
+    if not rendez_vous.visiteur.email:
+        return False
+
+    sujet = f"Modification de votre rendez-vous - {rendez_vous.sujet}"
+
+    context = {
+        'rendez_vous': rendez_vous,
+        'visiteur': rendez_vous.visiteur,
+        'motif': rendez_vous.motif,
+        'correspondant': rendez_vous.correspondant,
+        'site_url': request.build_absolute_uri('/'),
+        'changes': changes or [],
+    }
+
+    html_message = render_to_string('rendez_vous/email_modification.html', context)
+    plain_message = strip_tags(html_message)
+
+    try:
+        send_mail(
+            sujet,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [rendez_vous.visiteur.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Erreur lors de l'envoi de l'email de modification: {e}")
+        return False
