@@ -603,6 +603,7 @@ def agenda_ministre_events(request):
             'textColor': '#ffffff',
             'extendedProps': {
                 'sujet': rdv.sujet,
+                'description': rdv.description or '',
                 'motif': motif_label,
                 'visiteur': f"{rdv.visiteur.prenoms} {rdv.visiteur.nom}".strip(),
                 'telephone': getattr(rdv.visiteur, 'telephone', '') or '',
