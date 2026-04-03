@@ -721,8 +721,11 @@ def agenda_ministre_public_events(request, token):
             'textColor': '#ffffff',
             'extendedProps': {
                 'sujet': rdv.sujet,
+                'description': rdv.description or '',
                 'motif': motif_label,
                 'visiteur': f"{rdv.visiteur.prenoms} {rdv.visiteur.nom}".strip(),
+                'telephone': getattr(rdv.visiteur, 'telephone', '') or '',
+                'email': getattr(rdv.visiteur, 'email', '') or '',
                 'statut_code': rdv.statut,
                 'statut': rdv.get_statut_display() if hasattr(rdv, 'get_statut_display') else rdv.statut,
                 'heure_debut': rdv.heure_debut.strftime('%H:%M'),
