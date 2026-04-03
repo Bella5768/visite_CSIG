@@ -17,6 +17,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
 from core.models import Correspondant, MotifVisite
 from core.permissions import module_permission_required
 from visiteurs.models import Visiteur
@@ -154,6 +159,116 @@ def imprimer_badge(request, pk):
     pdf_buffer = generate_badge_pdf(visite.visiteur, visite)
     response = HttpResponse(pdf_buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="badge_{visite.visiteur.nom}.pdf"'
+    return response
+
+
+@module_permission_required('agenda', 'view')
+def agenda_ministre_export_pdf(request):
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+
+    def _to_date(s):
+        if not s:
+            return None
+        try:
+            return date.fromisoformat(s[:10])
+        except Exception:
+            return None
+
+    start_date = _to_date(start)
+    end_date = _to_date(end)
+
+    qs = RendezVous.objects.select_related('visiteur', 'motif', 'correspondant').filter(statut='confirme')
+    if start_date:
+        qs = qs.filter(date_rendez_vous__gte=start_date)
+    if end_date:
+        qs = qs.filter(date_rendez_vous__lt=end_date)
+    qs = qs.order_by('date_rendez_vous', 'heure_debut')
+
+    filename = 'rendez_vous_confirmes.pdf'
+    if start_date and end_date:
+        filename = f"rendez_vous_confirmes_{start_date.isoformat()}_{(end_date - timedelta(days=1)).isoformat()}.pdf"
+    elif start_date:
+        filename = f"rendez_vous_confirmes_{start_date.isoformat()}.pdf"
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        leftMargin=22,
+        rightMargin=22,
+        topMargin=22,
+        bottomMargin=18,
+        title='Rendez-vous confirmés',
+    )
+
+    styles = getSampleStyleSheet()
+    title = 'Liste des rendez-vous confirmés'
+    if start_date and end_date:
+        title = f"Liste des rendez-vous confirmés ({start_date.strftime('%d/%m/%Y')} - {(end_date - timedelta(days=1)).strftime('%d/%m/%Y')})"
+    elif start_date:
+        title = f"Liste des rendez-vous confirmés (à partir du {start_date.strftime('%d/%m/%Y')})"
+
+    elements = [
+        Paragraph(title, styles['Title']),
+        Spacer(1, 10),
+    ]
+
+    data = [[
+        'Date',
+        'Début',
+        'Fin',
+        'Motif',
+        'Sujet',
+        'Visiteur',
+        'Téléphone',
+        'Email',
+    ]]
+
+    for rdv in qs:
+        visiteur = getattr(rdv, 'visiteur', None)
+        motif = getattr(rdv, 'motif', None)
+        data.append([
+            rdv.date_rendez_vous.strftime('%d/%m/%Y') if rdv.date_rendez_vous else '',
+            rdv.heure_debut.strftime('%H:%M') if rdv.heure_debut else '',
+            rdv.heure_fin.strftime('%H:%M') if rdv.heure_fin else '',
+            getattr(motif, 'libelle', '') or '',
+            rdv.sujet or '',
+            f"{getattr(visiteur, 'prenoms', '')} {getattr(visiteur, 'nom', '')}".strip(),
+            getattr(visiteur, 'telephone', '') or '',
+            getattr(visiteur, 'email', '') or '',
+        ])
+
+    table = Table(
+        data,
+        colWidths=[60, 40, 40, 90, 140, 120, 80, 140],
+        repeatRows=1,
+    )
+
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0d3a6e')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#cbd5e1')),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ]))
+
+    elements.append(table)
+    doc.build(elements)
+
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
 
