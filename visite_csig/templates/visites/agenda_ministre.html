@@ -6,9 +6,6 @@
         <div class="subtitle">Calendrier des audiences (MENA-ETFP)</div>
     </div>
     <div class="actions">
-        <a href="#" class="btn-outline-gradient" id="agendaExportBtn">
-            <i class="bi bi-download"></i> Exporter (CSV)
-        </a>
         <a href="#" class="btn-primary-gradient" id="agendaExportPdfBtn">
             <i class="bi bi-filetype-pdf"></i> Exporter (PDF)
         </a>
@@ -428,7 +425,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
     var lastModalTitle = '';
-    var exportBtn = document.getElementById('agendaExportBtn');
     var exportPdfBtn = document.getElementById('agendaExportPdfBtn');
 
     function escapeHtml(value) {
@@ -650,15 +646,11 @@ document.addEventListener('DOMContentLoaded', function() {
     calendar.render();
 
     function updateExportLink() {
-        if (!exportBtn && !exportPdfBtn) return;
+        if (!exportPdfBtn) return;
         try {
             var view = calendar.view;
             var start = view.activeStart ? view.activeStart.toISOString().slice(0, 10) : '';
             var end = view.activeEnd ? view.activeEnd.toISOString().slice(0, 10) : '';
-            if (exportBtn) {
-                var url = "{% url 'visites:agenda_ministre_export' %}" + "?start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end);
-                exportBtn.setAttribute('href', url);
-            }
             if (exportPdfBtn) {
                 var urlPdf = "{% url 'visites:agenda_ministre_export_pdf' %}" + "?start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end);
                 exportPdfBtn.setAttribute('href', urlPdf);
