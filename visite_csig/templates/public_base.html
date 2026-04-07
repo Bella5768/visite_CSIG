@@ -25,12 +25,15 @@
         * { font-family: 'Inter', 'Segoe UI', sans-serif; }
         body { background: #f1f5f9; min-height: 100vh; }
         .public-shell { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
-        .public-header { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 16px; box-shadow: var(--shadow-sm); margin-bottom: 18px; }
-        .public-header .logo { width: 84px; height: 56px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(15, 23, 42, 0.08); }
+        .public-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 16px; box-shadow: var(--shadow-sm); margin-bottom: 18px; }
+        .public-header .left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .public-header .logos { display: flex; align-items: center; gap: 10px; }
+        .public-header .logo { width: 72px; height: 52px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(15, 23, 42, 0.08); }
         .public-header .logo img { width: 100%; height: 100%; object-fit: contain; transform: scale(1.12); }
         .public-header .brand { text-align: left; }
         .public-header .brand-title { font-weight: 800; letter-spacing: -0.3px; margin: 0; color: var(--primary-blue); font-size: 18px; line-height: 1.1; }
         .public-header .brand-subtitle { margin: 2px 0 0; color: var(--text-2); font-size: 12px; }
+        .public-header .right { text-align: right; color: var(--text-2); font-size: 12px; font-weight: 700; }
         .main-card { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 16px; box-shadow: var(--shadow-sm); padding: 18px; }
         .page-title-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
         .page-title-bar h2 { margin: 0; font-size: 20px; font-weight: 800; color: var(--primary-blue); display: flex; align-items: center; gap: 10px; }
@@ -74,17 +77,45 @@
         .alert-success { background: #dcfce7; color: #052e16; }
         .alert-warning { background: #fef3c7; color: #0b1220; }
         .alert-danger { background: #fee2e2; color: #450a0a; }
+
+        .table { margin-bottom: 0; }
+        .table.table-bordered { border-color: rgba(15, 23, 42, 0.10); }
+        .table.table-bordered > :not(caption) > * > * { border-color: rgba(15, 23, 42, 0.10); }
+        .table th { background: #f8fafc; font-weight: 900; color: #0f2f57; }
+        .table td { font-weight: 700; color: #0f172a; }
+
+        .input-group .btn { padding-left: 14px; padding-right: 14px; }
+        .input-group .form-control { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+        .input-group .btn { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+        @media (max-width: 576px) {
+            .public-header { align-items: flex-start; }
+            .public-header .right { display: none; }
+            .page-title-bar { flex-direction: column; align-items: flex-start; }
+            .page-title-bar .actions { width: 100%; }
+            .btn-primary-gradient, .btn-outline-gradient { width: 100%; justify-content: center; }
+        }
     </style>
 </head>
 <body>
     <div class="public-shell">
         <div class="public-header">
-            <div class="logo">
-                <img src="{% static 'images/mena-etfp.png' %}" alt="MENA-ETFP">
+            <div class="left">
+                <div class="logos">
+                    <div class="logo">
+                        <img src="{% static 'images/mena-etfp.png' %}" alt="MENA-ETFP">
+                    </div>
+                    <div class="logo">
+                        <img src="{% static 'images/simandou.jpeg' %}" alt="Simandou">
+                    </div>
+                </div>
+                <div class="brand">
+                    <p class="brand-title">{{ APP_NAME }}</p>
+                    <p class="brand-subtitle">Prise de rendez-vous (page publique)</p>
+                </div>
             </div>
-            <div class="brand">
-                <p class="brand-title">{{ APP_NAME }}</p>
-                <p class="brand-subtitle">Prise de rendez-vous (page publique)</p>
+            <div class="right">
+                Ministère / Branding officiel
             </div>
         </div>
 
