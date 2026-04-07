@@ -14,6 +14,27 @@
 
 <div class="card-section">
     <div class="card-body">
+        <div class="row g-2 align-items-end mb-3" id="agendaFilters">
+            <div class="col-md-7">
+                <label class="form-label">Rechercher</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="agendaSearchInput" placeholder="Sujet / visiteur / téléphone / email">
+                    <button class="btn btn-outline-secondary" type="button" id="agendaClearFilters"><i class="bi bi-x-lg"></i></button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Motif</label>
+                <select class="form-select" id="agendaMotifSelect">
+                    <option value="">Tous</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="button" class="btn btn-primary" id="agendaPrintViewBtn">
+                    <i class="bi bi-printer"></i> Imprimer
+                </button>
+            </div>
+        </div>
         <div id="calendar" style="min-height: 700px;"></div>
         <div id="events-debug" class="mt-3" style="display:none;"></div>
     </div>
@@ -538,6 +559,28 @@ document.addEventListener('DOMContentLoaded', function() {
         if (badgeClass === 'annule') badgeIcon = 'bi-x-circle';
         if (badgeClass === 'planifie') badgeIcon = 'bi-calendar2';
         if (badgeClass === 'termine') badgeIcon = 'bi-check-circle';
+        function safeTel(t) {
+            return String(t || '').replace(/\s+/g, '');
+        }
+        function copyToClipboard(text) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text);
+                    return;
+                }
+            } catch (e) {}
+            try {
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                ta.remove();
+            } catch (e) {}
+        }
+
+        var tel = p.telephone || '';
+        var email = p.email || '';
         var lines = [
             '<div class="row g-3">',
             '  <div class="col-md-6">',
@@ -565,8 +608,18 @@ document.addEventListener('DOMContentLoaded', function() {
             '      <div class="card-body-in">',
             '        <div class="agenda-kv">',
             '          <div class="k"><i class="bi bi-person-badge"></i> Nom</div><div class="v">' + escapeHtml(p.visiteur || '-') + '</div>',
-            '          <div class="k"><i class="bi bi-telephone"></i> Téléphone</div><div class="v">' + escapeHtml(p.telephone || '-') + '</div>',
-            '          <div class="k"><i class="bi bi-envelope"></i> Email</div><div class="v">' + escapeHtml(p.email || '-') + '</div>',
+            '          <div class="k"><i class="bi bi-telephone"></i> Téléphone</div><div class="v">' + escapeHtml(tel || '-')
+            + (tel ? (' <span class="ms-2 d-inline-flex gap-1">'
+            + '<a class="btn btn-sm btn-outline-primary" href="tel:' + escapeHtml(safeTel(tel)) + '"><i class="bi bi-telephone-outbound"></i></a>'
+            + '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="(' + copyToClipboard.toString() + ')(' + JSON.stringify(String(tel)) + ')"><i class="bi bi-clipboard"></i></button>'
+            + '</span>') : '')
+            + '</div>',
+            '          <div class="k"><i class="bi bi-envelope"></i> Email</div><div class="v">' + escapeHtml(email || '-')
+            + (email ? (' <span class="ms-2 d-inline-flex gap-1">'
+            + '<a class="btn btn-sm btn-outline-primary" href="mailto:' + escapeHtml(email) + '"><i class="bi bi-envelope-at"></i></a>'
+            + '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="(' + copyToClipboard.toString() + ')(' + JSON.stringify(String(email)) + ')"><i class="bi bi-clipboard"></i></button>'
+            + '</span>') : '')
+            + '</div>',
             '          <div class="k"><i class="bi bi-building"></i> Correspondant</div><div class="v">' + escapeHtml(p.correspondant || '-') + '</div>',
             '        </div>',
             '      </div>',
@@ -586,15 +639,120 @@ document.addEventListener('DOMContentLoaded', function() {
         return lines.join('');
     }
 
+    var agendaFilterState = {
+        query: '',
+        motif: '',
+    };
+
+    function normalizeValue(v) {
+        return String(v || '').toLowerCase();
+    }
+
+    function eventMatchesFilters(event) {
+        var p = event.extendedProps || {};
+        var q = normalizeValue(agendaFilterState.query).trim();
+        var motif = normalizeValue(agendaFilterState.motif).trim();
+
+        if (motif) {
+            if (normalizeValue(p.motif) !== motif) return false;
+        }
+
+        if (!q) return true;
+        var hay = [
+            p.sujet,
+            p.visiteur,
+            p.telephone,
+            p.email,
+            p.motif,
+            event.title,
+        ].map(normalizeValue).join(' | ');
+        return hay.indexOf(q) !== -1;
+    }
+
+    function refreshMotifOptions(calendar) {
+        var select = document.getElementById('agendaMotifSelect');
+        if (!select) return;
+        var current = select.value || '';
+
+        var motifs = {};
+        try {
+            calendar.getEvents().forEach(function(ev) {
+                var p = ev.extendedProps || {};
+                var m = (p.motif || '').trim();
+                if (m) motifs[m.toLowerCase()] = m;
+            });
+        } catch (e) {}
+
+        var keys = Object.keys(motifs).sort();
+        var html = '<option value="">Tous</option>' + keys.map(function(k) {
+            var lbl = motifs[k];
+            return '<option value="' + escapeHtml(k) + '">' + escapeHtml(lbl) + '</option>';
+        }).join('');
+        select.innerHTML = html;
+        select.value = current;
+    }
+
+    function printCurrentView(calendar) {
+        if (!calendar) return;
+        var view = calendar.view;
+        var start = view && view.activeStart ? new Date(view.activeStart) : null;
+        var end = view && view.activeEnd ? new Date(view.activeEnd) : null;
+        var title = (view && view.title) ? view.title : 'Agenda';
+
+        var evs = calendar.getEvents().filter(function(ev) {
+            if (!ev.start) return false;
+            if (start && ev.start < start) return false;
+            if (end && ev.start >= end) return false;
+            return eventMatchesFilters(ev);
+        });
+
+        evs.sort(function(a, b) { return (a.start || 0) - (b.start || 0); });
+
+        var listHtml = evs.map(function(ev) {
+            var p = ev.extendedProps || {};
+            var date = p.date || '';
+            var time = (p.heure_debut || '') + ' - ' + (p.heure_fin || '');
+            return (
+                '<tr>'
+                + '<td style="white-space:nowrap;">' + escapeHtml(date) + '</td>'
+                + '<td style="white-space:nowrap;">' + escapeHtml(time) + '</td>'
+                + '<td>' + escapeHtml(p.motif || '-') + '</td>'
+                + '<td>' + escapeHtml(p.sujet || ev.title) + '</td>'
+                + '<td>' + escapeHtml(p.visiteur || '-') + '</td>'
+                + '</tr>'
+            );
+        }).join('');
+
+        var html = (
+            '<div class="agenda-modal-card">'
+            + '<div class="card-head"><p class="card-title mb-0"><i class="bi bi-list-check"></i> ' + escapeHtml(title) + '</p></div>'
+            + '<div class="card-body-in">'
+            + (evs.length ? (
+                '<div class="table-responsive">'
+                + '<table class="table table-sm table-bordered mb-0">'
+                + '<thead><tr>'
+                + '<th>Date</th><th>Heure</th><th>Motif</th><th>Sujet</th><th>Demandeur</th>'
+                + '</tr></thead>'
+                + '<tbody>' + listHtml + '</tbody>'
+                + '</table></div>'
+            ) : '<div class="alert alert-info mb-0">Aucun rendez-vous dans cette vue.</div>')
+            + '</div></div>'
+        );
+
+        lastModalTitle = 'Agenda du Ministre';
+        showAgendaModal('Impression', html);
+        openPrintWindow();
+    }
+
     var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+        initialView: (window.innerWidth && window.innerWidth < 768) ? 'listWeek' : 'dayGridMonth',
         height: 'auto',
         locale: 'fr',
         eventDisplay: 'block',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,listDay'
         },
         navLinks: true,
         nowIndicator: true,
@@ -623,10 +781,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 } catch (e) {}
                 successCallback(data.events || []);
+                try {
+                    refreshMotifOptions(calendar);
+                    calendar.rerenderEvents();
+                } catch (e) {}
             })
             .catch(function() {
                 failureCallback();
             });
+        },
+        eventDidMount: function(arg) {
+            try {
+                if (!eventMatchesFilters(arg.event)) {
+                    arg.el.style.display = 'none';
+                }
+            } catch (e) {}
         },
         eventClick: function(info) {
             info.jsEvent.preventDefault();
@@ -716,6 +885,40 @@ document.addEventListener('DOMContentLoaded', function() {
         if (printBtn) {
             printBtn.addEventListener('click', function() {
                 openPrintWindow();
+            });
+        }
+    } catch (e) {}
+
+    try {
+        var searchInput = document.getElementById('agendaSearchInput');
+        var motifSelect = document.getElementById('agendaMotifSelect');
+        var clearBtn = document.getElementById('agendaClearFilters');
+        var printViewBtn = document.getElementById('agendaPrintViewBtn');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                agendaFilterState.query = searchInput.value || '';
+                calendar.rerenderEvents();
+            });
+        }
+        if (motifSelect) {
+            motifSelect.addEventListener('change', function() {
+                agendaFilterState.motif = motifSelect.value || '';
+                calendar.rerenderEvents();
+            });
+        }
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                agendaFilterState.query = '';
+                agendaFilterState.motif = '';
+                if (searchInput) searchInput.value = '';
+                if (motifSelect) motifSelect.value = '';
+                calendar.rerenderEvents();
+            });
+        }
+        if (printViewBtn) {
+            printViewBtn.addEventListener('click', function() {
+                printCurrentView(calendar);
             });
         }
     } catch (e) {}
