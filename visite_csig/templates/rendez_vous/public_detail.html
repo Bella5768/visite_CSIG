@@ -5,6 +5,13 @@
         <h2><i class="bi bi-calendar-event"></i> Suivi du rendez-vous</h2>
         <div class="subtitle">{{ rendez_vous.sujet }}</div>
     </div>
+    {% if preuve_url %}
+    <div class="actions">
+        <a href="{{ preuve_url }}" class="btn-primary-gradient" target="_blank" rel="noopener">
+            <i class="bi bi-printer"></i> Imprimer / PDF
+        </a>
+    </div>
+    {% endif %}
 </div>
 
 <div class="mb-4">
@@ -18,6 +25,12 @@
     <span class="badge bg-success fs-6">Terminé</span>
     {% elif rendez_vous.statut == 'annule' %}
     <span class="badge bg-danger fs-6">Annulé</span>
+    {% endif %}
+
+    {% if not preuve_url and rendez_vous.statut == 'confirme' %}
+    <div class="mt-2 text-muted" style="font-size: 12px; font-weight: 700;">
+        La preuve imprimable est disponible, recharge la page si besoin.
+    </div>
     {% endif %}
 </div>
 

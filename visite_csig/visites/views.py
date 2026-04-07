@@ -850,9 +850,21 @@ def rendez_vous_public_suivi(request, token):
             RendezVous.objects.select_related('visiteur', 'motif', 'correspondant'),
             pk=rdv_id,
         )
+
+        preuve_url = None
+        try:
+            if getattr(rendez_vous, 'statut', None) == 'confirme':
+                preuve_token = signing.dumps({'rdv_id': rendez_vous.pk}, salt='rendez_vous_public_preuve')
+                preuve_url = request.build_absolute_uri(
+                    reverse('rendez_vous_public_preuve', kwargs={'token': preuve_token})
+                )
+        except Exception:
+            preuve_url = None
+
         return render(request, 'rendez_vous/public_detail.html', {
             'page_title': 'Suivi du rendez-vous',
             'rendez_vous': rendez_vous,
+            'preuve_url': preuve_url,
         })
     except signing.BadSignature:
         return render(request, 'rendez_vous/public_invalid_link.html', {
