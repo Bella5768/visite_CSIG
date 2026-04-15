@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-people"></i> Audiences</h2>
+        <div class="subtitle">Liste complète des audiences (confirmées / en cours / terminées)</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visites:rendez_vous_create' %}" class="btn-primary-gradient">
+            <i class="bi bi-plus-circle"></i> Nouvelle audience
+        </a>
+    </div>
+</div>
+
+<div class="card-section mb-4">
+    <div class="card-body">
+        <form method="get" class="d-flex gap-3 align-items-end flex-wrap">
+            <div class="flex-grow-1">
+                <label class="form-label">Recherche</label>
+                <input type="text" name="search" class="form-control" value="{{ search_query }}" placeholder="Sujet, demandeur, téléphone, email, motif...">
+            </div>
+            <div>
+                <label class="form-label">Statut</label>
+                <select name="statut" class="form-select">
+                    <option value="">Tous</option>
+                    {% for statut, label in statuts %}
+                    <option value="{{ statut }}" {% if statut_filter == statut %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Priorité</label>
+                <select name="priorite" class="form-select">
+                    <option value="">Toutes</option>
+                    {% for priorite, label in priorites %}
+                    <option value="{{ priorite }}" {% if priorite_filter == priorite %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Filtrer
+            </button>
+            <a href="{% url 'core:cabinet_audiences' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise"></i> Réinitialiser
+            </a>
+        </form>
+    </div>
+</div>
+
+<div class="card-section">
+    <div class="card-body">
+        {% if audiences %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Heure</th>
+                        <th>Sujet</th>
+                        <th>Demandeur</th>
+                        <th>Motif</th>
+                        <th>Statut</th>
+                        <th>Priorité</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rdv in audiences %}
+                    <tr>
+                        <td style="white-space:nowrap;">{{ rdv.date_rendez_vous|date:"d/m/Y" }}</td>
+                        <td style="white-space:nowrap;">{{ rdv.heure_debut|time:"H:i" }} - {{ rdv.heure_fin|time:"H:i" }}</td>
+                        <td><strong>{{ rdv.sujet }}</strong></td>
+                        <td>{{ rdv.visiteur.prenoms }} {{ rdv.visiteur.nom }}</td>
+                        <td>{{ rdv.motif.libelle }}</td>
+                        <td>
+                            {% if rdv.statut == 'confirme' %}<span class="badge bg-info">Confirmé</span>{% endif %}
+                            {% if rdv.statut == 'en_cours' %}<span class="badge bg-primary">En cours</span>{% endif %}
+                            {% if rdv.statut == 'termine' %}<span class="badge bg-success">Terminé</span>{% endif %}
+                            {% if rdv.statut == 'annule' %}<span class="badge bg-danger">Annulé</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if rdv.priorite == 'basse' %}<span class="badge bg-light text-dark">Basse</span>{% endif %}
+                            {% if rdv.priorite == 'normale' %}<span class="badge bg-success">Normale</span>{% endif %}
+                            {% if rdv.priorite == 'haute' %}<span class="badge bg-warning">Haute</span>{% endif %}
+                            {% if rdv.priorite == 'urgente' %}<span class="badge bg-danger">Urgente</span>{% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'visites:rendez_vous_detail' rdv.pk %}" class="btn btn-outline-primary" title="Voir"><i class="bi bi-eye"></i></a>
+                                <a href="{% url 'visites:rendez_vous_update' rdv.pk %}" class="btn btn-outline-warning" title="Modifier"><i class="bi bi-pencil"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if audiences.has_other_pages %}
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if audiences.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ audiences.previous_page_number }}">Précédent</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ audiences.number }}</span></li>
+                {% if audiences.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ audiences.next_page_number }}">Suivant</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <p>Aucune audience trouvée</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

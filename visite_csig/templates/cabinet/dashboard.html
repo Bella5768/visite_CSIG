@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-title-bar">
+    <div>
+        <h2><i class="bi bi-speedometer2"></i> Tableau de bord</h2>
+        <div class="subtitle">Vue synthétique — {{ today|date:"d/m/Y" }}</div>
+    </div>
+    <div class="actions">
+        <a href="{% url 'visites:rendez_vous_create' %}" class="btn-primary-gradient">
+            <i class="bi bi-plus-circle"></i> Nouveau rendez-vous
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card blue">
+            <div class="stat-value">{{ rdv_du_jour|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-calendar-check stat-icon"></i> RDV du jour</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card cyan">
+            <div class="stat-value">{{ audiences_mois|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-calendar-month stat-icon"></i> Audiences du mois</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card indigo">
+            <div class="stat-value">{{ demandes_attente|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-inbox stat-icon"></i> Demandes en attente</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card purple">
+            <div class="stat-value">{{ prochaines_audiences|length|default:0 }}</div>
+            <div class="stat-label"><i class="bi bi-clock stat-icon"></i> Prochaines audiences</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7 mb-4">
+        <div class="card-section">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-calendar-day"></i> Agenda du jour</div>
+                <a href="{% url 'core:cabinet_agenda' %}" class="btn-voir-toutes">Ouvrir l'agenda <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="card-body">
+                {% if agenda_du_jour %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Heure</th>
+                                    <th>Sujet</th>
+                                    <th>Demandeur</th>
+                                    <th>Statut</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rdv in agenda_du_jour %}
+                                <tr>
+                                    <td style="white-space:nowrap;">{{ rdv.heure_debut|time:"H:i" }} - {{ rdv.heure_fin|time:"H:i" }}</td>
+                                    <td><strong>{{ rdv.sujet }}</strong><div class="text-muted" style="font-size:12px;">{{ rdv.motif.libelle }}</div></td>
+                                    <td>{{ rdv.visiteur.prenoms }} {{ rdv.visiteur.nom }}</td>
+                                    <td>
+                                        {% if rdv.statut == 'planifie' %}<span class="badge bg-secondary">En attente</span>{% endif %}
+                                        {% if rdv.statut == 'confirme' %}<span class="badge bg-info">Confirmé</span>{% endif %}
+                                        {% if rdv.statut == 'en_cours' %}<span class="badge bg-primary">En cours</span>{% endif %}
+                                        {% if rdv.statut == 'termine' %}<span class="badge bg-success">Terminé</span>{% endif %}
+                                        {% if rdv.statut == 'annule' %}<span class="badge bg-danger">Annulé</span>{% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary" href="{% url 'visites:rendez_vous_detail' rdv.pk %}"><i class="bi bi-eye"></i></a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-calendar-x"></i>
+                        <p>Aucun rendez-vous aujourd'hui</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 mb-4">
+        <div class="card-section">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-inbox"></i> Dernières demandes</div>
+                <a href="{% url 'core:cabinet_demandes' %}" class="btn-voir-toutes">Voir tout <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="card-body">
+                {% if dernieres_demandes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Demandeur</th>
+                                    <th>Sujet</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rdv in dernieres_demandes %}
+                                <tr>
+                                    <td>{{ rdv.visiteur.prenoms }} {{ rdv.visiteur.nom }}<div class="text-muted" style="font-size:12px;">{{ rdv.date_creation|date:"d/m/Y" }}</div></td>
+                                    <td><strong>{{ rdv.sujet }}</strong></td>
+                                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'visites:rendez_vous_detail' rdv.pk %}"><i class="bi bi-eye"></i></a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <p>Aucune demande récente</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

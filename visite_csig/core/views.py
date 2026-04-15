@@ -2,7 +2,9 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core import signing
+from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -11,7 +13,7 @@ from django.utils import timezone
 from core.permissions import module_permission_required
 
 from .models import Correspondant, MotifVisite, PermissionUtilisateur, Utilisateur
-from visites.models import CreneauDisponibilite, Visite
+from visites.models import CreneauDisponibilite, RendezVous, Visite
 from visiteurs.models import Visiteur
 
 
@@ -36,13 +38,133 @@ def logout_view(request):
 @login_required
 def dashboard(request):
     today = timezone.now().date()
-    return render(request, 'core/dashboard.html', {
+    month = today.month
+    year = today.year
+
+    rdv_today = RendezVous.objects.select_related('visiteur', 'motif').filter(date_rendez_vous=today).exclude(statut='annule')
+    agenda_du_jour = rdv_today.order_by('heure_debut')
+
+    audiences_mois = RendezVous.objects.filter(
+        date_rendez_vous__year=year,
+        date_rendez_vous__month=month,
+        statut__in=['confirme', 'en_cours', 'termine'],
+    ).count()
+
+    demandes_attente = RendezVous.objects.filter(statut='planifie').count()
+
+    prochaines_audiences = RendezVous.objects.select_related('visiteur', 'motif').filter(
+        date_rendez_vous__gte=today,
+        statut__in=['confirme', 'planifie'],
+    ).order_by('date_rendez_vous', 'heure_debut')[:8]
+
+    dernieres_demandes = RendezVous.objects.select_related('visiteur', 'motif').filter(
+        statut='planifie'
+    ).order_by('-date_creation')[:8]
+
+    return render(request, 'cabinet/dashboard.html', {
         'page_title': 'Tableau de bord',
-        'visites_jour': Visite.objects.filter(date_visite=today).count(),
-        'visites_en_cours': Visite.objects.filter(date_visite=today, statut='en_cours').count(),
-        'total_visiteurs': Visiteur.objects.count(),
-        'visites_mois': Visite.objects.filter(date_visite__month=today.month).count(),
-        'dernieres_visites': Visite.objects.filter(date_visite=today).select_related('visiteur', 'motif')[:10],
+        'rdv_du_jour': rdv_today.count(),
+        'audiences_mois': audiences_mois,
+        'demandes_attente': demandes_attente,
+        'agenda_du_jour': agenda_du_jour,
+        'prochaines_audiences': prochaines_audiences,
+        'dernieres_demandes': dernieres_demandes,
+        'today': today,
+    })
+
+
+@module_permission_required('agenda', 'view')
+def cabinet_agenda(request):
+    return redirect('visites:agenda_ministre')
+
+
+@module_permission_required('rendez_vous', 'view')
+def cabinet_audiences(request):
+    statut_filter = request.GET.get('statut', '')
+    priorite_filter = request.GET.get('priorite', '')
+    search_query = request.GET.get('search', '')
+
+    qs = RendezVous.objects.select_related('visiteur', 'motif', 'correspondant').exclude(statut='planifie')
+
+    if statut_filter:
+        qs = qs.filter(statut=statut_filter)
+    if priorite_filter:
+        qs = qs.filter(priorite=priorite_filter)
+    if search_query:
+        qs = qs.filter(
+            Q(sujet__icontains=search_query) |
+            Q(visiteur__nom__icontains=search_query) |
+            Q(visiteur__prenoms__icontains=search_query) |
+            Q(visiteur__telephone__icontains=search_query) |
+            Q(visiteur__email__icontains=search_query) |
+            Q(motif__libelle__icontains=search_query)
+        )
+
+    paginator = Paginator(qs.order_by('-date_rendez_vous', '-heure_debut'), 20)
+    page = paginator.get_page(request.GET.get('page', 1))
+
+    return render(request, 'cabinet/audiences.html', {
+        'page_title': 'Audiences',
+        'audiences': page,
+        'statuts': RendezVous.STATUT_CHOICES,
+        'priorites': RendezVous.PRIORITE_CHOICES,
+        'statut_filter': statut_filter,
+        'priorite_filter': priorite_filter,
+        'search_query': search_query,
+    })
+
+
+@module_permission_required('rendez_vous', 'view')
+def cabinet_demandes(request):
+    priorite_filter = request.GET.get('priorite', '')
+    search_query = request.GET.get('search', '')
+
+    qs = RendezVous.objects.select_related('visiteur', 'motif', 'correspondant').filter(statut='planifie')
+    if priorite_filter:
+        qs = qs.filter(priorite=priorite_filter)
+    if search_query:
+        qs = qs.filter(
+            Q(sujet__icontains=search_query) |
+            Q(visiteur__nom__icontains=search_query) |
+            Q(visiteur__prenoms__icontains=search_query) |
+            Q(visiteur__telephone__icontains=search_query) |
+            Q(visiteur__email__icontains=search_query) |
+            Q(motif__libelle__icontains=search_query)
+        )
+
+    paginator = Paginator(qs.order_by('-date_creation'), 20)
+    page = paginator.get_page(request.GET.get('page', 1))
+
+    return render(request, 'cabinet/demandes.html', {
+        'page_title': 'Demandes',
+        'demandes': page,
+        'priorites': RendezVous.PRIORITE_CHOICES,
+        'priorite_filter': priorite_filter,
+        'search_query': search_query,
+    })
+
+
+@module_permission_required('administration', 'view')
+def cabinet_repertoire(request):
+    search_query = (request.GET.get('search') or '').strip()
+    qs = Correspondant.objects.all()
+    if search_query:
+        qs = qs.filter(
+            Q(nom__icontains=search_query) |
+            Q(prenoms__icontains=search_query) |
+            Q(fonction__icontains=search_query) |
+            Q(departement__icontains=search_query) |
+            Q(telephone__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+
+    paginator = Paginator(qs.order_by('nom', 'prenoms'), 25)
+    page = paginator.get_page(request.GET.get('page', 1))
+
+    return render(request, 'cabinet/repertoire.html', {
+        'page_title': 'Répertoire',
+        'contacts': page,
+        'search_query': search_query,
     })
 
 

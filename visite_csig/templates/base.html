@@ -381,31 +381,24 @@
             
             <nav class="header-nav">
                 <a href="{% url 'core:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="bi bi-house-door-fill"></i> Accueil
+                    <i class="bi bi-speedometer2"></i> Tableau de bord
                 </a>
-                {% if user.role == 'superadmin' or user_perms.visites.view %}
-                <a href="{% url 'visites:index' %}" class="nav-link">
-                    <i class="bi bi-calendar-check-fill"></i> Visites
+                {% if user.role == 'superadmin' or user_perms.agenda.view %}
+                <a href="{% url 'core:cabinet_agenda' %}" class="nav-link {% if request.resolver_match.url_name == 'cabinet_agenda' %}active{% endif %}">
+                    <i class="bi bi-calendar2-week-fill"></i> Agenda
                 </a>
                 {% endif %}
                 {% if user.role == 'superadmin' or user_perms.rendez_vous.view %}
-                <a href="{% url 'visites:rendez_vous_list' %}" class="nav-link">
-                    <i class="bi bi-calendar-week"></i> Rendez-vous
+                <a href="{% url 'core:cabinet_audiences' %}" class="nav-link {% if request.resolver_match.url_name == 'cabinet_audiences' %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i> Audiences
+                </a>
+                <a href="{% url 'core:cabinet_demandes' %}" class="nav-link {% if request.resolver_match.url_name == 'cabinet_demandes' %}active{% endif %}">
+                    <i class="bi bi-inbox-fill"></i> Demandes
                 </a>
                 {% endif %}
-                {% if user.role == 'superadmin' or user_perms.visiteurs.view %}
-                <a href="{% url 'visiteurs:index' %}" class="nav-link">
-                    <i class="bi bi-people-fill"></i> Visiteurs
-                </a>
-                {% endif %}
-                {% if user.role == 'superadmin' or user_perms.rapports.view %}
-                <a href="{% url 'rapports:rapport_journalier' %}" class="nav-link">
-                    <i class="bi bi-file-earmark-bar-graph-fill"></i> Rapports
-                </a>
-                {% endif %}
-                {% if user.role == 'superadmin' or user_perms.agenda.view %}
-                <a href="{% url 'visites:agenda_ministre' %}" class="nav-link">
-                    <i class="bi bi-calendar2-week-fill"></i> Agenda Ministre
+                {% if user.role == 'superadmin' or user_perms.administration.view %}
+                <a href="{% url 'core:cabinet_repertoire' %}" class="nav-link {% if request.resolver_match.url_name == 'cabinet_repertoire' %}active{% endif %}">
+                    <i class="bi bi-journal-bookmark-fill"></i> Répertoire
                 </a>
                 {% endif %}
                 {% if user.role == 'superadmin' or user_perms.administration.view %}
