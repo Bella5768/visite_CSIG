@@ -5,31 +5,15 @@
         <h2><i class="bi bi-calendar2-week"></i> Agenda du Ministre</h2>
         <div class="subtitle">Lecture seule</div>
     </div>
+    <div class="actions">
+        <button type="button" class="btn btn-primary" id="agendaPublicPrintViewBtn">
+            <i class="bi bi-printer"></i> Imprimer
+        </button>
+    </div>
 </div>
 
 <div class="card-section">
     <div class="card-body">
-        <div class="row g-2 align-items-end mb-3" id="agendaPublicFilters">
-            <div class="col-md-7">
-                <label class="form-label">Rechercher</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" id="agendaPublicSearchInput" placeholder="Sujet / visiteur / téléphone / email">
-                    <button class="btn btn-outline-secondary" type="button" id="agendaPublicClearFilters"><i class="bi bi-x-lg"></i></button>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Motif</label>
-                <select class="form-select" id="agendaPublicMotifSelect">
-                    <option value="">Tous</option>
-                </select>
-            </div>
-            <div class="col-md-2 d-grid">
-                <button type="button" class="btn btn-primary" id="agendaPublicPrintViewBtn">
-                    <i class="bi bi-printer"></i> Imprimer
-                </button>
-            </div>
-        </div>
         <div id="calendar" style="min-height: 640px;"></div>
     </div>
 </div>
@@ -401,59 +385,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/'/g, '&#039;');
     }
 
-    var agendaPublicFilterState = {
-        query: '',
-        motif: '',
-    };
-
-    function normalizeValue(v) {
-        return String(v || '').toLowerCase();
-    }
-
-    function eventMatchesFilters(event) {
-        var p = event.extendedProps || {};
-        var q = normalizeValue(agendaPublicFilterState.query).trim();
-        var motif = normalizeValue(agendaPublicFilterState.motif).trim();
-
-        if (motif) {
-            if (normalizeValue(p.motif) !== motif) return false;
-        }
-
-        if (!q) return true;
-        var hay = [
-            p.sujet,
-            p.visiteur,
-            p.telephone,
-            p.email,
-            p.motif,
-            event.title,
-        ].map(normalizeValue).join(' | ');
-        return hay.indexOf(q) !== -1;
-    }
-
-    function refreshMotifOptions(calendar) {
-        var select = document.getElementById('agendaPublicMotifSelect');
-        if (!select) return;
-        var current = select.value || '';
-
-        var motifs = {};
-        try {
-            calendar.getEvents().forEach(function(ev) {
-                var p = ev.extendedProps || {};
-                var m = (p.motif || '').trim();
-                if (m) motifs[m.toLowerCase()] = m;
-            });
-        } catch (e) {}
-
-        var keys = Object.keys(motifs).sort();
-        var html = '<option value="">Tous</option>' + keys.map(function(k) {
-            var lbl = motifs[k];
-            return '<option value="' + escapeHtml(k) + '">' + escapeHtml(lbl) + '</option>';
-        }).join('');
-        select.innerHTML = html;
-        select.value = current;
-    }
-
     function printCurrentView(calendar) {
         if (!calendar) return;
         var view = calendar.view;
@@ -465,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!ev.start) return false;
             if (start && ev.start < start) return false;
             if (end && ev.start >= end) return false;
-            return eventMatchesFilters(ev);
+            return true;
         });
 
         evs.sort(function(a, b) { return (a.start || 0) - (b.start || 0); });
@@ -699,10 +630,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                     successCallback((data && data.events) ? data.events : []);
-                    try {
-                        refreshMotifOptions(calendar);
-                        calendar.rerenderEvents();
-                    } catch (e) {}
                 })
                 .catch(function() {
                     try {
@@ -710,13 +637,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (e) {}
                     if (failureCallback) failureCallback();
                 });
-        },
-        eventDidMount: function(arg) {
-            try {
-                if (!eventMatchesFilters(arg.event)) {
-                    arg.el.style.display = 'none';
-                }
-            } catch (e) {}
         },
         eventClick: function(info) {
             info.jsEvent.preventDefault();
@@ -794,32 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {}
 
     try {
-        var searchInput = document.getElementById('agendaPublicSearchInput');
-        var motifSelect = document.getElementById('agendaPublicMotifSelect');
-        var clearBtn = document.getElementById('agendaPublicClearFilters');
         var printViewBtn = document.getElementById('agendaPublicPrintViewBtn');
-
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                agendaPublicFilterState.query = searchInput.value || '';
-                calendar.rerenderEvents();
-            });
-        }
-        if (motifSelect) {
-            motifSelect.addEventListener('change', function() {
-                agendaPublicFilterState.motif = motifSelect.value || '';
-                calendar.rerenderEvents();
-            });
-        }
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function() {
-                agendaPublicFilterState.query = '';
-                agendaPublicFilterState.motif = '';
-                if (searchInput) searchInput.value = '';
-                if (motifSelect) motifSelect.value = '';
-                calendar.rerenderEvents();
-            });
-        }
         if (printViewBtn) {
             printViewBtn.addEventListener('click', function() {
                 printCurrentView(calendar);
