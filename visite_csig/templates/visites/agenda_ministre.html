@@ -585,85 +585,23 @@
   }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
 <script>
-(function() {
-    function onReady(fn) {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', fn);
-        } else {
-            fn();
-        }
-    }
-    onReady(function() {
+document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
     var lastModalTitle = '';
     var lastModalQrText = '';
     var exportPdfBtn = document.getElementById('agendaExportPdfBtn');
     var ministryLogoUrl = "{% static 'images/mena-etfp.png' %}";
 
-    function loadCssOnce(href) {
-        return new Promise(function(resolve, reject) {
-            try {
-                if (!href) return resolve();
-                var exists = false;
-                document.querySelectorAll('link[rel="stylesheet"]').forEach(function(l) {
-                    if ((l.getAttribute('href') || '') === href) exists = true;
-                });
-                if (exists) return resolve();
-                var link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = href;
-                link.onload = function() { resolve(); };
-                link.onerror = function() { reject(new Error('css_failed')); };
-                document.head.appendChild(link);
-            } catch (e) { reject(e); }
-        });
-    }
-
-    function loadScriptOnce(src) {
-        return new Promise(function(resolve, reject) {
-            try {
-                if (!src) return resolve();
-                var exists = false;
-                document.querySelectorAll('script').forEach(function(s) {
-                    if ((s.getAttribute('src') || '') === src) exists = true;
-                });
-                if (exists) return resolve();
-                var script = document.createElement('script');
-                script.src = src;
-                script.async = true;
-                script.onload = function() { resolve(); };
-                script.onerror = function() { reject(new Error('script_failed')); };
-                document.head.appendChild(script);
-            } catch (e) { reject(e); }
-        });
-    }
-
-    function ensureFullCalendar() {
-        if (window.FullCalendar && window.FullCalendar.Calendar) return Promise.resolve();
-        var jsPrimary = 'https://cdn.jsdelivr.net/npm/fullcalendar@6/index.global.min.js';
-        var jsFallback = 'https://unpkg.com/fullcalendar@6/index.global.min.js';
-        return loadScriptOnce(jsPrimary)
-            .catch(function() { return loadScriptOnce(jsFallback); })
-            .then(function() {
-                if (window.FullCalendar && window.FullCalendar.Calendar) return;
-                throw new Error('fullcalendar_missing');
-            });
-    }
-
-    function ensureQrCode() {
-        if (typeof QRCode !== 'undefined' && QRCode && QRCode.toCanvas) return Promise.resolve();
-        var jsPrimary = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-        var jsFallback = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
-        return loadScriptOnce(jsPrimary)
-            .catch(function() { return loadScriptOnce(jsFallback); })
-            .then(function() {
-                if (typeof QRCode !== 'undefined' && QRCode && QRCode.toCanvas) return;
-                throw new Error('qrcode_missing');
-            });
+    /* --- Check FullCalendar loaded --- */
+    if (!window.FullCalendar || !window.FullCalendar.Calendar) {
+        if (calendarEl) {
+            calendarEl.innerHTML = '<div class="alert alert-danger m-4"><strong>Erreur :</strong> FullCalendar n\'a pas pu être chargé. Vérifiez votre connexion Internet et rechargez la page.</div>';
+        }
+        return;
     }
 
     function escapeHtml(value) {
@@ -697,23 +635,22 @@
 
     function renderQrCanvases(root) {
         if (!root) return;
-        ensureQrCode().then(function() {
-            try {
-                root.querySelectorAll('canvas[data-qr-text]').forEach(function(c) {
-                    var text = c.getAttribute('data-qr-text') || '';
-                    if (!text) return;
-                    QRCode.toCanvas(c, text, {
-                        errorCorrectionLevel: 'M',
-                        margin: 1,
-                        width: 220,
-                        color: {
-                            dark: '#0b3a1e',
-                            light: '#ffffff'
-                        }
-                    }, function() {});
-                });
-            } catch (e) {}
-        }).catch(function() {});
+        try {
+            if (typeof QRCode === 'undefined' || !QRCode || !QRCode.toCanvas) return;
+            root.querySelectorAll('canvas[data-qr-text]').forEach(function(c) {
+                var text = c.getAttribute('data-qr-text') || '';
+                if (!text) return;
+                QRCode.toCanvas(c, text, {
+                    errorCorrectionLevel: 'M',
+                    margin: 1,
+                    width: 220,
+                    color: {
+                        dark: '#0b3a1e',
+                        light: '#ffffff'
+                    }
+                }, function() {});
+            });
+        } catch (e) {}
     }
 
     function openPrintWindow() {
@@ -1144,18 +1081,7 @@
         return calendar;
     }
 
-    ensureFullCalendar()
-        .then(function() {
-            initCalendar();
-        })
-        .catch(function() {
-            try {
-                if (calendarEl) {
-                    calendarEl.innerHTML = '<div class="alert alert-warning mb-0">Impossible de charger le calendrier (FullCalendar). Vérifie ta connexion Internet ou le blocage CDN (jsdelivr/unpkg) puis recharge la page.</div>';
-                }
-            } catch (e) {}
-        });
-    });
-})();
+    initCalendar();
+});
 </script>
 {% endblock %}

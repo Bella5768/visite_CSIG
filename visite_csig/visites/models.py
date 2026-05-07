@@ -160,23 +160,23 @@ class RendezVous(models.Model):
     def confirmer(self):
         if self.statut == 'planifie':
             self.statut = 'confirme'
-            self.save()
+            super().save(update_fields=['statut', 'date_modification'])
     
     def annuler(self, raison=""):
         self.statut = 'annule'
         if raison:
             self.description = f"{self.description}\n[ANNULE] {raison}" if self.description else f"[ANNULE] {raison}"
-        self.save()
+        super().save(update_fields=['statut', 'description', 'date_modification'])
     
     def commencer(self):
         if self.statut in ['planifie', 'confirme']:
             self.statut = 'en_cours'
-            self.save()
+            super().save(update_fields=['statut', 'date_modification'])
     
     def terminer(self):
         if self.statut == 'en_cours':
             self.statut = 'termine'
-            self.save()
+            super().save(update_fields=['statut', 'date_modification'])
 
 
 class CreneauDisponibilite(models.Model):
