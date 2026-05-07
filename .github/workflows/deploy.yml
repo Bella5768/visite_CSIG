@@ -1,0 +1,26 @@
+name: Deploy to PythonAnywhere
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to PythonAnywhere
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ssh.pythonanywhere.com
+        username: menaetfp
+        key: ${{ secrets.PYTHONANYWHERE_SSH_KEY }}
+        script: |
+          cd ~/visite_CSIG
+          git pull origin master
+          source venv/bin/activate
+          pip install -r requirements.txt
+          python manage.py migrate
+          python manage.py collectstatic --noinput
+          /usr/local/bin/pa_reload_webapp menaetfp
