@@ -10,6 +10,9 @@ def module_permission_required(module_code, action='view', json_forbidden=False)
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
+                accept = (request.headers.get('Accept') or '').lower()
+                if json_forbidden or ('application/json' in accept):
+                    return JsonResponse({'success': False, 'message': 'Non authentifié'}, status=401)
                 return redirect('core:login')
 
             if getattr(request.user, 'role', None) == 'superadmin':

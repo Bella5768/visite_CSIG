@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
 <div class="page-title-bar">
     <div>
@@ -54,16 +55,18 @@
 
   #calendar {
     background: #ffffff;
-    border: 1px solid rgba(16, 68, 128, 0.12);
+    border: 1px solid rgba(15, 108, 43, 0.16);
     border-radius: 14px;
     padding: 14px;
   }
 
+  #events-debug { display: none !important; }
+
   .fc .fc-toolbar-title {
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 900;
     letter-spacing: -0.2px;
-    color: #0f172a;
+    color: #0b3a1e;
   }
 
   .fc .fc-toolbar.fc-header-toolbar {
@@ -74,7 +77,7 @@
   .fc .fc-button {
     border-radius: 10px;
     padding: 8px 12px;
-    border: 1px solid rgba(16, 68, 128, 0.22) !important;
+    border: 1px solid rgba(15, 108, 43, 0.26) !important;
     background: #ffffff !important;
     color: var(--primary-blue) !important;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -85,8 +88,8 @@
   }
 
   .fc .fc-button:hover {
-    background: rgba(16, 68, 128, 0.05) !important;
-    border-color: rgba(16, 68, 128, 0.35) !important;
+    background: rgba(15, 108, 43, 0.05) !important;
+    border-color: rgba(15, 108, 43, 0.45) !important;
   }
 
   .fc .fc-button:focus,
@@ -95,17 +98,17 @@
     background: var(--primary-blue) !important;
     color: #ffffff !important;
     border-color: var(--primary-blue) !important;
-    box-shadow: 0 8px 18px rgba(16, 68, 128, 0.25) !important;
+    box-shadow: 0 10px 22px rgba(15, 108, 43, 0.24) !important;
   }
 
   .fc .fc-col-header-cell {
-    background: rgba(16, 68, 128, 0.06);
+    background: rgba(15, 108, 43, 0.06);
   }
 
   .fc .fc-col-header-cell-cushion {
     padding: 10px 6px;
     font-weight: 700;
-    color: #0f2f57;
+    color: #0b3a1e;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-size: 12px;
@@ -118,7 +121,7 @@
   }
 
   .fc .fc-scrollgrid {
-    border: 1px solid rgba(16, 68, 128, 0.12) !important;
+    border: 1px solid rgba(15, 108, 43, 0.14) !important;
     border-radius: 12px;
     overflow: hidden;
   }
@@ -130,13 +133,13 @@
   }
 
   .fc .fc-day-today {
-    background: rgba(16, 68, 128, 0.08) !important;
+    background: rgba(15, 108, 43, 0.06) !important;
   }
 
   .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-    background: rgba(16, 68, 128, 0.10);
+    background: rgba(15, 108, 43, 0.12);
     border-radius: 10px;
-    color: #0f2f57;
+    color: #0b3a1e;
   }
 
   .fc .fc-now-indicator-line {
@@ -162,7 +165,7 @@
   }
 
   .fc .fc-daygrid-day:hover {
-    background: rgba(16, 68, 128, 0.03);
+    background: rgba(15, 108, 43, 0.03);
   }
 
   .fc .fc-day-sat,
@@ -190,13 +193,13 @@
   }
 
   .fc .fc-day-today {
-    background: rgba(16, 68, 128, 0.06) !important;
+    background: rgba(15, 108, 43, 0.06) !important;
   }
 
   .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-    background: rgba(16, 68, 128, 0.12);
-    border-color: rgba(16, 68, 128, 0.25);
-    color: #0d3a6e;
+    background: rgba(15, 108, 43, 0.12);
+    border-color: rgba(15, 108, 43, 0.25);
+    color: #0b3a1e;
   }
 
   .fc .fc-daygrid-day-events {
@@ -218,14 +221,14 @@
   .fc .fc-event {
     border-radius: 10px;
     padding: 3px 6px;
+    border: 0 !important;
+    box-shadow: 0 6px 14px rgba(2, 6, 23, 0.12);
     font-weight: 700;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
-    border-width: 0 !important;
   }
 
   .fc .fc-event:focus,
   .fc .fc-event:active {
-    outline: 2px solid rgba(16, 68, 128, 0.35);
+    outline: 2px solid rgba(15, 108, 43, 0.40);
     outline-offset: 2px;
   }
 
@@ -267,13 +270,13 @@
   }
 
   .fc .fc-list-day-cushion {
-    background: rgba(16, 68, 128, 0.06);
+    background: rgba(15, 108, 43, 0.06);
     font-weight: 900;
-    color: #0f2f57;
+    color: #0b3a1e;
   }
 
   .fc .fc-list-event:hover td {
-    background: rgba(16, 68, 128, 0.04);
+    background: rgba(15, 108, 43, 0.04);
   }
 
   #events-debug {
@@ -285,7 +288,7 @@
   }
 
   .agenda-modal-header {
-    background: linear-gradient(135deg, rgba(13, 58, 110, 0.10) 0%, rgba(16, 68, 128, 0.08) 55%, rgba(21, 101, 168, 0.10) 100%);
+    background: linear-gradient(135deg, rgba(11, 58, 30, 0.10) 0%, rgba(15, 108, 43, 0.08) 55%, rgba(20, 83, 45, 0.10) 100%);
     border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   }
 
@@ -296,13 +299,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #0d3a6e;
+    background: linear-gradient(135deg, #0f6c2b 0%, #0b3a1e 100%);
     color: #ffffff;
-    box-shadow: 0 10px 24px rgba(16, 68, 128, 0.20);
+    box-shadow: 0 10px 24px rgba(15, 108, 43, 0.20);
   }
 
   .agenda-modal-body {
-    background: #f1f5f9;
+    background: #f3f7f4;
   }
 
   .agenda-modal-card {
@@ -335,7 +338,7 @@
   }
 
   .agenda-modal-card .card-title i {
-    color: #0d3a6e;
+    color: #0f6c2b;
     font-size: 16px;
   }
 
@@ -359,7 +362,7 @@
   }
 
   .agenda-kv .k i {
-    color: rgba(16, 68, 128, 0.85);
+    color: rgba(15, 108, 43, 0.85);
   }
 
   .agenda-kv .v {
@@ -385,7 +388,7 @@
   }
 
   .agenda-desc .title i {
-    color: #0d3a6e;
+    color: #0f6c2b;
   }
 
   .agenda-desc .text {
@@ -414,7 +417,168 @@
   .agenda-badge.en_cours { background: #fef3c7; color: #92400e; }
   .agenda-badge.annule { background: #fee2e2; color: #991b1b; }
   .agenda-badge.planifie { background: #e2e8f0; color: #334155; }
-  .agenda-badge.termine { background: #e0f2fe; color: #075985; }
+  .agenda-badge.termine { background: #dcfce7; color: #166534; }
+
+  .convocation-sheet {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 14px 40px rgba(2, 6, 23, 0.08);
+  }
+
+  .convocation-top {
+    padding: 16px 18px;
+    background: linear-gradient(135deg, rgba(15, 108, 43, 0.12) 0%, rgba(248, 250, 252, 0.92) 55%, rgba(202, 138, 4, 0.10) 100%);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .convocation-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .convocation-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .convocation-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex: 0 0 auto;
+  }
+
+  .convocation-logo img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+
+  .convocation-brand-text { min-width: 0; }
+  .convocation-brand-text .l1 { font-weight: 950; letter-spacing: 0.3px; color: #0b3a1e; text-transform: uppercase; font-size: 12px; }
+  .convocation-brand-text .l2 { font-weight: 800; color: #0f172a; font-size: 12px; line-height: 1.2; }
+  .convocation-brand-text .l3 { font-weight: 800; color: #475569; font-size: 11px; line-height: 1.2; }
+
+  .convocation-doc-meta {
+    text-align: right;
+    font-size: 12px;
+    color: #334155;
+    font-weight: 800;
+    line-height: 1.4;
+    flex: 0 0 auto;
+  }
+  .convocation-doc-meta .k { color: #0b3a1e; font-weight: 950; }
+
+  .convocation-title {
+    margin: 12px 0 0;
+    font-weight: 950;
+    letter-spacing: -0.3px;
+    color: #0f172a;
+    font-size: 18px;
+  }
+
+  .convocation-subtitle {
+    margin: 4px 0 0;
+    color: #475569;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .convocation-body { padding: 16px 18px; background: #ffffff; }
+  .convocation-grid { display: grid; grid-template-columns: 1fr 220px; gap: 14px; align-items: start; }
+  @media (max-width: 768px) { .convocation-grid { grid-template-columns: 1fr; } }
+
+  .convocation-panel {
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+  }
+  .convocation-panel .ph {
+    padding: 12px 14px;
+    background: rgba(15, 108, 43, 0.06);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .convocation-panel .ph .t { font-weight: 950; color: #0b3a1e; letter-spacing: 0.2px; font-size: 12px; text-transform: uppercase; }
+  .convocation-panel .pb { padding: 14px; }
+
+  .convocation-kv { display: grid; grid-template-columns: 140px 1fr; gap: 10px 12px; font-size: 13px; }
+  .convocation-kv .k { color: #64748b; font-weight: 950; text-transform: uppercase; letter-spacing: 0.3px; font-size: 11px; display: inline-flex; gap: 8px; align-items: center; }
+  .convocation-kv .k i { color: rgba(15, 108, 43, 0.90); }
+  .convocation-kv .v { color: #0f172a; font-weight: 800; }
+  @media (max-width: 576px) { .convocation-kv { grid-template-columns: 1fr; } }
+
+  .convocation-protocole {
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px dashed rgba(202, 138, 4, 0.45);
+    border-radius: 16px;
+    background: rgba(202, 138, 4, 0.06);
+  }
+  .convocation-protocole .h { font-weight: 950; color: #92400e; text-transform: uppercase; letter-spacing: 0.3px; font-size: 12px; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .convocation-protocole .li { font-weight: 750; color: #334155; font-size: 12px; margin: 6px 0; }
+
+  .convocation-qr {
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 12px;
+    display: grid;
+    place-items: center;
+    gap: 10px;
+  }
+  .convocation-qr canvas { width: 160px; height: 160px; }
+  .convocation-qr .cap { text-align: center; font-size: 11px; color: #475569; font-weight: 800; }
+
+  .convocation-actions {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn-doc {
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-weight: 900;
+    letter-spacing: 0.2px;
+    border: 1px solid rgba(15, 108, 43, 0.28);
+    background: #ffffff;
+    color: #0b3a1e;
+  }
+  .btn-doc:hover { background: rgba(15, 108, 43, 0.06); }
+
+  .btn-doc-primary {
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-weight: 950;
+    letter-spacing: 0.2px;
+    border: 1px solid rgba(15, 108, 43, 0.15);
+    background: linear-gradient(135deg, #0f6c2b 0%, #0b3a1e 100%);
+    color: #ffffff;
+    box-shadow: 0 12px 26px rgba(15, 108, 43, 0.22);
+  }
+  .btn-doc-primary:hover { filter: brightness(1.03); }
+
+  .convocation-note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #475569;
+    font-weight: 700;
+  }
 
   @media (max-width: 576px) {
     .agenda-kv { grid-template-columns: 1fr; }
@@ -423,12 +587,81 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
     var lastModalTitle = '';
+    var lastModalQrText = '';
     var exportPdfBtn = document.getElementById('agendaExportPdfBtn');
+    var ministryLogoUrl = "{% static 'images/mena-etfp.png' %}";
+
+    function loadCssOnce(href) {
+        return new Promise(function(resolve, reject) {
+            try {
+                if (!href) return resolve();
+                var exists = false;
+                document.querySelectorAll('link[rel="stylesheet"]').forEach(function(l) {
+                    if ((l.getAttribute('href') || '') === href) exists = true;
+                });
+                if (exists) return resolve();
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = href;
+                link.onload = function() { resolve(); };
+                link.onerror = function() { reject(new Error('css_failed')); };
+                document.head.appendChild(link);
+            } catch (e) { reject(e); }
+        });
+    }
+
+    function loadScriptOnce(src) {
+        return new Promise(function(resolve, reject) {
+            try {
+                if (!src) return resolve();
+                var exists = false;
+                document.querySelectorAll('script').forEach(function(s) {
+                    if ((s.getAttribute('src') || '') === src) exists = true;
+                });
+                if (exists) return resolve();
+                var script = document.createElement('script');
+                script.src = src;
+                script.async = true;
+                script.onload = function() { resolve(); };
+                script.onerror = function() { reject(new Error('script_failed')); };
+                document.head.appendChild(script);
+            } catch (e) { reject(e); }
+        });
+    }
+
+    function ensureFullCalendar() {
+        if (window.FullCalendar && window.FullCalendar.Calendar) return Promise.resolve();
+        var cssPrimary = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css';
+        var jsPrimary = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js';
+        var cssFallback = 'https://unpkg.com/fullcalendar@6.1.11/index.global.min.css';
+        var jsFallback = 'https://unpkg.com/fullcalendar@6.1.11/index.global.min.js';
+        return loadCssOnce(cssPrimary)
+            .catch(function() { return loadCssOnce(cssFallback); })
+            .then(function() { return loadScriptOnce(jsPrimary); })
+            .catch(function() { return loadScriptOnce(jsFallback); })
+            .then(function() {
+                if (window.FullCalendar && window.FullCalendar.Calendar) return;
+                throw new Error('fullcalendar_missing');
+            });
+    }
+
+    function ensureQrCode() {
+        if (typeof QRCode !== 'undefined' && QRCode && QRCode.toCanvas) return Promise.resolve();
+        var jsPrimary = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+        var jsFallback = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+        return loadScriptOnce(jsPrimary)
+            .catch(function() { return loadScriptOnce(jsFallback); })
+            .then(function() {
+                if (typeof QRCode !== 'undefined' && QRCode && QRCode.toCanvas) return;
+                throw new Error('qrcode_missing');
+            });
+    }
 
     function escapeHtml(value) {
         if (value === null || value === undefined) return '';
@@ -449,9 +682,35 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('agendaModal'));
             modal.show();
+            try {
+                if (bodyEl) {
+                    renderQrCanvases(bodyEl);
+                }
+            } catch (e) {}
         } catch (e) {
             alert(title + "\n\n" + (bodyEl ? bodyEl.textContent : ''));
         }
+    }
+
+    function renderQrCanvases(root) {
+        if (!root) return;
+        ensureQrCode().then(function() {
+            try {
+                root.querySelectorAll('canvas[data-qr-text]').forEach(function(c) {
+                    var text = c.getAttribute('data-qr-text') || '';
+                    if (!text) return;
+                    QRCode.toCanvas(c, text, {
+                        errorCorrectionLevel: 'M',
+                        margin: 1,
+                        width: 220,
+                        color: {
+                            dark: '#0b3a1e',
+                            light: '#ffffff'
+                        }
+                    }, function() {});
+                });
+            } catch (e) {}
+        }).catch(function() {});
     }
 
     function openPrintWindow() {
@@ -475,6 +734,32 @@ document.addEventListener('DOMContentLoaded', function() {
         var printedAt = formatNow();
         var title = lastModalTitle || 'Rendez-vous';
 
+        var refLine = '';
+        try {
+            if (lastModalQrText) {
+                refLine = '<div><span class="label">Référence:</span> ' + escapeHtml(lastModalQrText.split('|')[0] || '') + '</div>';
+            }
+        } catch (e) { refLine = ''; }
+
+        var header = (
+          '<div class="doc-header">'
+          + '  <div style="display:flex;align-items:center;gap:12px;">'
+          + '    <div style="width:44px;height:44px;border:1px solid rgba(15,23,42,0.12);border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff;">'
+          + '      <img src="' + ministryLogoUrl + '" alt="MENA-ETFP" style="width:100%;height:100%;object-fit:contain;padding:6px;" />'
+          + '    </div>'
+          + '    <div>'
+          + '      <div style="font-size:11px;font-weight:950;letter-spacing:0.3px;text-transform:uppercase;color:#0b3a1e;">République de Guinée</div>'
+          + '      <div style="font-size:12px;font-weight:900;color:#0f172a;">Ministère de l’Enseignement Pré-Universitaire et de l’Alphabétisation</div>'
+          + '      <div style="font-size:11px;font-weight:800;color:#475569;">Cabinet du Ministre — Agenda / Convocation</div>'
+          + '    </div>'
+          + '  </div>'
+          + '  <div class="doc-meta">'
+          + '    <div><span class="label">Imprimé le:</span> ' + escapeHtml(printedAt) + '</div>'
+          +      refLine
+          + '  </div>'
+          + '</div>'
+        );
+
         var css = `
             @page { size: A4; margin: 14mm; }
             * { box-sizing: border-box; }
@@ -483,17 +768,18 @@ document.addEventListener('DOMContentLoaded', function() {
             .doc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid rgba(15,23,42,0.12);} 
             .doc-title{font-size:18px;font-weight:950;margin:0;letter-spacing:-0.2px;}
             .doc-meta{font-size:12px;color:#475569;font-weight:700;text-align:right;line-height:1.4;}
-            .doc-meta .label{font-weight:900;color:#0f2f57;}
+            .doc-meta .label{font-weight:900;color:#0b3a1e;}
             .doc-body{margin-top:12px;}
             .agenda-modal-card,.agenda-desc{border:1px solid rgba(15,23,42,0.12);border-radius:14px;box-shadow:none !important;overflow:hidden;background:#fff;}
             .agenda-modal-card .card-head{background:#f8fafc;border-bottom:1px solid rgba(15,23,42,0.10);} 
-            .agenda-modal-card .card-title{font-weight:950;color:#0f2f57;}
+            .agenda-modal-card .card-title{font-weight:950;color:#0b3a1e;}
             .agenda-badge{padding:6px 10px;border-radius:999px;font-weight:950;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;}
             .row{display:flex;gap:12px;align-items:stretch;}
             .col-md-6{flex:1;min-width:0;}
             .mt-3{margin-top:12px;}
             .mb-2{margin-bottom:10px;}
             a{color:inherit;text-decoration:none;}
+            .convocation-qr canvas{width:140px;height:140px;}
             @media print{.no-print{display:none !important;} body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
         `;
 
@@ -508,18 +794,22 @@ document.addEventListener('DOMContentLoaded', function() {
               </head>
               <body>
                 <div class="doc">
-                  <div class="doc-header">
-                    <div>
-                      <h1 class="doc-title">${escapeHtml(title)}</h1>
-                      <div style="font-size:12px;color:#475569;font-weight:700;">Agenda du Ministre</div>
-                    </div>
-                    <div class="doc-meta">
-                      <div><span class="label">Imprimé le:</span> ${escapeHtml(printedAt)}</div>
-                    </div>
-                  </div>
+                  ${header}
+                  <h1 class="doc-title">${escapeHtml(title)}</h1>
                   <div class="doc-body">${printHtml}</div>
                 </div>
-                <script>window.onload=function(){window.print();};<\/script>
+                <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+                <script>
+                  window.onload=function(){
+                    try { document.querySelectorAll('canvas[data-qr-text]').forEach(function(c){
+                      if (typeof QRCode==='undefined' || !QRCode || !QRCode.toCanvas) return;
+                      var text=c.getAttribute('data-qr-text')||'';
+                      if(!text) return;
+                      QRCode.toCanvas(c, text, {errorCorrectionLevel:'M',margin:1,width:220,color:{dark:'#0b3a1e',light:'#ffffff'}}, function(){});
+                    }); } catch(e) {}
+                    window.print();
+                  };
+                <\/script>
               </body>
             </html>
         `;
@@ -563,62 +853,77 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var tel = p.telephone || '';
         var email = p.email || '';
-        var lines = [
-            '<div class="row g-3">',
-            '  <div class="col-md-6">',
-            '    <div class="agenda-modal-card">',
-            '      <div class="card-head">',
-            '        <p class="card-title"><i class="bi bi-bookmark-star"></i> Rendez-vous</p>',
-            '        <span class="agenda-badge ' + escapeHtml(badgeClass) + '"><i class="bi ' + escapeHtml(badgeIcon) + '"></i> ' + escapeHtml(badgeLabel) + '</span>',
-            '      </div>',
-            '      <div class="card-body-in">',
-            '        <div class="agenda-kv">',
-            '          <div class="k"><i class="bi bi-card-text"></i> Sujet</div><div class="v">' + escapeHtml(p.sujet || event.title) + '</div>',
-            '          <div class="k"><i class="bi bi-tag"></i> Motif</div><div class="v">' + escapeHtml(p.motif || '-') + '</div>',
-            '          <div class="k"><i class="bi bi-calendar3"></i> Date</div><div class="v">' + escapeHtml(p.date || '-') + '</div>',
-            '          <div class="k"><i class="bi bi-clock"></i> Heure</div><div class="v">' + escapeHtml((p.heure_debut || '') + ' - ' + (p.heure_fin || '')) + '</div>',
-            '          <div class="k"><i class="bi bi-check2-circle"></i> Statut</div><div class="v">' + escapeHtml(badgeLabel) + '</div>',
+
+        var ref = 'RDV-' + escapeHtml(event.id || '') + '-' + escapeHtml((p.date || '').replace(/\//g, ''));
+        var horaire = ((p.heure_debut || '') + ' - ' + (p.heure_fin || '')).trim();
+        var sujet = p.sujet || event.title || 'Rendez-vous';
+        var qrText = [ref, (p.date || ''), horaire, (p.visiteur || '')].filter(Boolean).join('|');
+        lastModalQrText = qrText;
+
+        var html = [
+            '<div class="convocation-sheet">',
+            '  <div class="convocation-top">',
+            '    <div class="convocation-head">',
+            '      <div class="convocation-brand">',
+            '        <div class="convocation-logo"><img src="' + escapeHtml(ministryLogoUrl) + '" alt="MENA-ETFP"></div>',
+            '        <div class="convocation-brand-text">',
+            '          <div class="l1">République de Guinée</div>',
+            '          <div class="l2">Ministère de l’Enseignement Pré-Universitaire et de l’Alphabétisation</div>',
+            '          <div class="l3">Cabinet du Ministre — Convocation / Audience</div>',
             '        </div>',
             '      </div>',
-            '    </div>',
-            '  </div>',
-            '  <div class="col-md-6">',
-            '    <div class="agenda-modal-card">',
-            '      <div class="card-head">',
-            '        <p class="card-title"><i class="bi bi-person"></i> Demandeur</p>',
+            '      <div class="convocation-doc-meta">',
+            '        <div><span class="k">Référence:</span> ' + escapeHtml(ref) + '</div>',
+            '        <div><span class="k">Statut:</span> <span class="agenda-badge ' + escapeHtml(badgeClass) + '"><i class="bi ' + escapeHtml(badgeIcon) + '"></i> ' + escapeHtml(badgeLabel) + '</span></div>',
             '      </div>',
-            '      <div class="card-body-in">',
-            '        <div class="agenda-kv">',
-            '          <div class="k"><i class="bi bi-person-badge"></i> Nom</div><div class="v">' + escapeHtml(p.visiteur || '-') + '</div>',
-            '          <div class="k"><i class="bi bi-telephone"></i> Téléphone</div><div class="v">' + escapeHtml(tel || '-')
-            + (tel ? (' <span class="ms-2 d-inline-flex gap-1">'
-            + '<a class="btn btn-sm btn-outline-primary" href="tel:' + escapeHtml(safeTel(tel)) + '"><i class="bi bi-telephone-outbound"></i></a>'
-            + '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="(' + copyToClipboard.toString() + ')(' + JSON.stringify(String(tel)) + ')"><i class="bi bi-clipboard"></i></button>'
-            + '</span>') : '')
-            + '</div>',
-            '          <div class="k"><i class="bi bi-envelope"></i> Email</div><div class="v">' + escapeHtml(email || '-')
-            + (email ? (' <span class="ms-2 d-inline-flex gap-1">'
-            + '<a class="btn btn-sm btn-outline-primary" href="mailto:' + escapeHtml(email) + '"><i class="bi bi-envelope-at"></i></a>'
-            + '<button type="button" class="btn btn-sm btn-outline-secondary" onclick="(' + copyToClipboard.toString() + ')(' + JSON.stringify(String(email)) + ')"><i class="bi bi-clipboard"></i></button>'
-            + '</span>') : '')
-            + '</div>',
-            '          <div class="k"><i class="bi bi-building"></i> Correspondant</div><div class="v">' + escapeHtml(p.correspondant || '-') + '</div>',
+            '    </div>',
+            '    <div class="convocation-title">Convocation officielle — ' + escapeHtml(sujet) + '</div>',
+            '    <div class="convocation-subtitle">Document interne — à présenter à l’accueil / protocole</div>',
+            '  </div>',
+            '  <div class="convocation-body">',
+            '    <div class="convocation-grid">',
+            '      <div>',
+            '        <div class="convocation-panel">',
+            '          <div class="ph">',
+            '            <div class="t"><i class="bi bi-calendar2-check"></i> Informations du rendez-vous</div>',
+            '          </div>',
+            '          <div class="pb">',
+            '            <div class="convocation-kv">',
+            '              <div class="k"><i class="bi bi-card-text"></i> Sujet</div><div class="v">' + escapeHtml(sujet) + '</div>',
+            '              <div class="k"><i class="bi bi-tag"></i> Motif</div><div class="v">' + escapeHtml(p.motif || '-') + '</div>',
+            '              <div class="k"><i class="bi bi-calendar3"></i> Date</div><div class="v">' + escapeHtml(p.date || '-') + '</div>',
+            '              <div class="k"><i class="bi bi-clock"></i> Heure</div><div class="v">' + escapeHtml(horaire || '-') + '</div>',
+            '              <div class="k"><i class="bi bi-person"></i> Demandeur</div><div class="v">' + escapeHtml(p.visiteur || '-') + '</div>',
+            '              <div class="k"><i class="bi bi-building"></i> Correspondant</div><div class="v">' + escapeHtml(p.correspondant || '-') + '</div>',
+            '            </div>',
+            (desc ? ('            <div class="convocation-note">' + escapeHtml(desc) + '</div>') : ''),
+            '            <div class="convocation-protocole">',
+            '              <div class="h"><i class="bi bi-shield-check"></i> Protocole & Accueil</div>',
+            '              <div class="li">- Arriver 10 minutes avant l’heure prévue.</div>',
+            '              <div class="li">- Présenter une pièce d’identité + ce document (ou QR) à l’accueil.</div>',
+            '              <div class="li">- Accès soumis aux consignes de sécurité du Cabinet.</div>',
+            '            </div>',
+            '            <div class="convocation-actions">',
+            (tel ? ('              <a class="btn-doc-primary" href="tel:' + escapeHtml(safeTel(tel)) + '"><i class="bi bi-telephone-outbound"></i> Appeler</a>') : ''),
+            (email ? ('              <a class="btn-doc" href="mailto:' + escapeHtml(email) + '"><i class="bi bi-envelope-at"></i> Email</a>') : ''),
+            (tel ? ('              <button type="button" class="btn-doc" onclick="(' + copyToClipboard.toString() + ')(' + JSON.stringify(String(tel)) + ')"><i class="bi bi-clipboard"></i> Copier téléphone</button>') : ''),
+            (email ? ('              <button type="button" class="btn-doc" onclick="(' + copyToClipboard.toString() + ')(' + JSON.stringify(String(email)) + ')"><i class="bi bi-clipboard"></i> Copier email</button>') : ''),
+            '            </div>',
+            '          </div>',
+            '        </div>',
+            '      </div>',
+            '      <div>',
+            '        <div class="convocation-qr">',
+            '          <canvas data-qr-text="' + escapeHtml(qrText) + '"></canvas>',
+            '          <div class="cap">Scanner pour vérifier la référence<br><span style="font-weight:950;color:#0b3a1e;">' + escapeHtml(ref) + '</span></div>',
             '        </div>',
             '      </div>',
             '    </div>',
             '  </div>',
             '</div>'
-        ];
+        ].join('');
 
-        if (desc) {
-            lines.push(
-                '<div class="mt-3 agenda-desc">'
-                + '<div class="title"><i class="bi bi-chat-left-text"></i> Description</div>'
-                + '<p class="text">' + escapeHtml(desc) + '</p>'
-                + '</div>'
-            );
-        }
-        return lines.join('');
+        return html;
     }
 
     function printCurrentView(calendar) {
@@ -673,148 +978,180 @@ document.addEventListener('DOMContentLoaded', function() {
         openPrintWindow();
     }
 
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: (window.innerWidth && window.innerWidth < 768) ? 'listWeek' : 'dayGridMonth',
-        height: 'auto',
-        locale: 'fr',
-        eventDisplay: 'block',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,listDay'
-        },
-        navLinks: true,
-        nowIndicator: true,
-        selectable: false,
-        eventTimeFormat: {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        },
-        events: function(fetchInfo, successCallback, failureCallback) {
-            fetch("{% url 'visites:agenda_ministre_events' %}?start=" + encodeURIComponent(fetchInfo.startStr) + "&end=" + encodeURIComponent(fetchInfo.endStr), {
-                headers: { 'Accept': 'application/json' }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (!data || data.success === false) {
+    function initCalendar() {
+        if (!calendarEl) return;
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: (window.innerWidth && window.innerWidth < 768) ? 'listWeek' : 'dayGridMonth',
+            height: 'auto',
+            locale: 'fr',
+            eventDisplay: 'block',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek,listDay'
+            },
+            navLinks: true,
+            nowIndicator: true,
+            selectable: false,
+            eventTimeFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            },
+            events: function(fetchInfo, successCallback, failureCallback) {
+                fetch("{% url 'visites:agenda_ministre_events' %}?start=" + encodeURIComponent(fetchInfo.startStr) + "&end=" + encodeURIComponent(fetchInfo.endStr), {
+                    headers: { 'Accept': 'application/json' }
+                })
+                .then(function(r) {
+                    var ct = (r.headers && r.headers.get) ? (r.headers.get('Content-Type') || '') : '';
+                    var isJson = ct.toLowerCase().indexOf('application/json') !== -1;
+                    if (!r.ok || !isJson) {
+                        try {
+                            if (r.status === 401) {
+                                showAgendaModal('Connexion requise', '<div class="alert alert-warning mb-0">Votre session a expiré. Veuillez vous reconnecter pour afficher l\'agenda.</div>');
+                            } else if (r.status === 403) {
+                                showAgendaModal('Accès refusé', '<div class="alert alert-danger mb-0">Vous n\'avez pas l\'autorisation d\'accéder à l\'agenda.</div>');
+                            }
+                        } catch (e) {}
+                        failureCallback();
+                        return null;
+                    }
+                    return r.json();
+                })
+                .then(function(data) {
+                    if (!data || data.success === false) {
+                        failureCallback();
+                        return;
+                    }
+                    try {
+                        var dbg = document.getElementById('events-debug');
+                        if (dbg) {
+                            var items = (data.events || []).map(function(ev) { return '<li>' + (ev.title || '(sans titre)') + '</li>'; }).join('');
+                            dbg.innerHTML = '<div class="fw-semibold">Événements chargés:</div><ul class="mb-0">' + items + '</ul>';
+                            dbg.style.display = 'block';
+                        }
+                    } catch (e) {}
+                    successCallback(data.events || []);
+                })
+                .catch(function() {
                     failureCallback();
+                });
+            },
+            eventClick: function(info) {
+                info.jsEvent.preventDefault();
+                var title = (info.event.extendedProps && info.event.extendedProps.sujet) ? info.event.extendedProps.sujet : info.event.title;
+                showAgendaModal(title, renderEventDetails(info.event));
+            },
+            dateClick: function(info) {
+                var clicked = info.dateStr;
+                var events = calendar.getEvents().filter(function(ev) {
+                    try {
+                        return ev.start && ev.start.toISOString().slice(0, 10) === clicked;
+                    } catch (e) {
+                        return false;
+                    }
+                });
+
+                if (!events.length) {
+                    showAgendaModal('Agenda du ' + clicked, '<div class="alert alert-info mb-0">Aucun rendez-vous confirmé pour cette date.</div>');
                     return;
                 }
+
+                var items = events
+                    .sort(function(a, b) { return (a.start || 0) - (b.start || 0); })
+                    .map(function(ev) {
+                        var p = ev.extendedProps || {};
+                        var time = '';
+                        try {
+                            time = ev.start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        } catch (e) {}
+                        return (
+                            '<div class="agenda-modal-card mb-2">'
+                            + '  <div class="card-body-in">'
+                            + '    <div class="d-flex justify-content-between align-items-start gap-2">'
+                            + '      <div>'
+                            + '        <div class="fw-bold" style="font-size: 14px;">' + escapeHtml(p.sujet || ev.title) + '</div>'
+                            + '        <div class="text-muted" style="font-size: 13px;">' + escapeHtml((p.motif || '-') + ' • ' + (p.visiteur || '-') ) + '</div>'
+                            + '      </div>'
+                            + '      <div class="fw-semibold" style="white-space:nowrap;">' + escapeHtml(time) + '</div>'
+                            + '    </div>'
+                            + '    <div class="mt-2">'
+                            + '      <button type="button" class="btn btn-sm btn-outline-primary" data-ev-id="' + escapeHtml(ev.id) + '"><i class="bi bi-eye"></i> Détails</button>'
+                            + '    </div>'
+                            + '  </div>'
+                            + '</div>'
+                        );
+                    })
+                    .join('');
+
+                showAgendaModal('Agenda du ' + clicked, items);
+
                 try {
-                    var dbg = document.getElementById('events-debug');
-                    if (dbg) {
-                        var items = (data.events || []).map(function(ev) { return '<li>' + (ev.title || '(sans titre)') + '</li>'; }).join('');
-                        dbg.innerHTML = '<div class="fw-semibold">Événements chargés:</div><ul class="mb-0">' + items + '</ul>';
-                        dbg.style.display = 'block';
-                    }
-                } catch (e) {}
-                successCallback(data.events || []);
-            })
-            .catch(function() {
-                failureCallback();
-            });
-        },
-        eventClick: function(info) {
-            info.jsEvent.preventDefault();
-            var title = (info.event.extendedProps && info.event.extendedProps.sujet) ? info.event.extendedProps.sujet : info.event.title;
-            showAgendaModal(title, renderEventDetails(info.event));
-        },
-        dateClick: function(info) {
-            var clicked = info.dateStr;
-            var events = calendar.getEvents().filter(function(ev) {
-                try {
-                    return ev.start && ev.start.toISOString().slice(0, 10) === clicked;
-                } catch (e) {
-                    return false;
-                }
-            });
-
-            if (!events.length) {
-                showAgendaModal('Agenda du ' + clicked, '<div class="alert alert-info mb-0">Aucun rendez-vous confirmé pour cette date.</div>');
-                return;
-            }
-
-            var items = events
-                .sort(function(a, b) { return (a.start || 0) - (b.start || 0); })
-                .map(function(ev) {
-                    var p = ev.extendedProps || {};
-                    var time = '';
-                    try {
-                        time = ev.start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                    } catch (e) {}
-                    return (
-                        '<div class="agenda-modal-card mb-2">'
-                        + '  <div class="card-body-in">'
-                        + '    <div class="d-flex justify-content-between align-items-start gap-2">'
-                        + '      <div>'
-                        + '        <div class="fw-bold" style="font-size: 14px;">' + escapeHtml(p.sujet || ev.title) + '</div>'
-                        + '        <div class="text-muted" style="font-size: 13px;">' + escapeHtml((p.motif || '-') + ' • ' + (p.visiteur || '-') ) + '</div>'
-                        + '      </div>'
-                        + '      <div class="fw-semibold" style="white-space:nowrap;">' + escapeHtml(time) + '</div>'
-                        + '    </div>'
-                        + '    <div class="mt-2">'
-                        + '      <button type="button" class="btn btn-sm btn-outline-primary" data-ev-id="' + escapeHtml(ev.id) + '"><i class="bi bi-eye"></i> Détails</button>'
-                        + '    </div>'
-                        + '  </div>'
-                        + '</div>'
-                    );
-                })
-                .join('');
-
-            showAgendaModal('Agenda du ' + clicked, items);
-
-            try {
-                document.querySelectorAll('#agendaModalBody [data-ev-id]').forEach(function(btn) {
-                    btn.addEventListener('click', function() {
-                        var id = btn.getAttribute('data-ev-id');
-                        var ev = calendar.getEventById(id);
-                        if (!ev) return;
-                        var title = (ev.extendedProps && ev.extendedProps.sujet) ? ev.extendedProps.sujet : ev.title;
-                        showAgendaModal(title, renderEventDetails(ev));
+                    document.querySelectorAll('#agendaModalBody [data-ev-id]').forEach(function(btn) {
+                        btn.addEventListener('click', function() {
+                            var id = btn.getAttribute('data-ev-id');
+                            var ev = calendar.getEventById(id);
+                            if (!ev) return;
+                            var title = (ev.extendedProps && ev.extendedProps.sujet) ? ev.extendedProps.sujet : ev.title;
+                            showAgendaModal(title, renderEventDetails(ev));
+                        });
                     });
-                });
+                } catch (e) {}
+            }
+        });
+
+        calendar.render();
+
+        function updateExportLink() {
+            if (!exportPdfBtn) return;
+            try {
+                var view = calendar.view;
+                var start = view.activeStart ? view.activeStart.toISOString().slice(0, 10) : '';
+                var end = view.activeEnd ? view.activeEnd.toISOString().slice(0, 10) : '';
+                if (exportPdfBtn) {
+                    var urlPdf = "{% url 'visites:agenda_ministre_export_pdf' %}" + "?start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end);
+                    exportPdfBtn.setAttribute('href', urlPdf);
+                }
             } catch (e) {}
         }
-    });
 
-    calendar.render();
+        updateExportLink();
+        calendar.on('datesSet', function() {
+            updateExportLink();
+        });
 
-    function updateExportLink() {
-        if (!exportPdfBtn) return;
         try {
-            var view = calendar.view;
-            var start = view.activeStart ? view.activeStart.toISOString().slice(0, 10) : '';
-            var end = view.activeEnd ? view.activeEnd.toISOString().slice(0, 10) : '';
-            if (exportPdfBtn) {
-                var urlPdf = "{% url 'visites:agenda_ministre_export_pdf' %}" + "?start=" + encodeURIComponent(start) + "&end=" + encodeURIComponent(end);
-                exportPdfBtn.setAttribute('href', urlPdf);
+            var printBtn = document.getElementById('agendaPrintBtn');
+            if (printBtn) {
+                printBtn.addEventListener('click', function() {
+                    openPrintWindow();
+                });
             }
         } catch (e) {}
+
+        try {
+            var printViewBtn = document.getElementById('agendaPrintViewBtn');
+            if (printViewBtn) {
+                printViewBtn.addEventListener('click', function() {
+                    printCurrentView(calendar);
+                });
+            }
+        } catch (e) {}
+
+        return calendar;
     }
 
-    updateExportLink();
-    calendar.on('datesSet', function() {
-        updateExportLink();
-    });
-
-    try {
-        var printBtn = document.getElementById('agendaPrintBtn');
-        if (printBtn) {
-            printBtn.addEventListener('click', function() {
-                openPrintWindow();
-            });
-        }
-    } catch (e) {}
-
-    try {
-        var printViewBtn = document.getElementById('agendaPrintViewBtn');
-        if (printViewBtn) {
-            printViewBtn.addEventListener('click', function() {
-                printCurrentView(calendar);
-            });
-        }
-    } catch (e) {}
+    ensureFullCalendar()
+        .then(function() {
+            initCalendar();
+        })
+        .catch(function() {
+            try {
+                if (calendarEl) {
+                    calendarEl.innerHTML = '<div class="alert alert-warning mb-0">Impossible de charger le calendrier (FullCalendar). Vérifie ta connexion Internet ou le blocage CDN (jsdelivr/unpkg) puis recharge la page.</div>';
+                }
+            } catch (e) {}
+        });
 });
 </script>
 {% endblock %}

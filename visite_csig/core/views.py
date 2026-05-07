@@ -1,11 +1,10 @@
 from django.contrib import messages
-from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core import signing
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -13,8 +12,24 @@ from django.utils import timezone
 from core.permissions import module_permission_required
 
 from .models import Correspondant, MotifVisite, PermissionUtilisateur, Utilisateur
-from visites.models import CreneauDisponibilite, RendezVous, Visite
-from visiteurs.models import Visiteur
+from visites.models import CreneauDisponibilite, RendezVous
+
+
+def _clean_error_message(e):
+    """Extract a clean, user-friendly message from a Django exception."""
+    if isinstance(e, ValidationError):
+        if hasattr(e, 'message_dict'):
+            parts = []
+            for field, msgs in e.message_dict.items():
+                joined = ', '.join(msgs)
+                if field == '__all__':
+                    parts.append(joined)
+                else:
+                    parts.append(f"{field}: {joined}")
+            return ' | '.join(parts)
+        if hasattr(e, 'messages'):
+            return ' | '.join(e.messages)
+    return str(e)
 
 
 def login_view(request):

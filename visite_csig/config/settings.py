@@ -11,10 +11,10 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000', 
     'http://localhost:8000', 
     'http://127.0.0.1:55006',
-    'https://boubacar32.pythonanywhere.com',
+    'https://boubacar32.pythonanywhere.com', 
     'http://boubacar32.pythonanywhere.com',
     'http://127.0.0.1:58635',
-    'http://localhost:58635',
+    'http://localhost:58635', 
 ]
 
 INSTALLED_APPS = [
@@ -79,13 +79,13 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # Configuration principale (Gmail par défaut)
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'True'
-EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() == 'True'
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 'yes')
 
 # Identifiants
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@csig-guinee.org')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'etfpmena@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'pxrm ikhy yfzj rpon')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Cabinet MENA-ETFP <etfpmena@gmail.com>')
 
 # Configuration pour le développement (commenter pour tester)
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -117,6 +117,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 APP_NAME = 'MENA-ETFP'
 APP_VERSION = '2.0'
+
+# URL publique du site (pour les images dans les emails)
+SITE_PUBLIC_URL = os.environ.get('SITE_PUBLIC_URL', 'https://boubacar32.pythonanywhere.com')
 
 TYPES_IDENTITE = [
     ('cni', 'Carte Nationale d\'Identité'),

@@ -689,7 +689,7 @@ def agenda_ministre_public_events(request, token):
         except Exception:
             return None
 
-    qs = RendezVous.objects.select_related('visiteur', 'motif').filter(statut='confirme')
+    qs = RendezVous.objects.select_related('visiteur', 'motif').exclude(statut='annule')
     start_date = _to_date(start)
     end_date = _to_date(end)
     if start_date:

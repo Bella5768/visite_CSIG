@@ -66,14 +66,18 @@ def generate_badge_pdf(visiteur, visite=None):
 def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
     """
     Envoie un email de confirmation au demandeur du rendez-vous
+    avec les logos attachés en inline (CID) pour qu'ils s'affichent dans Gmail.
     """
     if not rendez_vous.visiteur.email:
         return False
     
-    sujet = f"Confirmation de votre rendez-vous - {rendez_vous.sujet}"
-    
+    import os
+    from email.mime.image import MIMEImage
+    from django.core.mail import EmailMultiAlternatives
     from django.core import signing
     from django.urls import reverse
+
+    sujet = f"Confirmation de votre rendez-vous - {rendez_vous.sujet}"
 
     preuve_token = signing.dumps({'rdv_id': rendez_vous.pk}, salt='rendez_vous_public_preuve')
     preuve_url = request.build_absolute_uri(
@@ -93,14 +97,33 @@ def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
     plain_message = strip_tags(html_message)
     
     try:
-        send_mail(
-            sujet,
-            plain_message,
-            settings.DEFAULT_FROM_EMAIL,
-            [rendez_vous.visiteur.email],
-            html_message=html_message,
-            fail_silently=False,
+        email = EmailMultiAlternatives(
+            subject=sujet,
+            body=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[rendez_vous.visiteur.email],
         )
+        email.attach_alternative(html_message, "text/html")
+        email.mixed_subtype = 'related'
+
+        # Attacher les logos en inline
+        images_dir = os.path.join(settings.STATIC_ROOT, 'images')
+        logo_files = [
+            ('logo_mena', 'mena-etfp.png', 'image/png'),
+            ('logo_branding', 'branding.webp', 'image/webp'),
+            ('logo_simandou', 'simandou.jpeg', 'image/jpeg'),
+        ]
+        for cid, filename, mimetype in logo_files:
+            filepath = os.path.join(images_dir, filename)
+            if os.path.exists(filepath):
+                with open(filepath, 'rb') as f:
+                    maintype, subtype = mimetype.split('/')
+                    img = MIMEImage(f.read(), _subtype=subtype)
+                    img.add_header('Content-ID', f'<{cid}>')
+                    img.add_header('Content-Disposition', 'inline', filename=filename)
+                    email.attach(img)
+
+        email.send(fail_silently=False)
         return True
     except Exception as e:
         print(f"Erreur lors de l'envoi de l'email de confirmation: {e}")

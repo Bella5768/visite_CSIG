@@ -3,109 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmation de rendez-vous</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 5px 5px 0 0;
-        }
-        .content {
-            background-color: #f9f9f9;
-            padding: 30px;
-            border: 1px solid #ddd;
-        }
-        .footer {
-            background-color: #ecf0f1;
-            padding: 20px;
-            text-align: center;
-            border-radius: 0 0 5px 5px;
-            font-size: 12px;
-            color: #666;
-        }
-        .info-box {
-            background-color: #e8f4f8;
-            border-left: 4px solid #3498db;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-        .btn:hover {
-            background-color: #2980b9;
-        }
-        .logos { display: flex; justify-content: center; align-items: center; gap: 14px; margin-bottom: 12px; }
-        .logos img { height: 44px; width: auto; background: #fff; border-radius: 8px; padding: 6px; }
-    </style>
+    <title>Confirmation de rendez-vous — MENA-ETFP</title>
 </head>
-<body>
-    <div class="header">
-        <div class="logos">
-            <img src="{{ site_url }}static/images/mena-etfp.png" alt="MENA-ETFP">
-            <img src="{{ site_url }}static/images/simandou.jpeg" alt="Simandou">
-        </div>
-        <h1>Confirmation de rendez-vous</h1>
-        <p>MENA-ETFP</p>
-    </div>
-    
-    <div class="content">
-        <p>Bonjour {{ visiteur.prenoms }} {{ visiteur.nom }},</p>
-        
-        <p>Nous avons le plaisir de vous confirmer votre rendez-vous. Voici les détails :</p>
-        
-        <div class="info-box">
-            <h3>Détails du rendez-vous</h3>
-            <p><strong>Sujet :</strong> {{ rendez_vous.sujet }}</p>
-            <p><strong>Date :</strong> {{ rendez_vous.date_rendez_vous|date:"d F Y" }}</p>
-            <p><strong>Heure :</strong> {{ rendez_vous.heure_debut|time:"H:i" }} - {{ rendez_vous.heure_fin|time:"H:i" }}</p>
-            <p><strong>Motif :</strong> {{ motif.libelle }}</p>
-            {% if correspondant %}
-            <p><strong>Correspondant :</strong> {{ correspondant.prenoms }} {{ correspondant.nom }} - {{ correspondant.departement }}</p>
-            {% endif %}
-        </div>
-        
-        {% if rendez_vous.description %}
-        <p><strong>Description :</strong></p>
-        <p>{{ rendez_vous.description }}</p>
-        {% endif %}
-        
-        <p>Veuillez vous présenter à l'accueil 10 minutes avant l'heure prévue avec une pièce d'identité.</p>
-        
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="{{ site_url }}" class="btn">Accéder au site MENA-ETFP</a>
-        </div>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f4f8; line-height: 1.6;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f4f8; padding: 30px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+                    
+                    <!-- HEADER avec couleur MENA -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 50%, #172554 100%); padding: 32px 40px; text-align: center;">
+                            <!-- Logos -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="padding-bottom: 20px;">
+                                        <img src="cid:logo_mena" alt="MENA-ETFP" height="52" style="height: 52px; width: auto; border-radius: 8px; margin: 0 8px;">
+                                        <img src="cid:logo_branding" alt="Guinée" height="52" style="height: 52px; width: auto; border-radius: 8px; margin: 0 8px;">
+                                        <img src="cid:logo_simandou" alt="Simandou" height="52" style="height: 52px; width: auto; border-radius: 8px; margin: 0 8px;">
+                                    </td>
+                                </tr>
+                            </table>
+                            <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">✅ Rendez-vous Confirmé</h1>
+                            <p style="margin: 8px 0 0; font-size: 13px; color: rgba(255,255,255,0.7); font-weight: 500;">Cabinet du Ministre — MENA-ETFP</p>
+                        </td>
+                    </tr>
 
-        <div style="text-align: center; margin: 0 0 30px 0;">
-            <a href="{{ preuve_url }}" class="btn">Imprimer la preuve (PDF)</a>
-            <div style="font-size: 12px; color: #666; margin-top: 8px;">Présente cette preuve à l'accueil si on te la demande.</div>
-        </div>
-        
-        <p>En cas d'empêchement, nous vous prions de nous en informer au plus tard 24 heures avant le rendez-vous.</p>
-        
-        <p>Cordialement,<br>
-        L'équipe du Ministère de l'Éducation Nationale, de l'Alphabétisation, de l'Enseignement Technique et de la Formation Professionnelle</p>
-    </div>
-    
-    <div class="footer">
-        <p>Ministère de l'Éducation Nationale, de l'Alphabétisation, de l'Enseignement Technique et de la Formation Professionnelle (MENA-ETFP)</p>
-        <p>Cet email a été généré automatiquement. Merci de ne pas y répondre.</p>
-    </div>
+                    <!-- CONTENU -->
+                    <tr>
+                        <td style="background-color: #ffffff; padding: 36px 40px;">
+                            <p style="margin: 0 0 20px; font-size: 15px; color: #1e293b;">
+                                Bonjour <strong>{{ visiteur.prenoms }} {{ visiteur.nom }}</strong>,
+                            </p>
+                            <p style="margin: 0 0 28px; font-size: 14px; color: #475569;">
+                                Nous avons le plaisir de vous confirmer votre rendez-vous auprès du Cabinet du Ministre de l'Éducation Nationale. Voici les détails :
+                            </p>
+
+                            <!-- Carte détails -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; border-left: 5px solid #2563eb; overflow: hidden;">
+                                <tr>
+                                    <td style="padding: 24px;">
+                                        <p style="margin: 0 0 12px; font-size: 12px; font-weight: 700; color: #1d4ed8; text-transform: uppercase; letter-spacing: 1px;">Détails du rendez-vous</p>
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 13px; color: #64748b; width: 100px;">📋 Sujet</td>
+                                                <td style="padding: 6px 0; font-size: 14px; color: #1e293b; font-weight: 600;">{{ rendez_vous.sujet }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 13px; color: #64748b;">📅 Date</td>
+                                                <td style="padding: 6px 0; font-size: 14px; color: #1e293b; font-weight: 600;">{{ rendez_vous.date_rendez_vous|date:"l d F Y" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 13px; color: #64748b;">🕐 Heure</td>
+                                                <td style="padding: 6px 0; font-size: 14px; color: #1e293b; font-weight: 600;">{{ rendez_vous.heure_debut|time:"H:i" }} — {{ rendez_vous.heure_fin|time:"H:i" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 13px; color: #64748b;">📌 Motif</td>
+                                                <td style="padding: 6px 0; font-size: 14px; color: #1e293b; font-weight: 600;">{{ motif.libelle }}</td>
+                                            </tr>
+                                            {% if correspondant %}
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 13px; color: #64748b;">👤 Contact</td>
+                                                <td style="padding: 6px 0; font-size: 14px; color: #1e293b; font-weight: 600;">{{ correspondant.prenoms }} {{ correspondant.nom }}</td>
+                                            </tr>
+                                            {% endif %}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            {% if rendez_vous.description %}
+                            <p style="margin: 20px 0 8px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">Description</p>
+                            <p style="margin: 0 0 20px; font-size: 14px; color: #334155; background: #f8fafc; padding: 12px 16px; border-radius: 8px;">{{ rendez_vous.description }}</p>
+                            {% endif %}
+
+                            <!-- Alerte -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef9c3; border: 1px solid #fde047; border-radius: 10px; margin: 24px 0;">
+                                <tr>
+                                    <td style="padding: 16px 20px;">
+                                        <p style="margin: 0; font-size: 13px; color: #854d0e; font-weight: 600;">
+                                            ⚠️ Veuillez vous présenter à l'accueil <strong>10 minutes avant</strong> l'heure prévue avec une pièce d'identité valide.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Boutons -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 28px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ preuve_url }}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 700; letter-spacing: 0.3px;">
+                                            📄 Télécharger la preuve
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding-top: 10px;">
+                                        <p style="margin: 0; font-size: 11px; color: #94a3b8;">Présentez ce document à l'accueil si nécessaire</p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 24px 0 0; font-size: 13px; color: #64748b;">
+                                En cas d'empêchement, nous vous prions de nous en informer au plus tard 24 heures avant le rendez-vous.
+                            </p>
+
+                            <p style="margin: 24px 0 0; font-size: 14px; color: #334155;">
+                                Cordialement,<br>
+                                <strong style="color: #1d4ed8;">Le Cabinet du Ministre MENA-ETFP</strong>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                        <td style="background-color: #1e293b; padding: 24px 40px; text-align: center;">
+                            <p style="margin: 0 0 6px; font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 600;">
+                                Ministère de l'Éducation Nationale, de l'Alphabétisation,<br>de l'Enseignement Technique et de la Formation Professionnelle
+                            </p>
+                            <p style="margin: 8px 0 0; font-size: 11px; color: rgba(255,255,255,0.4);">
+                                République de Guinée — Travail • Justice • Solidarité
+                            </p>
+                            <p style="margin: 12px 0 0; font-size: 10px; color: rgba(255,255,255,0.3);">
+                                Cet email a été généré automatiquement. Merci de ne pas y répondre.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
