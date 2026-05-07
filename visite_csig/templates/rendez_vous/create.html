@@ -1,172 +1,374 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
-<!-- Page Title Bar -->
-<div class="page-title-bar">
+
+<!-- Header -->
+<div class="rdv-header">
+    <div class="rdv-header-icon"><i class="bi bi-calendar-plus-fill"></i></div>
     <div>
-        <h2><i class="bi bi-calendar-plus"></i> Nouveau rendez-vous</h2>
-        <div class="subtitle">Planifier un nouveau rendez-vous</div>
+        <h2 class="rdv-header-title">Nouveau rendez-vous</h2>
+        <div class="rdv-header-sub">Planifier un rendez-vous interne</div>
     </div>
-    <div class="actions">
-        <a href="{% url 'visites:rendez_vous_list' %}" class="btn-outline-gradient">
-            <i class="bi bi-arrow-left"></i> Retour à la liste
-        </a>
+    <a href="{% url 'visites:rendez_vous_list' %}" class="rdv-header-back"><i class="bi bi-arrow-left"></i> Retour</a>
+</div>
+
+<!-- Stepper -->
+<div class="rdv-stepper">
+    <div class="rdv-step active" data-step="1">
+        <span class="rdv-step-icon"><i class="bi bi-calendar3"></i></span>
+        <span class="rdv-step-label">Créneau & Motif</span>
+    </div>
+    <div class="rdv-step-sep"><i class="bi bi-chevron-right"></i></div>
+    <div class="rdv-step" data-step="2">
+        <span class="rdv-step-icon"><i class="bi bi-person-lines-fill"></i></span>
+        <span class="rdv-step-label">Visiteur & Détails</span>
+    </div>
+    <div class="rdv-step-sep"><i class="bi bi-chevron-right"></i></div>
+    <div class="rdv-step" data-step="3">
+        <span class="rdv-step-icon"><i class="bi bi-check2-circle"></i></span>
+        <span class="rdv-step-label">Confirmation</span>
     </div>
 </div>
 
-<!-- Form -->
-<div class="card-section">
-    <div class="card-body">
-        <form method="post" id="rendez_vous_form">
-            {% csrf_token %}
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="sujet" class="form-label">Sujet du rendez-vous *</label>
-                        <input type="text" class="form-control" id="sujet" name="sujet" required 
-                               placeholder="Ex: Réunion de suivi, Consultation, etc.">
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="priorite" class="form-label">Priorité</label>
-                        <select class="form-select" id="priorite" name="priorite">
-                            {% for priorite, label in priorites %}
-                            <option value="{{ priorite }}"{% if priorite == 'normale' %} selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+<form method="post" id="rdv_form">
+{% csrf_token %}
+
+<!-- STEP 1 : Créneau & Motif -->
+<div class="rdv-panel" id="step1">
+    <div class="row g-4">
+        <div class="col-md-5">
+            <div class="rdv-card">
+                <div class="rdv-card-head"><i class="bi bi-bookmark-fill"></i> Motif de la visite</div>
+                <div class="rdv-card-body" id="motifList">
+                    {% for motif in motifs %}
+                    <label class="rdv-motif-item">
+                        <input type="radio" name="motif_id" value="{{ motif.pk }}" required>
+                        <span class="rdv-motif-label">{{ motif.libelle }}</span>
+                    </label>
+                    {% empty %}
+                    <div class="rdv-empty">Aucun motif disponible</div>
+                    {% endfor %}
                 </div>
             </div>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="visiteur_id" class="form-label">Visiteur *</label>
-                        <select class="form-select" id="visiteur_id" name="visiteur_id" required>
-                            <option value="">Sélectionner un visiteur</option>
-                            {% for visiteur in visiteurs %}
-                            <option value="{{ visiteur.pk }}"{% if visiteur_preselect_id and visiteur.pk == visiteur_preselect_id %} selected{% endif %}>
-                                {{ visiteur.nom }} {{ visiteur.prenoms }} - {{ visiteur.telephone }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <div class="form-text">
-                            <a href="{% url 'visiteurs:ajouter' %}" target="_blank">
-                                <i class="bi bi-plus-circle"></i> Ajouter un nouveau visiteur
-                            </a>
+        </div>
+        <div class="col-md-7">
+            <div class="rdv-card">
+                <div class="rdv-card-head"><i class="bi bi-clock-fill"></i> Créneau disponible</div>
+                <div class="rdv-card-body">
+                    <div id="creneauArea">
+                        <div class="rdv-empty">
+                            <i class="bi bi-calendar2-week" style="font-size:32px;opacity:.4;"></i>
+                            <div>Sélectionnez d'abord un motif</div>
+                        </div>
+                    </div>
+                    <div id="manualTimeArea" style="display:none;">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Date du rendez-vous *</label>
+                            <input type="date" class="form-control" id="date_rendez_vous" name="date_rendez_vous" min="{{ today|date:'Y-m-d' }}">
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Heure début *</label>
+                                <input type="time" class="form-control" id="heure_debut" name="heure_debut">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Heure fin *</label>
+                                <input type="time" class="form-control" id="heure_fin" name="heure_fin">
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="motif_id" class="form-label">Motif de visite *</label>
-                        <select class="form-select" id="motif_id" name="motif_id" required>
-                            <option value="">Sélectionner un motif</option>
-                            {% for motif in motifs %}
-                            <option value="{{ motif.pk }}">{{ motif.libelle }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
             </div>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="correspondant_id" class="form-label">Correspondant</label>
-                        <select class="form-select" id="correspondant_id" name="correspondant_id">
-                            <option value="">Aucun correspondant</option>
-                            {% for correspondant in correspondants %}
-                            <option value="{{ correspondant.pk }}">
-                                {{ correspondant.prenoms }} {{ correspondant.nom }} - {{ correspondant.departement }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="date_rendez_vous" class="form-label">Date du rendez-vous *</label>
-                        <input type="date" class="form-control" id="date_rendez_vous" name="date_rendez_vous" required 
-                               min="{{ today|date:'Y-m-d' }}">
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="heure_debut" class="form-label">Heure de début *</label>
-                        <input type="time" class="form-control" id="heure_debut" name="heure_debut" required>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="heure_fin" class="form-label">Heure de fin *</label>
-                        <input type="time" class="form-control" id="heure_fin" name="heure_fin" required>
-                        <div class="form-text text-muted">Doit être postérieure à l'heure de début</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="4" 
-                          placeholder="Description détaillée du rendez-vous..."></textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="notes_confidentielles" class="form-label">
-                    <i class="bi bi-lock"></i> Notes confidentielles
-                </label>
-                <textarea class="form-control" id="notes_confidentielles" name="notes_confidentielles" rows="3" 
-                          placeholder="Notes internes confidentielles..."></textarea>
-                <div class="form-text text-muted">Ces notes ne seront visibles que par le personnel autorisé</div>
-            </div>
-
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i> Créer le rendez-vous
-                </button>
-                <a href="{% url 'visites:rendez_vous_list' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-x-circle"></i> Annuler
-                </a>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
+<!-- STEP 2 : Visiteur & Détails -->
+<div class="rdv-panel" id="step2" style="display:none;">
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="rdv-card">
+                <div class="rdv-card-head"><i class="bi bi-person-fill"></i> Visiteur</div>
+                <div class="rdv-card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Sélectionner un visiteur *</label>
+                        <select class="form-select" id="visiteur_id" name="visiteur_id" required>
+                            <option value="">— Choisir —</option>
+                            {% for v in visiteurs %}
+                            <option value="{{ v.pk }}" {% if visiteur_preselect_id and v.pk == visiteur_preselect_id %}selected{% endif %}>
+                                {{ v.nom }} {{ v.prenoms }} — {{ v.telephone }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text mt-1">
+                            <a href="{% url 'visiteurs:ajouter' %}" target="_blank"><i class="bi bi-plus-circle"></i> Ajouter un visiteur</a>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Correspondant</label>
+                        <select class="form-select" id="correspondant_id" name="correspondant_id">
+                            <option value="">Aucun</option>
+                            {% for c in correspondants %}
+                            <option value="{{ c.pk }}">{{ c.prenoms }} {{ c.nom }} — {{ c.departement }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="rdv-card">
+                <div class="rdv-card-head"><i class="bi bi-chat-square-text-fill"></i> Détails</div>
+                <div class="rdv-card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Sujet *</label>
+                        <input type="text" class="form-control" id="sujet" name="sujet" required placeholder="Ex: Réunion de suivi">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Priorité</label>
+                        <select class="form-select" id="priorite" name="priorite">
+                            {% for p, label in priorites %}
+                            <option value="{{ p }}" {% if p == 'normale' %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Description..."></textarea>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold"><i class="bi bi-lock-fill"></i> Notes confidentielles</label>
+                        <textarea class="form-control" id="notes_confidentielles" name="notes_confidentielles" rows="2" placeholder="Notes internes..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STEP 3 : Confirmation -->
+<div class="rdv-panel" id="step3" style="display:none;">
+    <div class="rdv-card">
+        <div class="rdv-card-head"><i class="bi bi-clipboard-check-fill"></i> Récapitulatif du rendez-vous</div>
+        <div class="rdv-card-body" id="recap">
+        </div>
+    </div>
+</div>
+
+<!-- Nav Buttons -->
+<div class="rdv-nav-bar">
+    <button type="button" class="rdv-btn-outline" id="btnPrev" style="display:none;">
+        <i class="bi bi-arrow-left"></i> Précédent
+    </button>
+    <div style="flex:1;"></div>
+    <button type="button" class="rdv-btn-primary" id="btnNext">
+        Suivant <i class="bi bi-arrow-right"></i>
+    </button>
+    <button type="submit" class="rdv-btn-primary" id="btnSubmit" style="display:none;">
+        <i class="bi bi-check-circle-fill"></i> Créer le rendez-vous
+    </button>
+</div>
+</form>
+
+<style>
+    .rdv-header{display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#1e3a5f 0%,#1e40af 100%);color:#fff;border-radius:16px;padding:18px 24px;margin-bottom:18px;position:relative;}
+    .rdv-header-icon{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:22px;}
+    .rdv-header-title{margin:0;font-size:20px;font-weight:800;color:#fff;}
+    .rdv-header-sub{font-size:13px;opacity:.8;font-weight:500;}
+    .rdv-header-back{margin-left:auto;padding:8px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.3);color:#fff;text-decoration:none;font-weight:600;font-size:13px;transition:all .2s;}
+    .rdv-header-back:hover{background:rgba(255,255,255,.15);color:#fff;}
+
+    .rdv-stepper{display:flex;align-items:center;gap:4px;background:#fff;border-radius:14px;padding:10px 16px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+    .rdv-step{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;color:#94a3b8;cursor:pointer;transition:all .2s;}
+    .rdv-step.active{background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.3);}
+    .rdv-step.done{color:#2563eb;background:rgba(37,99,235,.08);}
+    .rdv-step-icon{font-size:15px;}
+    .rdv-step-sep{color:#cbd5e1;font-size:12px;}
+
+    .rdv-panel{margin-bottom:16px;}
+    .rdv-card{background:#fff;border-radius:16px;border:1px solid rgba(15,23,42,.06);box-shadow:0 2px 8px rgba(0,0,0,.04);overflow:hidden;}
+    .rdv-card-head{padding:14px 20px;font-size:14px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(15,23,42,.06);background:#f8fafc;}
+    .rdv-card-head i{color:#2563eb;font-size:16px;}
+    .rdv-card-body{padding:20px;}
+
+    .rdv-motif-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;cursor:pointer;transition:all .15s;border:1.5px solid transparent;margin-bottom:6px;}
+    .rdv-motif-item:hover{background:rgba(37,99,235,.04);}
+    .rdv-motif-item input[type=radio]{width:18px;height:18px;accent-color:#2563eb;margin:0;flex-shrink:0;}
+    .rdv-motif-item:has(input:checked){background:rgba(37,99,235,.08);border-color:#2563eb;}
+    .rdv-motif-label{font-weight:600;font-size:14px;color:#1e293b;}
+
+    .rdv-creneau-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;cursor:pointer;transition:all .15s;border:1.5px solid transparent;margin-bottom:6px;}
+    .rdv-creneau-item:hover{background:rgba(37,99,235,.04);}
+    .rdv-creneau-item input[type=radio]{width:18px;height:18px;accent-color:#2563eb;margin:0;flex-shrink:0;}
+    .rdv-creneau-item:has(input:checked){background:rgba(37,99,235,.08);border-color:#2563eb;}
+    .rdv-creneau-label{font-weight:600;font-size:13px;color:#1e293b;}
+    .rdv-creneau-sub{font-size:12px;color:#64748b;}
+
+    .rdv-empty{text-align:center;padding:32px 12px;color:#94a3b8;font-weight:600;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+
+    .rdv-nav-bar{display:flex;align-items:center;gap:12px;padding:14px 0;margin-top:4px;}
+    .rdv-btn-primary{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:12px;border:none;background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);color:#fff;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.3);transition:all .2s;}
+    .rdv-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,99,235,.4);}
+    .rdv-btn-outline{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:12px;border:1.5px solid #cbd5e1;background:#fff;color:#475569;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;}
+    .rdv-btn-outline:hover{border-color:#2563eb;color:#2563eb;}
+
+    .rdv-recap-grid{display:grid;grid-template-columns:160px 1fr;gap:10px 16px;font-size:14px;}
+    .rdv-recap-grid .k{color:#64748b;font-weight:700;display:flex;align-items:center;gap:8px;}
+    .rdv-recap-grid .k i{color:#2563eb;font-size:15px;}
+    .rdv-recap-grid .v{color:#1e293b;font-weight:600;}
+
+    @media(max-width:768px){
+        .rdv-stepper{flex-wrap:wrap;gap:6px;}
+        .rdv-step{padding:8px 12px;font-size:12px;}
+        .rdv-recap-grid{grid-template-columns:1fr;}
+    }
+</style>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('rendez_vous_form');
-    const heureDebut = document.getElementById('heure_debut');
-    const heureFin = document.getElementById('heure_fin');
-    const dateRdv = document.getElementById('date_rendez_vous');
-    
-    // Set minimum date to today
-    const today = new Date().toISOString().split('T')[0];
-    dateRdv.min = today;
-    
-    form.addEventListener('submit', function(e) {
-        // Validate time
-        if (heureDebut.value && heureFin.value) {
-            if (heureFin.value <= heureDebut.value) {
-                e.preventDefault();
-                alert('L\'heure de fin doit être postérieure à l\'heure de début');
-                heureFin.focus();
+(function(){
+    var currentStep = 1;
+    var steps = [null, document.getElementById('step1'), document.getElementById('step2'), document.getElementById('step3')];
+    var stepEls = document.querySelectorAll('.rdv-step');
+    var btnNext = document.getElementById('btnNext');
+    var btnPrev = document.getElementById('btnPrev');
+    var btnSubmit = document.getElementById('btnSubmit');
+
+    function showStep(n) {
+        currentStep = n;
+        for (var i = 1; i <= 3; i++) {
+            steps[i].style.display = (i === n) ? '' : 'none';
+        }
+        stepEls.forEach(function(el) {
+            var s = parseInt(el.getAttribute('data-step'));
+            el.classList.remove('active', 'done');
+            if (s === n) el.classList.add('active');
+            else if (s < n) el.classList.add('done');
+        });
+        btnPrev.style.display = (n > 1) ? '' : 'none';
+        btnNext.style.display = (n < 3) ? '' : 'none';
+        btnSubmit.style.display = (n === 3) ? '' : 'none';
+        if (n === 3) buildRecap();
+    }
+
+    btnNext.addEventListener('click', function() {
+        if (currentStep === 1) {
+            var motif = document.querySelector('input[name="motif_id"]:checked');
+            if (!motif) { alert('Veuillez sélectionner un motif'); return; }
+            var creneau = document.querySelector('input[name="creneau_id"]:checked');
+            var dateV = document.getElementById('date_rendez_vous').value;
+            var hdV = document.getElementById('heure_debut').value;
+            var hfV = document.getElementById('heure_fin').value;
+            if (!creneau && (!dateV || !hdV || !hfV)) {
+                alert('Veuillez sélectionner un créneau ou renseigner la date et les heures');
+                return;
+            }
+            if (hdV && hfV && hfV <= hdV) {
+                alert("L'heure de fin doit être postérieure à l'heure de début");
                 return;
             }
         }
-        
-        // Validate date
-        if (dateRdv.value && dateRdv.value < today) {
-            e.preventDefault();
-            alert('La date du rendez-vous ne peut pas être dans le passé');
-            dateRdv.focus();
-            return;
+        if (currentStep === 2) {
+            if (!document.getElementById('visiteur_id').value) { alert('Veuillez sélectionner un visiteur'); return; }
+            if (!document.getElementById('sujet').value.trim()) { alert('Veuillez renseigner le sujet'); return; }
         }
+        if (currentStep < 3) showStep(currentStep + 1);
     });
-});
+
+    btnPrev.addEventListener('click', function() {
+        if (currentStep > 1) showStep(currentStep - 1);
+    });
+
+    // Motif selection → load créneaux
+    document.querySelectorAll('input[name="motif_id"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            loadCreneaux(this.value);
+        });
+    });
+
+    function loadCreneaux(motifId) {
+        var area = document.getElementById('creneauArea');
+        var manual = document.getElementById('manualTimeArea');
+        area.innerHTML = '<div class="rdv-empty"><div class="spinner-border spinner-border-sm text-primary"></div> Chargement...</div>';
+        manual.style.display = 'none';
+
+        fetch('/visites/api/motifs/')
+            .then(function(r) { return r.json(); })
+            .catch(function() { return null; });
+
+        fetch('/rdv/api/creneaux/?motif_id=' + encodeURIComponent(motifId), {headers:{'Accept':'application/json'}})
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                area.innerHTML = '';
+                if (data.success && data.creneaux && data.creneaux.length > 0) {
+                    data.creneaux.forEach(function(c) {
+                        var label = document.createElement('label');
+                        label.className = 'rdv-creneau-item';
+                        label.innerHTML = '<input type="radio" name="creneau_id" value="' + c.id + '">'
+                            + '<div><div class="rdv-creneau-label">' + escapeHtml(c.label) + '</div></div>';
+                        area.appendChild(label);
+                    });
+                    // When creneau selected, auto-fill date/time
+                    area.querySelectorAll('input[name="creneau_id"]').forEach(function(r){
+                        r.addEventListener('change', function(){
+                            // Creneau selected, clear manual fields
+                            document.getElementById('date_rendez_vous').value = '';
+                            document.getElementById('heure_debut').value = '';
+                            document.getElementById('heure_fin').value = '';
+                        });
+                    });
+                    manual.style.display = 'none';
+                } else {
+                    area.innerHTML = '<div class="rdv-empty"><i class="bi bi-calendar-x" style="font-size:28px;opacity:.4;"></i><div>Aucun créneau prédéfini</div><div style="font-size:12px;">Renseignez manuellement la date et l\'heure ci-dessous</div></div>';
+                    manual.style.display = '';
+                }
+            })
+            .catch(function() {
+                area.innerHTML = '<div class="rdv-empty"><i class="bi bi-calendar-x" style="font-size:28px;opacity:.4;"></i><div>Aucun créneau prédéfini</div><div style="font-size:12px;">Renseignez manuellement la date et l\'heure ci-dessous</div></div>';
+                manual.style.display = '';
+            });
+    }
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function buildRecap() {
+        var motifEl = document.querySelector('input[name="motif_id"]:checked');
+        var motifLabel = motifEl ? motifEl.closest('.rdv-motif-item').querySelector('.rdv-motif-label').textContent.trim() : '-';
+
+        var creneauEl = document.querySelector('input[name="creneau_id"]:checked');
+        var creneauLabel = creneauEl ? creneauEl.closest('.rdv-creneau-item').querySelector('.rdv-creneau-label').textContent.trim() : '';
+
+        var dateV = document.getElementById('date_rendez_vous').value;
+        var hdV = document.getElementById('heure_debut').value;
+        var hfV = document.getElementById('heure_fin').value;
+        var timeStr = creneauLabel || ((dateV || '-') + '  ' + (hdV || '') + ' - ' + (hfV || ''));
+
+        var visiteurSel = document.getElementById('visiteur_id');
+        var visiteurLabel = visiteurSel.selectedIndex > 0 ? visiteurSel.options[visiteurSel.selectedIndex].text : '-';
+
+        var corrSel = document.getElementById('correspondant_id');
+        var corrLabel = corrSel.selectedIndex > 0 ? corrSel.options[corrSel.selectedIndex].text : 'Aucun';
+
+        var sujet = document.getElementById('sujet').value || '-';
+        var prioriteSel = document.getElementById('priorite');
+        var prioLabel = prioriteSel.options[prioriteSel.selectedIndex].text;
+        var desc = document.getElementById('description').value || '-';
+
+        document.getElementById('recap').innerHTML =
+            '<div class="rdv-recap-grid">'
+            + '<div class="k"><i class="bi bi-bookmark"></i> Motif</div><div class="v">' + escapeHtml(motifLabel) + '</div>'
+            + '<div class="k"><i class="bi bi-clock"></i> Créneau</div><div class="v">' + escapeHtml(timeStr) + '</div>'
+            + '<div class="k"><i class="bi bi-person"></i> Visiteur</div><div class="v">' + escapeHtml(visiteurLabel) + '</div>'
+            + '<div class="k"><i class="bi bi-building"></i> Correspondant</div><div class="v">' + escapeHtml(corrLabel) + '</div>'
+            + '<div class="k"><i class="bi bi-chat-text"></i> Sujet</div><div class="v">' + escapeHtml(sujet) + '</div>'
+            + '<div class="k"><i class="bi bi-flag"></i> Priorité</div><div class="v">' + escapeHtml(prioLabel) + '</div>'
+            + '<div class="k"><i class="bi bi-text-paragraph"></i> Description</div><div class="v">' + escapeHtml(desc) + '</div>'
+            + '</div>';
+    }
+
+    showStep(1);
+})();
 </script>
 {% endblock %}

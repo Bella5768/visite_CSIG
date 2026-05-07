@@ -585,12 +585,19 @@
   }
 </style>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
+    function onReady(fn) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fn);
+        } else {
+            fn();
+        }
+    }
+    onReady(function() {
     var calendarEl = document.getElementById('calendar');
     var lastModalTitle = '';
     var lastModalQrText = '';
@@ -637,13 +644,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function ensureFullCalendar() {
         if (window.FullCalendar && window.FullCalendar.Calendar) return Promise.resolve();
-        var cssPrimary = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css';
-        var jsPrimary = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js';
-        var cssFallback = 'https://unpkg.com/fullcalendar@6.1.11/index.global.min.css';
-        var jsFallback = 'https://unpkg.com/fullcalendar@6.1.11/index.global.min.js';
-        return loadCssOnce(cssPrimary)
-            .catch(function() { return loadCssOnce(cssFallback); })
-            .then(function() { return loadScriptOnce(jsPrimary); })
+        var jsPrimary = 'https://cdn.jsdelivr.net/npm/fullcalendar@6/index.global.min.js';
+        var jsFallback = 'https://unpkg.com/fullcalendar@6/index.global.min.js';
+        return loadScriptOnce(jsPrimary)
             .catch(function() { return loadScriptOnce(jsFallback); })
             .then(function() {
                 if (window.FullCalendar && window.FullCalendar.Calendar) return;
@@ -1152,6 +1155,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (e) {}
         });
-});
+    });
+})();
 </script>
 {% endblock %}
