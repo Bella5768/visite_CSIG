@@ -2,12 +2,18 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Agenda Ministre">
+    <meta name="theme-color" content="#104480">
     {% load static %}
     <title>{% block title %}{{ page_title|default:"Prendre rendez-vous" }}{% endblock %} - {{ APP_NAME }}</title>
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}?v={{ APP_VERSION }}">
     <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}?v={{ APP_VERSION }}">
     <link rel="apple-touch-icon" href="{% static 'images/mena-etfp.png' %}?v={{ APP_VERSION }}">
+    <link rel="apple-touch-startup-image" href="{% static 'images/mena-etfp.png' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -88,10 +94,17 @@
         .input-group .form-control { border-top-right-radius: 0; border-bottom-right-radius: 0; }
         .input-group .btn { border-top-left-radius: 0; border-bottom-left-radius: 0; }
 
-        @media (max-width: 576px) {
-            .public-header { align-items: flex-start; }
+        @media (max-width: 768px) {
+            .public-shell { padding: 8px 8px 32px; }
+            .public-header { flex-wrap: wrap; gap: 10px; padding: 10px 12px; }
             .public-header .right { display: none; }
-            .page-title-bar { flex-direction: column; align-items: flex-start; }
+            .public-header .logo { width: 44px; height: 36px; }
+            .public-header .brand-title { font-size: 14px; }
+            .public-header .brand-subtitle { font-size: 11px; }
+            .main-card { padding: 12px 8px; }
+            .card-section .card-body { padding: 12px 8px; }
+            .page-title-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .page-title-bar h2 { font-size: 16px; }
             .page-title-bar .actions { width: 100%; }
             .btn-primary-gradient, .btn-outline-gradient { width: 100%; justify-content: center; }
         }
