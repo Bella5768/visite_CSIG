@@ -7,9 +7,39 @@
         <div class="subtitle">{{ rendez_vous.paginator.count|default:0 }} rendez-vous enregistrés</div>
     </div>
     <div class="actions">
-        <a href="{% url 'visites:rendez_vous_create' %}" class="btn-primary-gradient">
-            <i class="bi bi-plus-circle"></i> Nouveau rendez-vous
-        </a>
+        <div class="btn-group" role="group">
+            <a href="{% url 'visites:rendez_vous_create' %}" class="btn-primary-gradient">
+                <i class="bi bi-plus-circle"></i> Nouveau rendez-vous
+            </a>
+            <div class="dropdown">
+                <button class="btn-outline-gradient dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-gear"></i> Actions
+                </button>
+                <ul class="dropdown-menu">
+                    <li><h6 class="dropdown-header">Exportation</h6></li>
+                    <li><a class="dropdown-item text-success" href="{% url 'visites:rendez_vous_exporter' %}?statut=tous">
+                        <i class="bi bi-download"></i> Exporter tous les rendez-vous
+                    </a></li>
+                    <li><a class="dropdown-item text-success" href="{% url 'visites:rendez_vous_exporter' %}?statut=confirme">
+                        <i class="bi bi-download"></i> Exporter rendez-vous confirmés
+                    </a></li>
+                    <li><a class="dropdown-item text-success" href="{% url 'visites:rendez_vous_exporter' %}?statut=planifie">
+                        <i class="bi bi-download"></i> Exporter rendez-vous planifiés
+                    </a></li>
+                    <li><a class="dropdown-item text-success" href="{% url 'visites:rendez_vous_exporter' %}?statut=termine">
+                        <i class="bi bi-download"></i> Exporter rendez-vous terminés
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header">Suppression</h6></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmDeleteConfirmed()">
+                        <i class="bi bi-trash"></i> Supprimer rendez-vous confirmés
+                    </a></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmDeleteAll()">
+                        <i class="bi bi-trash"></i> Supprimer tous les rendez-vous
+                    </a></li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -217,4 +247,40 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+function confirmDeleteConfirmed() {
+    if (confirm('⚠️ ATTENTION !\n\nCette action va supprimer TOUS les rendez-vous confirmés.\n\nCette action est IRRÉVERSIBLE !\n\nÊtes-vous sûr de vouloir continuer ?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "visites:rendez_vous_supprimer_confirmees" %}';
+        
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function confirmDeleteAll() {
+    if (confirm('⚠️ ATTENTION !\n\nCette action va supprimer TOUS les rendez-vous (sauf les annulés).\n\nCette action est IRRÉVERSIBLE !\n\nÊtes-vous sûr de vouloir continuer ?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "visites:rendez_vous_supprimer_tous" %}';
+        
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 {% endblock %}

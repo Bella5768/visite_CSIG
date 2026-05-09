@@ -8,11 +8,12 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1', '.pythonanywhere.com']
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:8000', 
-    'http://localhost:8000', 
-    'http://127.0.0.1:62443',
-    'https://menaetfp.pythonanywhere.com', 
+    'https://menaetfp.pythonanywhere.com',
     'http://menaetfp.pythonanywhere.com',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'http://127.0.0.1:54629',
+    'http://localhost:54629',
 ]
 
 INSTALLED_APPS = [

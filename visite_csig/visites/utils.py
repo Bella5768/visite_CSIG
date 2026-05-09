@@ -63,12 +63,109 @@ def generate_badge_pdf(visiteur, visite=None):
     return buffer
 
 
+def _get_images_dir():
+    """Retourne le dossier images en cherchant dans STATICFILES_DIRS puis STATIC_ROOT"""
+    import os
+    # D'abord chercher dans les dossiers de fichiers statiques (dev)
+    for static_dir in settings.STATICFILES_DIRS:
+        images_path = os.path.join(str(static_dir), 'images')
+        if os.path.isdir(images_path):
+            return images_path
+    # Sinon dans STATIC_ROOT (production)
+    if settings.STATIC_ROOT:
+        images_path = os.path.join(str(settings.STATIC_ROOT), 'images')
+        if os.path.isdir(images_path):
+            return images_path
+    return None
+
+
+def generer_preuve_pdf(rendez_vous):
+    """Génère un PDF de preuve de rendez-vous"""
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    
+    # En-tête
+    p.setFont("Helvetica-Bold", 18)
+    p.drawCentredString(width/2, height - 2*cm, "PREUVE DE RENDEZ-VOUS")
+    
+    p.setFont("Helvetica", 11)
+    p.drawCentredString(width/2, height - 2.8*cm, "Cabinet du Ministre — MENA-ETFP")
+    p.drawCentredString(width/2, height - 3.4*cm, "République de Guinée")
+    
+    # Ligne séparatrice
+    p.setStrokeColorRGB(0.11, 0.31, 0.85)
+    p.setLineWidth(2)
+    p.line(2*cm, height - 4*cm, width - 2*cm, height - 4*cm)
+    
+    # Détails du rendez-vous
+    y = height - 5.5*cm
+    p.setFont("Helvetica-Bold", 13)
+    p.drawString(2.5*cm, y, "Détails du rendez-vous")
+    
+    y -= 1*cm
+    p.setFont("Helvetica", 11)
+    details = [
+        ("Sujet", rendez_vous.sujet),
+        ("Date", rendez_vous.date_rendez_vous.strftime('%d/%m/%Y')),
+        ("Heure", f"{rendez_vous.heure_debut.strftime('%H:%M')} - {rendez_vous.heure_fin.strftime('%H:%M') if rendez_vous.heure_fin else ''}"),
+        ("Motif", rendez_vous.motif.libelle if rendez_vous.motif else '-'),
+        ("Statut", "Confirmé"),
+    ]
+    
+    for label, value in details:
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(3*cm, y, f"{label}:")
+        p.setFont("Helvetica", 10)
+        p.drawString(7*cm, y, str(value))
+        y -= 0.7*cm
+    
+    # Informations du visiteur
+    y -= 1*cm
+    p.setFont("Helvetica-Bold", 13)
+    p.drawString(2.5*cm, y, "Informations du demandeur")
+    
+    y -= 1*cm
+    visiteur_details = [
+        ("Nom", f"{rendez_vous.visiteur.prenoms} {rendez_vous.visiteur.nom}"),
+        ("Téléphone", rendez_vous.visiteur.telephone or '-'),
+        ("Email", rendez_vous.visiteur.email or '-'),
+    ]
+    
+    if rendez_vous.correspondant:
+        visiteur_details.append(("Correspondant", f"{rendez_vous.correspondant.prenoms} {rendez_vous.correspondant.nom}"))
+    
+    for label, value in visiteur_details:
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(3*cm, y, f"{label}:")
+        p.setFont("Helvetica", 10)
+        p.drawString(7*cm, y, str(value))
+        y -= 0.7*cm
+    
+    # Note en bas
+    y -= 1.5*cm
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(2.5*cm, y, "Veuillez présenter ce document et une pièce d'identité à l'accueil.")
+    
+    # Footer
+    p.setFont("Helvetica", 8)
+    p.drawCentredString(width/2, 2*cm, "Ministère de l'Éducation Nationale, de l'Alphabétisation,")
+    p.drawCentredString(width/2, 1.5*cm, "de l'Enseignement Technique et de la Formation Professionnelle")
+    p.drawCentredString(width/2, 1*cm, "Document généré automatiquement — Ne pas modifier")
+    
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return buffer
+
+
 def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
     """
     Envoie un email de confirmation au demandeur du rendez-vous
-    avec les logos attachés en inline (CID) pour qu'ils s'affichent dans Gmail.
+    avec les logos attachés en inline (CID) et le PDF de preuve en pièce jointe.
     """
     if not rendez_vous.visiteur.email:
+        print(f"[EMAIL] Pas d'email pour le visiteur {rendez_vous.visiteur}")
         return False
     
     import os
@@ -107,26 +204,43 @@ def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
         email.mixed_subtype = 'related'
 
         # Attacher les logos en inline
-        images_dir = os.path.join(settings.STATIC_ROOT, 'images')
-        logo_files = [
-            ('logo_mena', 'mena-etfp.png', 'image/png'),
-            ('logo_branding', 'branding.webp', 'image/webp'),
-            ('logo_simandou', 'simandou.jpeg', 'image/jpeg'),
-        ]
-        for cid, filename, mimetype in logo_files:
-            filepath = os.path.join(images_dir, filename)
-            if os.path.exists(filepath):
-                with open(filepath, 'rb') as f:
-                    maintype, subtype = mimetype.split('/')
-                    img = MIMEImage(f.read(), _subtype=subtype)
-                    img.add_header('Content-ID', f'<{cid}>')
-                    img.add_header('Content-Disposition', 'inline', filename=filename)
-                    email.attach(img)
+        images_dir = _get_images_dir()
+        if images_dir:
+            logo_files = [
+                ('logo_mena', 'mena-etfp.png', 'image/png'),
+                ('logo_branding', 'branding.webp', 'image/webp'),
+                ('logo_simandou', 'simandou.jpeg', 'image/jpeg'),
+            ]
+            for cid, filename, mimetype in logo_files:
+                filepath = os.path.join(images_dir, filename)
+                if os.path.exists(filepath):
+                    with open(filepath, 'rb') as f:
+                        maintype, subtype = mimetype.split('/')
+                        img = MIMEImage(f.read(), _subtype=subtype)
+                        img.add_header('Content-ID', f'<{cid}>')
+                        img.add_header('Content-Disposition', 'inline', filename=filename)
+                        email.attach(img)
+                else:
+                    print(f"[EMAIL] Logo non trouvé: {filepath}")
+        else:
+            print(f"[EMAIL] Dossier images non trouvé")
+
+        # Générer et attacher le PDF de preuve
+        try:
+            pdf_buffer = generer_preuve_pdf(rendez_vous)
+            nom_pdf = f"preuve_rdv_{rendez_vous.visiteur.nom}_{rendez_vous.date_rendez_vous.strftime('%Y%m%d')}.pdf"
+            email.attach(nom_pdf, pdf_buffer.getvalue(), 'application/pdf')
+            print(f"[EMAIL] PDF de preuve attaché: {nom_pdf}")
+        except Exception as e:
+            print(f"[EMAIL] Erreur génération PDF: {e}")
 
         email.send(fail_silently=False)
+        print(f"[EMAIL] ✅ Email de confirmation envoyé à: {rendez_vous.visiteur.email}")
         return True
     except Exception as e:
-        print(f"Erreur lors de l'envoi de l'email de confirmation: {e}")
+        print(f"[EMAIL] ❌ Erreur lors de l'envoi: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 

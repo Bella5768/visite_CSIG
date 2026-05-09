@@ -127,8 +127,34 @@ class RendezVous(models.Model):
             raise ValidationError("La date du rendez-vous ne peut pas être dans le passé")
     
     def save(self, *args, **kwargs):
+        # Créer une notification si c'est un nouveau rendez-vous
+        is_new = self.pk is None
         self.full_clean()
         super().save(*args, **kwargs)
+        
+        # Notification pour nouveau rendez-vous
+        if is_new:
+            try:
+                from core.models import Notification
+                from django.contrib.auth import get_user_model
+                
+                User = get_user_model()
+                
+                # Notifier tous les administrateurs
+                admins = User.objects.filter(role__in=['admin', 'superadmin'])
+                
+                for admin in admins:
+                    Notification.creer_notification(
+                        titre=f"Nouveau rendez-vous: {self.sujet}",
+                        message=f"Un nouveau rendez-vous a été demandé par {self.visiteur}.\n"
+                               f"Date: {self.date_rendez_vous} à {self.heure_debut}\n"
+                               f"Sujet: {self.sujet}",
+                        utilisateur=admin,
+                        type_notification='rendez_vous',
+                        objet=self
+                    )
+            except Exception as e:
+                print(f"Erreur lors de la création de la notification: {e}")
     
     def get_duree(self):
         if not self.heure_fin:
@@ -157,10 +183,48 @@ class RendezVous(models.Model):
         )
         return rdv_datetime < now
     
-    def confirmer(self):
+    def confirmer(self, request=None):
+        """
+        Confirme le rendez-vous et envoie un email de confirmation
+        uniquement au demandeur (visiteur).
+        """
         if self.statut == 'planifie':
             self.statut = 'confirme'
             super().save(update_fields=['statut', 'date_modification'])
+            
+            if request:
+                try:
+                    from .utils import envoyer_email_confirmation_rendez_vous
+                    email_sent = envoyer_email_confirmation_rendez_vous(self, request)
+                    if email_sent:
+                        print(f"[EMAIL] ✅ Email de confirmation envoyé au demandeur: {self.visiteur.email}")
+                    else:
+                        print(f"[EMAIL] ⚠️ Email non envoyé au demandeur (email manquant ou erreur)")
+                except Exception as e:
+                    print(f"[EMAIL] ❌ Erreur: {e}")
+            
+            # Créer une notification de confirmation
+            try:
+                from core.models import Notification
+                from django.contrib.auth import get_user_model
+                
+                User = get_user_model()
+                
+                # Notifier tous les administrateurs de la confirmation
+                admins = User.objects.filter(role__in=['admin', 'superadmin'])
+                
+                for admin in admins:
+                    Notification.creer_notification(
+                        titre=f"Rendez-vous confirmé: {self.sujet}",
+                        message=f"Le rendez-vous de {self.visiteur} a été confirmé.\n"
+                               f"Date: {self.date_rendez_vous} à {self.heure_debut}\n"
+                               f"Sujet: {self.sujet}",
+                        utilisateur=admin,
+                        type_notification='confirmation',
+                        objet=self
+                    )
+            except Exception as e:
+                print(f"Erreur lors de la création de la notification de confirmation: {e}")
     
     def annuler(self, raison=""):
         self.statut = 'annule'

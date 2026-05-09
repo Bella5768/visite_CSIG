@@ -28,6 +28,12 @@ urlpatterns = [
     path('rdv/preuve/<str:token>/', visites_views.rendez_vous_public_preuve, name='rendez_vous_public_preuve'),
     path('agenda/ministre/<str:token>/', visites_views.agenda_ministre_public, name='agenda_ministre_public'),
     path('agenda/ministre/<str:token>/events/', visites_views.agenda_ministre_public_events, name='agenda_ministre_public_events'),
+    # URL ultra courte pour le cabinet du ministre
+    path('agenda/', visites_views.agenda_ministre_public_cabinet, name='agenda_ministre_cabinet'),
+    # URL encore plus courte avec code simple pour le cabinet
+    path('a/', visites_views.agenda_ministre_public_cabinet, name='agenda_ministre_cabinet_short'),
+    # URL directe ultra courte pour le cabinet (token fixe)
+    path('cabinet/', visites_views.agenda_ministre_public_direct, name='agenda_ministre_direct'),
     path('rdv/api/creneaux/', visites_views.rendez_vous_public_creneaux, name='rendez_vous_public_creneaux'),
     path('rdv/suivi/<str:token>/', visites_views.rendez_vous_public_suivi, name='rendez_vous_public_suivi'),
     path('visites/', include('visites.urls')),

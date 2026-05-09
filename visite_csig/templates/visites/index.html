@@ -7,9 +7,26 @@
         <div class="subtitle">{{ visites.paginator.count|default:0 }} visites enregistrées</div>
     </div>
     <div class="actions">
-        <a href="{% url 'visites:nouvelle_visite' %}" class="btn-primary-gradient">
-            <i class="bi bi-plus-circle"></i> Nouvelle visite
-        </a>
+        <div class="btn-group" role="group">
+            <a href="{% url 'visites:nouvelle_visite' %}" class="btn-primary-gradient">
+                <i class="bi bi-plus-circle"></i> Nouvelle visite
+            </a>
+            <div class="dropdown">
+                <button class="btn-outline-gradient dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-gear"></i> Actions
+                </button>
+                <ul class="dropdown-menu">
+                    <li><h6 class="dropdown-header">Audiences Confirmées</h6></li>
+                    <li><a class="dropdown-item text-success" href="{% url 'visites:audiences_confirmees_exporter' %}">
+                        <i class="bi bi-download"></i> Exporter audiences confirmées
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmDeleteAudiences()">
+                        <i class="bi bi-trash"></i> Supprimer audiences confirmées
+                    </a></li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -158,4 +175,25 @@
     </ul>
 </nav>
 {% endif %}
+
+<script>
+function confirmDeleteAudiences() {
+    if (confirm('⚠️ ATTENTION !\n\nCette action va supprimer TOUTES les audiences confirmées (visites terminées avec le motif "Audience Ministre").\n\nCette action est IRRÉVERSIBLE !\n\nÊtes-vous sûr de vouloir continuer ?')) {
+        // Soumettre le formulaire de suppression
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "visites:audiences_confirmees_supprimer" %}';
+        
+        // Ajouter le token CSRF
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 {% endblock %}

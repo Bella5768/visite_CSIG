@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 import io
+import csv
 import json
 
 import qrcode
@@ -504,17 +505,9 @@ def rendez_vous_confirmer(request, pk):
     
     if request.method == 'POST':
         try:
-            rendez_vous.confirmer()
-            messages.success(request, 'Rendez-vous confirmé avec succès')
-
-            try:
-                from .utils import envoyer_email_confirmation_rendez_vous
-
-                email_sent = envoyer_email_confirmation_rendez_vous(rendez_vous, request)
-                if not email_sent:
-                    messages.warning(request, "Le rendez-vous est confirmé, mais l'email de confirmation n'a pas pu être envoyé (adresse email manquante ou configuration email).")
-            except Exception as e:
-                messages.warning(request, f"Le rendez-vous est confirmé, mais une erreur est survenue lors de l'envoi de l'email de confirmation: {str(e)}")
+            # La méthode confirmer enverra automatiquement les emails
+            rendez_vous.confirmer(request=request)
+            messages.success(request, 'Rendez-vous confirmé avec succès. Les emails de confirmation ont été envoyés.')
         except Exception as e:
             messages.error(request, f'Erreur lors de la confirmation: {str(e)}')
     
@@ -891,10 +884,14 @@ def rendez_vous_public_preuve(request, token):
             'page_title': 'Lien invalide',
         }, status=404)
 
-    return render(request, 'rendez_vous/public_preuve.html', {
-        'page_title': 'Preuve de rendez-vous',
-        'rendez_vous': rendez_vous,
-    })
+    # Générer et télécharger le PDF directement
+    from .utils import generer_preuve_pdf
+    pdf_buffer = generer_preuve_pdf(rendez_vous)
+    nom_pdf = f"preuve_rdv_{rendez_vous.visiteur.nom}_{rendez_vous.date_rendez_vous.strftime('%Y%m%d')}.pdf"
+
+    response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{nom_pdf}"'
+    return response
 
 
 @module_permission_required('rendez_vous', 'change')
@@ -938,3 +935,242 @@ def rendez_vous_terminer(request, pk):
             messages.error(request, f'Erreur lors de la terminaison: {str(e)}')
     
     return redirect('visites:rendez_vous_detail', pk=pk)
+
+
+# Vues pour la gestion des audiences confirmées
+@module_permission_required('visites', 'delete')
+def audiences_confirmees_supprimer(request):
+    """Vue pour supprimer toutes les audiences confirmées"""
+    motif_audience = _get_motif_audience_ministre()
+    
+    if not motif_audience:
+        messages.error(request, "Aucun motif d'audience ministre trouvé")
+        return redirect('visites:index')
+    
+    if request.method == 'POST':
+        try:
+            # Récupérer les audiences confirmées (visites avec le motif audience et statut 'terminee')
+            audiences_confirmees = Visite.objects.filter(
+                motif=motif_audience,
+                statut='terminee'
+            )
+            
+            count = audiences_confirmees.count()
+            if count == 0:
+                messages.info(request, "Aucune audience confirmée à supprimer")
+            else:
+                audiences_confirmees.delete()
+                messages.success(request, f'{count} audience(s) confirmée(s) supprimée(s) avec succès')
+                
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la suppression: {str(e)}')
+    
+    return redirect('visites:index')
+
+
+@module_permission_required('visites', 'view')
+def audiences_confirmees_exporter(request):
+    """Vue pour exporter les audiences confirmées en CSV"""
+    motif_audience = _get_motif_audience_ministre()
+    
+    if not motif_audience:
+        messages.error(request, "Aucun motif d'audience ministre trouvé")
+        return redirect('visites:index')
+    
+    try:
+        # Récupérer les audiences confirmées
+        audiences_confirmees = Visite.objects.filter(
+            motif=motif_audience,
+            statut='terminee'
+        ).order_by('-date_visite', '-heure_entree')
+        
+        if audiences_confirmees.count() == 0:
+            messages.info(request, "Aucune audience confirmée à exporter")
+            return redirect('visites:index')
+        
+        # Créer la réponse CSV
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="audiences_confirmees_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        
+        # Écrire l'en-tête CSV
+        writer = csv.writer(response)
+        writer.writerow([
+            'ID Visite', 'Visiteur', 'Téléphone', 'Email', 'Date', 'Heure entrée', 
+            'Heure sortie', 'Correspondant', 'Département', 'Observations', 
+            'Agent entrée', 'Agent sortie'
+        ])
+        
+        # Écrire les données
+        for visite in audiences_confirmees:
+            writer.writerow([
+                visite.pk,
+                f"{visite.visiteur.prenoms} {visite.visiteur.nom}",
+                visite.visiteur.telephone or '',
+                visite.visiteur.email or '',
+                visite.date_visite.strftime('%d/%m/%Y'),
+                visite.heure_entree.strftime('%H:%M'),
+                visite.heure_sortie.strftime('%H:%M') if visite.heure_sortie else '',
+                f"{visite.correspondant.prenoms} {visite.correspondant.nom}" if visite.correspondant else '',
+                visite.correspondant.departement if visite.correspondant else '',
+                visite.observations.replace('\n', ' ') if visite.observations else '',
+                visite.agent_entree,
+                visite.agent_sortie or ''
+            ])
+        
+        return response
+        
+    except Exception as e:
+        messages.error(request, f'Erreur lors de l\'exportation: {str(e)}')
+        return redirect('visites:index')
+
+
+# Vues pour la gestion des rendez-vous
+@module_permission_required('rendez_vous', 'delete')
+def rendez_vous_supprimer_confirmees(request):
+    """Vue pour supprimer tous les rendez-vous confirmés"""
+    if request.method == 'POST':
+        try:
+            # Récupérer les rendez-vous confirmés
+            rdv_confirmees = RendezVous.objects.filter(statut='confirme')
+            
+            count = rdv_confirmees.count()
+            if count == 0:
+                messages.info(request, "Aucun rendez-vous confirmé à supprimer")
+            else:
+                rdv_confirmees.delete()
+                messages.success(request, f'{count} rendez-vous confirmé(s) supprimé(s) avec succès')
+                
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la suppression: {str(e)}')
+    
+    return redirect('visites:rendez_vous_list')
+
+
+@module_permission_required('rendez_vous', 'delete')
+def rendez_vous_supprimer_tous(request):
+    """Vue pour supprimer tous les rendez-vous (sauf annulés)"""
+    if request.method == 'POST':
+        try:
+            # Récupérer tous les rendez-vous sauf les annulés
+            rdv_tous = RendezVous.objects.exclude(statut='annule')
+            
+            count = rdv_tous.count()
+            if count == 0:
+                messages.info(request, "Aucun rendez-vous à supprimer")
+            else:
+                rdv_tous.delete()
+                messages.success(request, f'{count} rendez-vous supprimé(s) avec succès')
+                
+        except Exception as e:
+            messages.error(request, f'Erreur lors de la suppression: {str(e)}')
+    
+    return redirect('visites:rendez_vous_list')
+
+
+@module_permission_required('rendez_vous', 'view')
+def rendez_vous_exporter(request):
+    """Vue pour exporter les rendez-vous en CSV"""
+    statut_filter = request.GET.get('statut', 'tous')
+    
+    try:
+        # Filtrer selon le statut
+        if statut_filter == 'tous':
+            rdv_list = RendezVous.objects.all().order_by('-date_rendez_vous', '-heure_debut')
+        elif statut_filter == 'confirme':
+            rdv_list = RendezVous.objects.filter(statut='confirme').order_by('-date_rendez_vous', '-heure_debut')
+        elif statut_filter == 'termine':
+            rdv_list = RendezVous.objects.filter(statut='termine').order_by('-date_rendez_vous', '-heure_debut')
+        elif statut_filter == 'planifie':
+            rdv_list = RendezVous.objects.filter(statut='planifie').order_by('-date_rendez_vous', '-heure_debut')
+        else:
+            rdv_list = RendezVous.objects.exclude(statut='annule').order_by('-date_rendez_vous', '-heure_debut')
+        
+        if rdv_list.count() == 0:
+            messages.info(request, "Aucun rendez-vous à exporter")
+            return redirect('visites:rendez_vous_list')
+        
+        # Créer la réponse CSV
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="rendez_vous_{statut_filter}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        
+        # Écrire l'en-tête CSV
+        writer = csv.writer(response)
+        writer.writerow([
+            'ID RDV', 'Visiteur', 'Téléphone', 'Email', 'Date RDV', 'Heure début', 
+            'Heure fin', 'Motif', 'Correspondant', 'Sujet', 'Statut', 'Priorité',
+            'Description', 'Date création', 'Créé par'
+        ])
+        
+        # Écrire les données
+        for rdv in rdv_list:
+            writer.writerow([
+                rdv.pk,
+                f"{rdv.visiteur.prenoms} {rdv.visiteur.nom}",
+                rdv.visiteur.telephone or '',
+                rdv.visiteur.email or '',
+                rdv.date_rendez_vous.strftime('%d/%m/%Y'),
+                rdv.heure_debut.strftime('%H:%M'),
+                rdv.heure_fin.strftime('%H:%M') if rdv.heure_fin else '',
+                rdv.motif.libelle,
+                f"{rdv.correspondant.prenoms} {rdv.correspondant.nom}" if rdv.correspondant else '',
+                rdv.sujet,
+                rdv.get_statut_display(),
+                rdv.get_priorite_display(),
+                rdv.description.replace('\n', ' ') if rdv.description else '',
+                rdv.date_creation.strftime('%d/%m/%Y %H:%M'),
+                f"{rdv.cree_par.prenoms} {rdv.cree_par.nom}" if rdv.cree_par else ''
+            ])
+        
+        return response
+        
+    except Exception as e:
+        messages.error(request, f'Erreur lors de l\'exportation: {str(e)}')
+        return redirect('visites:rendez_vous_list')
+
+
+@module_permission_required('agenda', 'view')
+def agenda_ministre_public_cabinet(request):
+    """Vue pour l'agenda du ministre avec URL courte pour le cabinet"""
+    import base64
+    import hashlib
+    from django.core import signing
+    from django.utils import timezone
+    
+    # Créer un token simple et court pour le cabinet
+    # Utiliser un code fixe simple: "cabinet-2024"
+    simple_token = "cabinet-2024"
+    
+    # Créer un token signé avec les données du cabinet
+    token_data = {
+        'audience': 'ministre',
+        'cabinet': True,
+        'code': simple_token,
+        'expires': (timezone.now().date() + timezone.timedelta(days=365)).isoformat()  # Convertir en string
+    }
+    
+    # Utiliser le même salt que agenda_ministre_public
+    token = signing.dumps(token_data, salt='agenda_ministre_public', key='cabinet-agenda-key-2024')
+    
+    # Rediriger vers l'agenda public avec le token
+    return redirect('visites:agenda_ministre_public', token=token)
+
+
+def agenda_ministre_public_direct(request):
+    """Vue directe pour l'agenda du ministre avec token fixe ultra court"""
+    from django.core import signing
+    from django.utils import timezone
+    
+    # Token fixe et court pour le cabinet
+    token_data = {
+        'audience': 'ministre',
+        'cabinet': True,
+        'direct': True,
+        'expires': (timezone.now().date() + timezone.timedelta(days=365)).isoformat()  # Convertir en string
+    }
+    
+    # Générer un token avec le même salt que agenda_ministre_public
+    token = signing.dumps(token_data, salt='agenda_ministre_public', key='cabinet-direct-2024')
+    
+    # Afficher directement l'agenda public avec ce token
+    request.token = token
+    return agenda_ministre_public(request, token)

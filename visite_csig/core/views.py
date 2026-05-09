@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 from core.permissions import module_permission_required
 
@@ -496,3 +497,84 @@ def admin_utilisateur_delete(request, pk):
     utilisateur.delete()
     messages.success(request, f'Utilisateur {nom} supprimé')
     return redirect('core:admin_utilisateurs')
+
+
+# Vues pour les notifications
+@login_required
+def notifications_list(request):
+    """Liste des notifications de l'utilisateur"""
+    notifications = request.user.notifications.all()
+    
+    # Pagination
+    paginator = Paginator(notifications, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'core/notifications_list.html', {
+        'page_title': 'Notifications',
+        'notifications': page_obj,
+        'non_lues_count': request.user.notifications.filter(lue=False).count()
+    })
+
+
+@csrf_exempt
+@login_required
+def notifications_api(request):
+    """API pour les notifications en temps réel"""
+    if request.method == 'GET':
+        # Récupérer les notifications non lues
+        notifications = request.user.notifications.filter(lue=False).order_by('-date_creation')[:5]
+        
+        data = []
+        for notif in notifications:
+            data.append({
+                'id': notif.id,
+                'titre': notif.titre,
+                'message': notif.message,
+                'type': notif.type_notification,
+                'date': notif.date_creation.strftime('%d/%m/%Y %H:%M'),
+                'url': notif.get_url() if hasattr(notif, 'get_url') else '#'
+            })
+        
+        from django.http import JsonResponse
+        return JsonResponse({
+            'notifications': data,
+            'non_lues_count': request.user.notifications.filter(lue=False).count()
+        })
+    
+    elif request.method == 'POST':
+        # Marquer une notification comme lue
+        notif_id = request.POST.get('notification_id')
+        if notif_id:
+            try:
+                notification = request.user.notifications.get(id=notif_id)
+                notification.marquer_comme_lue()
+                from django.http import JsonResponse
+                return JsonResponse({'success': True})
+            except:
+                from django.http import JsonResponse
+                return JsonResponse({'success': False})
+        
+        # Marquer toutes les notifications comme lues
+        if request.POST.get('marquer_toutes') == 'true':
+            request.user.notifications.filter(lue=False).update(lue=True, date_lecture=timezone.now())
+            from django.http import JsonResponse
+            return JsonResponse({'success': True})
+        
+        from django.http import JsonResponse
+        return JsonResponse({'success': False})
+
+
+@login_required
+def marquer_notification_lue(request, notification_id):
+    """Marquer une notification spécifique comme lue"""
+    notification = get_object_or_404(request.user.notifications, id=notification_id)
+    notification.marquer_comme_lue()
+    
+    # Rediriger vers l'objet concerné si possible
+    if hasattr(notification, 'get_url'):
+        return redirect(notification.get_url())
+    
+    return redirect('core:notifications_list')
+
+

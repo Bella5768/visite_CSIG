@@ -33,4 +33,13 @@ urlpatterns = [
     path('rendez-vous/<int:pk>/annuler/', views.rendez_vous_annuler, name='rendez_vous_annuler'),
     path('rendez-vous/<int:pk>/commencer/', views.rendez_vous_commencer, name='rendez_vous_commencer'),
     path('rendez-vous/<int:pk>/terminer/', views.rendez_vous_terminer, name='rendez_vous_terminer'),
+    
+    # Gestion des audiences confirmées
+    path('audiences/confirmees/supprimer/', views.audiences_confirmees_supprimer, name='audiences_confirmees_supprimer'),
+    path('audiences/confirmees/exporter/', views.audiences_confirmees_exporter, name='audiences_confirmees_exporter'),
+    
+    # Gestion des rendez-vous
+    path('rendez-vous/confirmees/supprimer/', views.rendez_vous_supprimer_confirmees, name='rendez_vous_supprimer_confirmees'),
+    path('rendez-vous/tous/supprimer/', views.rendez_vous_supprimer_tous, name='rendez_vous_supprimer_tous'),
+    path('rendez-vous/exporter/', views.rendez_vous_exporter, name='rendez_vous_exporter'),
 ]

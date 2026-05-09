@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db.utils import OperationalError
+from django.utils import timezone
 
 
 class UtilisateurManager(BaseUserManager):
@@ -122,3 +123,67 @@ class Correspondant(models.Model):
     
     def __str__(self):
         return f"{self.prenoms} {self.nom} - {self.departement}"
+
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ('rendez_vous', 'Nouveau rendez-vous'),
+        ('confirmation', 'Rendez-vous confirmé'),
+        ('annulation', 'Rendez-vous annulé'),
+        ('modification', 'Rendez-vous modifié'),
+        ('visite', 'Nouvelle visite'),
+        ('systeme', 'Notification système'),
+    ]
+    
+    titre = models.CharField(max_length=200)
+    message = models.TextField()
+    type_notification = models.CharField(max_length=20, choices=TYPE_CHOICES, default='systeme')
+    
+    # Destinataire
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='notifications')
+    
+    # État
+    lue = models.BooleanField(default=False)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_lecture = models.DateTimeField(null=True, blank=True)
+    
+    # Lien optionnel vers l'objet concerné
+    contenu_type = models.ForeignKey('contenttypes.ContentType', on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = 'Notification'
+        verbose_name_plural = 'Notifications'
+        ordering = ['-date_creation']
+    
+    def __str__(self):
+        return f"{self.titre} - {self.utilisateur}"
+    
+    def marquer_comme_lue(self):
+        if not self.lue:
+            self.lue = True
+            self.date_lecture = timezone.now()
+            self.save(update_fields=['lue', 'date_lecture'])
+    
+    @classmethod
+    def creer_notification(cls, titre, message, utilisateur, type_notification='systeme', objet=None):
+        """
+        Crée une notification pour un utilisateur
+        """
+        from django.contrib.contenttypes.models import ContentType
+        
+        notification = cls.objects.create(
+            titre=titre,
+            message=message,
+            type_notification=type_notification,
+            utilisateur=utilisateur
+        )
+        
+        # Associer à un objet si fourni
+        if objet:
+            content_type = ContentType.objects.get_for_model(objet)
+            notification.contenu_type = content_type
+            notification.object_id = objet.pk
+            notification.save(update_fields=['contenu_type', 'object_id'])
+        
+        return notification

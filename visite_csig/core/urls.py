@@ -21,4 +21,7 @@ urlpatterns = [
     path('administration/utilisateurs/<int:pk>/modifier/', views.admin_utilisateur_edit, name='admin_utilisateur_edit'),
     path('administration/utilisateurs/<int:pk>/toggle/', views.admin_utilisateur_toggle, name='admin_utilisateur_toggle'),
     path('administration/utilisateurs/<int:pk>/supprimer/', views.admin_utilisateur_delete, name='admin_utilisateur_delete'),
+    path('notifications/', views.notifications_list, name='notifications_list'),
+    path('notifications/api/', views.notifications_api, name='notifications_api'),
+    path('notifications/<int:notification_id>/lire/', views.marquer_notification_lue, name='marquer_notification_lue'),
 ]
