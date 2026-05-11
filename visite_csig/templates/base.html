@@ -2,7 +2,10 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0b1120">
     {% load static %}
     <title>{% block title %}{{ page_title|default:"Accueil" }}{% endblock %} - {{ APP_NAME }}</title>
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}?v={{ APP_VERSION }}">
@@ -35,6 +38,7 @@
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-main); min-height: 100vh; overflow: hidden; margin: 0; padding: 0; }
+        @media (max-width: 768px) { body { overflow-x: hidden; overflow-y: auto; } .app-layout { height: auto; min-height: 100vh; } .main-wrapper { height: auto; min-height: 100vh; overflow: visible; } .content-area { overflow: visible; } }
 
         /* ========== APP LAYOUT ========== */
         .app-layout { display: flex; height: 100vh; }
@@ -202,14 +206,80 @@
         .btn-action-sm.primary { background: #dbeafe; color: #2563eb; }
         .btn-action-sm.primary:hover { background: #2563eb; color: #fff; }
 
-        /* Responsive */
-        @media (max-width: 992px) {
-            .sidebar { width: 200px; }
-            :root { --sidebar-width: 200px; }
+        /* ========== SIDEBAR OVERLAY (mobile) ========== */
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 99; backdrop-filter: blur(2px); }
+        .sidebar-overlay.active { display: block; }
+
+        /* ========== HAMBURGER BUTTON ========== */
+        .btn-hamburger { display: none; width: 40px; height: 40px; background: rgba(255,255,255,0.08); border: none; border-radius: 10px; color: #fff; font-size: 20px; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+        .btn-hamburger:hover { background: rgba(255,255,255,0.14); }
+
+        /* ========== SIDEBAR CLOSE BUTTON ========== */
+        .sidebar-close { display: none; position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 16px; align-items: center; justify-content: center; cursor: pointer; }
+
+        /* ========== RESPONSIVE BREAKPOINTS ========== */
+        @media (max-width: 1100px) {
+            .sidebar { width: 210px; }
+            :root { --sidebar-width: 210px; }
+            .header-center .header-time { font-size: 24px; }
+        }
+        @media (max-width: 900px) {
+            .topbar { padding: 4px 12px; }
+            .topbar-left { font-size: 11px; }
+            .header-center { display: none; }
+            .content-area { padding: 16px; }
         }
         @media (max-width: 768px) {
-            .sidebar { display: none; }
+            /* Sidebar devient off-canvas */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+                z-index: 200;
+                width: 260px;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-close { display: flex; }
             .main-wrapper { margin-left: 0; }
+            /* Hamburger visible */
+            .btn-hamburger { display: flex; }
+            /* Header compact */
+            .app-header { padding: 10px 14px; }
+            .header-left .header-brand h1 { font-size: 13px; }
+            .header-left .header-brand span { display: none; }
+            .header-right .user-info { display: none; }
+            .header-right { gap: 8px; }
+            .topbar { display: none; }
+            /* Content */
+            .content-area { padding: 12px 10px; }
+            /* Page title */
+            .page-title-bar { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
+            .page-title-bar h2 { font-size: 18px; }
+            .page-title-bar .actions { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+            /* Cards */
+            .card-section .card-header-custom,
+            .card-section .card-header { padding: 12px 14px; font-size: 14px; }
+            .card-section .card-body { padding: 14px 12px; }
+            /* Stats */
+            .stat-card { padding: 14px; }
+            .stat-card .stat-value { font-size: 28px; }
+            /* Tables */
+            .table-responsive-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            /* Search */
+            .search-box { flex-wrap: wrap; }
+            .select-filter { min-width: 100%; }
+            /* Modals */
+            .modal-dialog { margin: 8px; }
+            .modal-content { border-radius: 14px; }
+            /* Notification popup */
+            .notification-popup { right: 8px; left: 8px; max-width: none; }
+        }
+        @media (max-width: 480px) {
+            .app-header { padding: 8px 10px; }
+            .header-icon { display: none !important; }
+            .header-left { gap: 8px; }
+            .content-area { padding: 8px 6px; }
+            .card-section .card-body { padding: 10px 8px; }
+            .btn-primary-gradient, .btn-success-gradient, .btn-danger-gradient, .btn-warning-gradient { padding: 8px 12px; font-size: 13px; }
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -217,8 +287,12 @@
 <body>
     {% if user.is_authenticated %}
     <div class="app-layout">
+        <!-- SIDEBAR OVERLAY -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- SIDEBAR -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="mainSidebar">
+            <button class="sidebar-close" id="btnSidebarClose" aria-label="Fermer"><i class="bi bi-x-lg"></i></button>
             <div class="sidebar-brand">
                 <a href="{% url 'visites:rendez_vous_create' %}" class="btn-new-rdv">
                     <i class="bi bi-plus-lg"></i> Nouveau RDV
@@ -285,6 +359,7 @@
             <!-- HEADER -->
             <header class="app-header">
                 <div class="header-left">
+                    <button class="btn-hamburger" id="btnHamburger" aria-label="Menu"><i class="bi bi-list"></i></button>
                     <div class="header-icon"><i class="bi bi-building"></i></div>
                     <div class="header-brand">
                         <h1>Cabinet du Ministre</h1>
@@ -435,6 +510,38 @@
             if (notifBtn) {
                 notifBtn.addEventListener('click', function() {
                     window.location.href = '/notifications/';
+                });
+            }
+
+            // ===== SIDEBAR MOBILE =====
+            const sidebar    = document.getElementById('mainSidebar');
+            const overlay    = document.getElementById('sidebarOverlay');
+            const btnOpen    = document.getElementById('btnHamburger');
+            const btnClose   = document.getElementById('btnSidebarClose');
+
+            function openSidebar() {
+                if (!sidebar) return;
+                sidebar.classList.add('open');
+                if (overlay) overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeSidebar() {
+                if (!sidebar) return;
+                sidebar.classList.remove('open');
+                if (overlay) overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            if (btnOpen)  btnOpen.addEventListener('click', openSidebar);
+            if (btnClose) btnClose.addEventListener('click', closeSidebar);
+            if (overlay)  overlay.addEventListener('click', closeSidebar);
+
+            // Fermer automatiquement sur un lien de la sidebar (navigation mobile)
+            if (sidebar) {
+                sidebar.querySelectorAll('.nav-link').forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth < 768) closeSidebar();
+                    });
                 });
             }
         });

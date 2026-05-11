@@ -313,19 +313,20 @@
             }
         }
 
+        @media (max-width: 768px) {
+            body { overflow-y: auto; align-items: flex-start; padding: 20px 0; }
+            .login-container { margin: 16px auto; max-width: 440px; }
+        }
         @media (max-width: 480px) {
-            .login-container {
-                margin: 16px;
-                max-width: 100%;
-            }
-            
-            .login-body {
-                padding: 20px;
-            }
-            
-            .login-header {
-                padding: 18px 20px;
-            }
+            body { padding: 12px 0; }
+            .login-container { margin: 12px; max-width: 100%; }
+            .login-body { padding: 18px 16px; }
+            .login-header { padding: 16px; }
+            .login-header h1 { font-size: 17px; }
+            .input-wrapper input { font-size: 16px; }
+        }
+        @media (min-width: 1200px) {
+            .login-container { max-width: 420px; }
         }
     </style>
 </head>
