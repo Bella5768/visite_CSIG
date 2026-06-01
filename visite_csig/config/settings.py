@@ -12,9 +12,16 @@ CSRF_TRUSTED_ORIGINS = [
     'http://menaetfp.pythonanywhere.com',
     'http://127.0.0.1:8000',
     'http://localhost:8000',
-    'http://127.0.0.1:54629',
-    'http://localhost:54629',
+    'http://127.0.0.1:52594',
+    'http://localhost:52594',
 ]
+
+# En mode DEBUG, on peut ajouter d'autres origines via la variable
+# d'environnement CSRF_EXTRA_ORIGINS (ex: proxy Windsurf à port dynamique).
+if DEBUG:
+    _extra = os.environ.get('CSRF_EXTRA_ORIGINS', '')
+    if _extra:
+        CSRF_TRUSTED_ORIGINS += [o.strip() for o in _extra.split(',') if o.strip()]
 
 INSTALLED_APPS = [
     'django.contrib.admin',

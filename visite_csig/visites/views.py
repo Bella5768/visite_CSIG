@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 import io
 import csv
 import json
@@ -28,6 +28,160 @@ from visiteurs.models import Visiteur
 
 from .models import CreneauDisponibilite, RendezVous, Visite
 from .utils import generate_badge_pdf
+
+
+# --- Workflow rendez-vous publics ---------------------------------------------
+# Règles métier:
+#  - Motif "Visite officielle" : disponible du lundi au jeudi, créneau 13h-16h.
+#    L'administrateur précise ensuite l'heure exacte au moment de la confirmation.
+#  - Motif "Visite personnelle" : disponible uniquement le vendredi, 11h-15h.
+# Les créneaux sont générés automatiquement à la volée (4 semaines à l'avance).
+
+VISITE_OFFICIELLE = 'officielle'
+VISITE_PERSONNELLE = 'personnelle'
+
+# Jours: lundi=0 ... dimanche=6
+_REGLES_MOTIF = {
+    VISITE_OFFICIELLE: {
+        'jours': (0, 1, 2, 3),  # lundi -> jeudi
+        'heure_debut': time(13, 0),
+        'heure_fin': time(16, 0),
+    },
+    VISITE_PERSONNELLE: {
+        'jours': (4,),  # vendredi
+        'heure_debut': time(11, 0),
+        'heure_fin': time(15, 0),
+    },
+}
+
+_JOURS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+_MOIS_FR = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+            'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+
+
+def _classifier_motif(motif):
+    """Retourne VISITE_OFFICIELLE / VISITE_PERSONNELLE ou None selon le libellé."""
+    if motif is None:
+        return None
+    libelle = (motif.libelle or '').lower()
+    if 'officiel' in libelle:
+        return VISITE_OFFICIELLE
+    if 'personnel' in libelle:
+        return VISITE_PERSONNELLE
+    return None
+
+
+def _generer_creneaux_virtuels(motif):
+    """Génère les créneaux disponibles pour la semaine en cours.
+
+    Règle: on n'expose qu'une seule semaine à la fois. Dès que tous les jours
+    autorisés de la semaine sont passés, on bascule automatiquement sur la
+    semaine suivante.
+    """
+    type_motif = _classifier_motif(motif)
+    regle = _REGLES_MOTIF.get(type_motif)
+    if not regle:
+        return []
+
+    today = timezone.now().date()
+    jours_autorises = regle['jours']
+    h_debut = regle['heure_debut']
+    h_fin = regle['heure_fin']
+
+    # Lundi de la semaine en cours.
+    lundi = today - timedelta(days=today.weekday())
+    # Si tous les jours autorisés de cette semaine sont passés, on passe à
+    # la semaine suivante.
+    dernier_jour_autorise = lundi + timedelta(days=max(jours_autorises))
+    if today > dernier_jour_autorise:
+        lundi = lundi + timedelta(days=7)
+
+    fin_semaine = lundi + timedelta(days=6)
+
+    # Pour la visite personnelle (un seul créneau par vendredi), on exclut
+    # les dates déjà réservées. La visite officielle accepte plusieurs
+    # demandes par jour (l'admin choisira l'heure exacte).
+    dates_reservees = set()
+    if type_motif == VISITE_PERSONNELLE:
+        dates_reservees = set(
+            CreneauDisponibilite.objects
+            .filter(motif=motif, date__gte=lundi, date__lte=fin_semaine)
+            .filter(rendez_vous__isnull=False)
+            .exclude(rendez_vous__statut='annule')
+            .values_list('date', flat=True)
+        )
+
+    creneaux = []
+    for offset in range(7):
+        jour = lundi + timedelta(days=offset)
+        if jour.weekday() not in jours_autorises:
+            continue
+        if jour < today:
+            continue
+        if jour in dates_reservees:
+            continue
+        iso = jour.isoformat()
+        creneaux.append({
+            'id': f'v:{type_motif}:{iso}',
+            'date': iso,
+            'date_formatted': f"{_JOURS_FR[jour.weekday()]} {jour.day} {_MOIS_FR[jour.month]} {jour.year}",
+            'heure_debut': h_debut.strftime('%H:%M'),
+            'heure_fin': h_fin.strftime('%H:%M'),
+            'places_restantes': 1,
+            'capacite': 1,
+            'label': f"{jour.strftime('%d/%m/%Y')} {h_debut.strftime('%H:%M')} - {h_fin.strftime('%H:%M')}",
+        })
+
+    return creneaux
+
+
+def _resoudre_creneau_virtuel(creneau_id, motif):
+    """Crée (et retourne) un CreneauDisponibilite à partir d'un id virtuel.
+
+    Format attendu: ``v:<type>:<YYYY-MM-DD>``.
+    Retourne ``None`` si l'id n'est pas un id virtuel valide.
+    """
+    if not creneau_id or not creneau_id.startswith('v:'):
+        return None
+    try:
+        _, type_motif, iso_date = creneau_id.split(':', 2)
+        jour = date.fromisoformat(iso_date)
+    except (ValueError, AttributeError):
+        return None
+
+    regle = _REGLES_MOTIF.get(type_motif)
+    if not regle:
+        return None
+    if jour.weekday() not in regle['jours']:
+        return None
+    if jour < timezone.now().date():
+        return None
+    if _classifier_motif(motif) != type_motif:
+        return None
+
+    # Pour la visite personnelle (un seul créneau par vendredi), on réutilise
+    # un éventuel créneau libre existant.
+    if type_motif == VISITE_PERSONNELLE:
+        existant = (
+            CreneauDisponibilite.objects
+            .filter(motif=motif, date=jour,
+                    heure_debut=regle['heure_debut'],
+                    heure_fin=regle['heure_fin'])
+            .first()
+        )
+        if existant and existant.est_disponible():
+            return existant
+
+    # Visite officielle: chaque demande crée son propre créneau (capacité 1)
+    creneau = CreneauDisponibilite.objects.create(
+        motif=motif,
+        date=jour,
+        heure_debut=regle['heure_debut'],
+        heure_fin=regle['heure_fin'],
+        capacite=1,
+        actif=True,
+    )
+    return creneau
 
 
 def _get_motif_audience_ministre(require_active=True):
@@ -281,8 +435,8 @@ def rendez_vous_list(request):
     
     rendez_vous = RendezVous.objects.select_related(
         'visiteur', 'motif', 'correspondant', 'cree_par'
-    )
-    
+    ).order_by('-date_creation')
+
     if date_filter:
         rendez_vous = rendez_vous.filter(date_rendez_vous=date_filter)
     
@@ -502,15 +656,46 @@ def rendez_vous_delete(request, pk):
 @module_permission_required('rendez_vous', 'change')
 def rendez_vous_confirmer(request, pk):
     rendez_vous = get_object_or_404(RendezVous, pk=pk)
-    
+
     if request.method == 'POST':
         try:
-            # La méthode confirmer enverra automatiquement les emails
+            # L'administrateur peut préciser l'heure exacte au moment de la
+            # confirmation (cas typique d'une visite officielle où le créneau
+            # initial est large, ex: 13h-16h).
+            heure_debut_str = (request.POST.get('heure_debut') or '').strip()
+            heure_fin_str = (request.POST.get('heure_fin') or '').strip()
+
+            def _parse(t):
+                for fmt in ('%H:%M', '%H:%M:%S'):
+                    try:
+                        return datetime.strptime(t, fmt).time()
+                    except ValueError:
+                        continue
+                return None
+
+            nouvelle_debut = _parse(heure_debut_str) if heure_debut_str else None
+            nouvelle_fin = _parse(heure_fin_str) if heure_fin_str else None
+
+            if nouvelle_debut and nouvelle_fin and nouvelle_fin <= nouvelle_debut:
+                messages.error(request, "L'heure de fin doit être postérieure à l'heure de début")
+                return redirect('visites:rendez_vous_detail', pk=pk)
+
+            updated_fields = []
+            if nouvelle_debut and nouvelle_debut != rendez_vous.heure_debut:
+                rendez_vous.heure_debut = nouvelle_debut
+                updated_fields.append('heure_debut')
+            if nouvelle_fin and nouvelle_fin != rendez_vous.heure_fin:
+                rendez_vous.heure_fin = nouvelle_fin
+                updated_fields.append('heure_fin')
+            if updated_fields:
+                rendez_vous.save(update_fields=updated_fields + ['date_modification'])
+
+            # La méthode confirmer enverra automatiquement l'email au demandeur
             rendez_vous.confirmer(request=request)
-            messages.success(request, 'Rendez-vous confirmé avec succès. Les emails de confirmation ont été envoyés.')
+            messages.success(request, 'Rendez-vous confirmé avec succès. Email de confirmation envoyé au demandeur.')
         except Exception as e:
             messages.error(request, f'Erreur lors de la confirmation: {str(e)}')
-    
+
     return redirect('visites:rendez_vous_detail', pk=pk)
 
 
@@ -558,7 +743,22 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
                 messages.error(request, 'Veuillez sélectionner un créneau disponible')
                 return redirect(error_redirect_url_name)
 
-            creneau = get_object_or_404(CreneauDisponibilite, pk=creneau_id, motif_id=motif_id)
+            description = (request.POST.get('description') or '').strip()
+            if not description:
+                messages.error(request, 'Veuillez préciser le commentaire / la description de votre demande')
+                return redirect(error_redirect_url_name)
+
+            # Résolution du créneau: id virtuel (workflow officielle/personnelle)
+            # ou id réel d'un CreneauDisponibilite existant.
+            motif_obj = get_object_or_404(MotifVisite, pk=motif_id)
+            if creneau_id.startswith('v:'):
+                creneau = _resoudre_creneau_virtuel(creneau_id, motif_obj)
+                if creneau is None:
+                    messages.error(request, "Créneau invalide ou indisponible. Veuillez en choisir un autre.")
+                    return redirect(error_redirect_url_name)
+            else:
+                creneau = get_object_or_404(CreneauDisponibilite, pk=creneau_id, motif_id=motif_id)
+
             if not creneau.est_disponible():
                 messages.error(request, 'Ce créneau n\'est plus disponible. Veuillez en choisir un autre.')
                 return redirect(error_redirect_url_name)
@@ -571,28 +771,17 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
                 heure_debut=creneau.heure_debut,
                 heure_fin=creneau.heure_fin,
                 sujet=(request.POST.get('sujet') or '').strip(),
-                description=(request.POST.get('description') or '').strip(),
+                description=description,
                 priorite='normale',
                 cree_par=None,
             )
             rdv.full_clean()
             rdv.save()
 
-            # Envoyer les emails de notification
-            from .utils import envoyer_email_confirmation_rendez_vous
-            
-            # Email de confirmation au demandeur
-            try:
-                email_sent = envoyer_email_confirmation_rendez_vous(rdv, request)
-                if email_sent:
-                    print(f"[OK] Email de confirmation envoye a {rdv.visiteur.email}")
-                else:
-                    print(f"[ERREUR] Erreur lors de l'envoi de l'email de confirmation a {rdv.visiteur.email}")
-            except Exception as e:
-                print(f"[ERREUR] Exception lors de l'envoi de l'email de confirmation: {e}")
-            
-            # Notification au correspondant
-            # (désactivée pour la page publique: le demandeur ne choisit pas de correspondant)
+            # NB: aucun email n'est envoyé à la création du rendez-vous.
+            # L'email de confirmation est déclenché uniquement lorsqu'un
+            # administrateur valide la demande en précisant l'heure exacte
+            # (voir `rendez_vous_confirmer`).
 
             suivi_token = signing.dumps({'rdv_id': rdv.pk}, salt='rendez_vous_public_suivi')
             suivi_url = request.build_absolute_uri(
@@ -611,9 +800,16 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
         except Exception as e:
             messages.error(request, f'Erreur lors de la création: {str(e)}')
 
+    # Sur la page publique, on n'affiche que les 2 motifs réglementés:
+    # "Visite officielle" (lun-jeu 13h-16h) et "Visite personnelle" (ven 11h-15h).
+    motifs_publics = [
+        m for m in MotifVisite.objects.filter(actif=True)
+        if _classifier_motif(m) in _REGLES_MOTIF
+    ]
+
     return render(request, 'rendez_vous/public_create.html', {
         'page_title': 'Prendre rendez-vous',
-        'motifs': MotifVisite.objects.filter(actif=True),
+        'motifs': motifs_publics,
         'today': timezone.now().date(),
         'types_identite': settings.TYPES_IDENTITE,
         'fixed_motif': fixed_motif,
@@ -812,6 +1008,17 @@ def rendez_vous_public_creneaux(request):
     if not motif_id:
         return JsonResponse({'success': False, 'message': 'motif_id requis', 'creneaux': []}, status=400)
 
+    motif = MotifVisite.objects.filter(pk=motif_id, actif=True).first()
+    if not motif:
+        return JsonResponse({'success': False, 'message': 'Motif introuvable', 'creneaux': []}, status=404)
+
+    # Visite officielle / personnelle : génération automatique selon les règles métier.
+    type_motif = _classifier_motif(motif)
+    if type_motif in _REGLES_MOTIF:
+        creneaux = _generer_creneaux_virtuels(motif)
+        return JsonResponse({'success': True, 'creneaux': creneaux})
+
+    # Autres motifs : créneaux administrés manuellement.
     today = timezone.now().date()
     qs = (
         CreneauDisponibilite.objects
@@ -826,9 +1033,11 @@ def rendez_vous_public_creneaux(request):
         creneaux.append({
             'id': c.id,
             'date': c.date.strftime('%Y-%m-%d'),
+            'date_formatted': f"{_JOURS_FR[c.date.weekday()]} {c.date.day} {_MOIS_FR[c.date.month]} {c.date.year}",
             'heure_debut': c.heure_debut.strftime('%H:%M'),
             'heure_fin': c.heure_fin.strftime('%H:%M'),
             'places_restantes': c.get_places_restantes(),
+            'capacite': c.capacite,
             'label': f"{c.date.strftime('%d/%m/%Y')} {c.heure_debut.strftime('%H:%M')} - {c.heure_fin.strftime('%H:%M')}",
         })
 

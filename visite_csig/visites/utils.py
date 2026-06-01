@@ -80,79 +80,248 @@ def _get_images_dir():
 
 
 def generer_preuve_pdf(rendez_vous):
-    """Génère un PDF de preuve de rendez-vous"""
+    """Génère un PDF de preuve de rendez-vous avec un design institutionnel."""
+    import os
+    import json
+    from reportlab.lib.colors import HexColor, Color
+    from reportlab.lib.utils import ImageReader
+
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
-    
-    # En-tête
-    p.setFont("Helvetica-Bold", 18)
-    p.drawCentredString(width/2, height - 2*cm, "PREUVE DE RENDEZ-VOUS")
-    
-    p.setFont("Helvetica", 11)
-    p.drawCentredString(width/2, height - 2.8*cm, "Cabinet du Ministre — MENA-ETFP")
-    p.drawCentredString(width/2, height - 3.4*cm, "République de Guinée")
-    
-    # Ligne séparatrice
-    p.setStrokeColorRGB(0.11, 0.31, 0.85)
-    p.setLineWidth(2)
-    p.line(2*cm, height - 4*cm, width - 2*cm, height - 4*cm)
-    
-    # Détails du rendez-vous
-    y = height - 5.5*cm
-    p.setFont("Helvetica-Bold", 13)
-    p.drawString(2.5*cm, y, "Détails du rendez-vous")
-    
-    y -= 1*cm
-    p.setFont("Helvetica", 11)
-    details = [
-        ("Sujet", rendez_vous.sujet),
-        ("Date", rendez_vous.date_rendez_vous.strftime('%d/%m/%Y')),
-        ("Heure", f"{rendez_vous.heure_debut.strftime('%H:%M')} - {rendez_vous.heure_fin.strftime('%H:%M') if rendez_vous.heure_fin else ''}"),
-        ("Motif", rendez_vous.motif.libelle if rendez_vous.motif else '-'),
-        ("Statut", "Confirmé"),
-    ]
-    
-    for label, value in details:
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(3*cm, y, f"{label}:")
-        p.setFont("Helvetica", 10)
-        p.drawString(7*cm, y, str(value))
-        y -= 0.7*cm
-    
-    # Informations du visiteur
-    y -= 1*cm
-    p.setFont("Helvetica-Bold", 13)
-    p.drawString(2.5*cm, y, "Informations du demandeur")
-    
-    y -= 1*cm
-    visiteur_details = [
-        ("Nom", f"{rendez_vous.visiteur.prenoms} {rendez_vous.visiteur.nom}"),
-        ("Téléphone", rendez_vous.visiteur.telephone or '-'),
-        ("Email", rendez_vous.visiteur.email or '-'),
-    ]
-    
+
+    # Palette
+    PRIMARY = HexColor('#104480')      # Bleu institutionnel
+    ACCENT = HexColor('#fbbf24')       # Or accent
+    SUCCESS = HexColor('#16a34a')
+    TEXT_DARK = HexColor('#1e293b')
+    TEXT_MUTED = HexColor('#64748b')
+    BG_LIGHT = HexColor('#f8fafc')
+    BORDER = HexColor('#e2e8f0')
+
+    # ============== BANDEAU HEADER ==============
+    header_h = 4.2 * cm
+    p.setFillColor(PRIMARY)
+    p.rect(0, height - header_h, width, header_h, stroke=0, fill=1)
+
+    # Bande accent dorée sous le header
+    p.setFillColor(ACCENT)
+    p.rect(0, height - header_h - 0.15 * cm, width, 0.15 * cm, stroke=0, fill=1)
+
+    # Logo MENA-ETFP à gauche
+    images_dir = _get_images_dir()
+    if images_dir:
+        logo_path = os.path.join(images_dir, 'mena-etfp-transparent.png')
+        if not os.path.exists(logo_path):
+            logo_path = os.path.join(images_dir, 'mena-etfp.png')
+        if os.path.exists(logo_path):
+            try:
+                p.drawImage(
+                    ImageReader(logo_path),
+                    1.5 * cm, height - header_h + 0.6 * cm,
+                    width=3 * cm, height=3 * cm,
+                    preserveAspectRatio=True, mask='auto',
+                )
+            except Exception:
+                pass
+
+    # Texte header (centré, à droite du logo)
+    p.setFillColorRGB(1, 1, 1)
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(5.2 * cm, height - 1.5 * cm, "RÉPUBLIQUE DE GUINÉE")
+    p.setFont("Helvetica", 9)
+    p.drawString(5.2 * cm, height - 2.0 * cm, "Travail — Justice — Solidarité")
+
+    p.setFont("Helvetica-Bold", 9.5)
+    p.drawString(5.2 * cm, height - 2.7 * cm, "Ministère de l'Éducation Nationale,")
+    p.drawString(5.2 * cm, height - 3.15 * cm, "de l'Alphabétisation, de l'Enseignement Technique")
+    p.drawString(5.2 * cm, height - 3.6 * cm, "et de la Formation Professionnelle")
+
+    # ============== TITRE PRINCIPAL ==============
+    title_y = height - header_h - 1.3 * cm
+    p.setFillColor(PRIMARY)
+    p.setFont("Helvetica-Bold", 22)
+    p.drawCentredString(width / 2, title_y, "PREUVE DE RENDEZ-VOUS")
+
+    p.setFillColor(TEXT_MUTED)
+    p.setFont("Helvetica-Oblique", 10)
+    p.drawCentredString(width / 2, title_y - 0.6 * cm, "Cabinet du Ministre")
+
+    # Référence du document
+    ref_y = title_y - 1.5 * cm
+    p.setFillColor(TEXT_DARK)
+    p.setFont("Helvetica-Bold", 9)
+    ref = f"Référence : RDV-{rendez_vous.pk:06d}"
+    p.drawString(2 * cm, ref_y, ref)
+    from django.utils import timezone as _tz
+    date_emission = _tz.now().strftime('%d/%m/%Y à %H:%M')
+    p.setFont("Helvetica", 9)
+    p.setFillColor(TEXT_MUTED)
+    p.drawRightString(width - 2 * cm, ref_y, f"Émis le {date_emission}")
+
+    # Badge statut "CONFIRMÉ"
+    badge_x = width / 2 - 2.2 * cm
+    badge_y = ref_y - 1.2 * cm
+    p.setFillColor(SUCCESS)
+    p.roundRect(badge_x, badge_y, 4.4 * cm, 0.85 * cm, 0.42 * cm, stroke=0, fill=1)
+    p.setFillColorRGB(1, 1, 1)
+    p.setFont("Helvetica-Bold", 12)
+    p.drawCentredString(width / 2, badge_y + 0.27 * cm, "✓  CONFIRMÉ")
+
+    # ============== CARTE DÉTAILS RDV ==============
+    card_top = badge_y - 0.8 * cm
+    card_h = 5.8 * cm
+    card_y = card_top - card_h
+    card_x = 2 * cm
+    card_w = width - 4 * cm
+
+    p.setFillColor(BG_LIGHT)
+    p.setStrokeColor(BORDER)
+    p.setLineWidth(0.6)
+    p.roundRect(card_x, card_y, card_w, card_h, 0.25 * cm, stroke=1, fill=1)
+
+    # Bande titre de la carte
+    p.setFillColor(PRIMARY)
+    p.roundRect(card_x, card_top - 0.9 * cm, card_w, 0.9 * cm, 0.25 * cm, stroke=0, fill=1)
+    p.rect(card_x, card_top - 0.9 * cm, card_w, 0.45 * cm, stroke=0, fill=1)
+    p.setFillColorRGB(1, 1, 1)
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(card_x + 0.5 * cm, card_top - 0.6 * cm, "DÉTAILS DU RENDEZ-VOUS")
+
+    # Contenu de la carte
+    def _draw_kv(x, y, label, value, label_w=4.5):
+        p.setFillColor(TEXT_MUTED)
+        p.setFont("Helvetica", 9)
+        p.drawString(x, y, label.upper())
+        p.setFillColor(TEXT_DARK)
+        p.setFont("Helvetica-Bold", 11)
+        p.drawString(x, y - 0.55 * cm, str(value))
+
+    col1_x = card_x + 0.7 * cm
+    col2_x = card_x + card_w / 2 + 0.3 * cm
+    row1_y = card_top - 1.7 * cm
+    row2_y = row1_y - 1.6 * cm
+    row3_y = row2_y - 1.6 * cm
+
+    heure_str = f"{rendez_vous.heure_debut.strftime('%H:%M')} - {rendez_vous.heure_fin.strftime('%H:%M')}" \
+        if rendez_vous.heure_fin else rendez_vous.heure_debut.strftime('%H:%M')
+
+    _draw_kv(col1_x, row1_y, "Sujet", rendez_vous.sujet or '-')
+    _draw_kv(col2_x, row1_y, "Motif", rendez_vous.motif.libelle if rendez_vous.motif else '-')
+
+    _draw_kv(col1_x, row2_y, "Date", rendez_vous.date_rendez_vous.strftime('%A %d %B %Y').capitalize()
+             if hasattr(rendez_vous.date_rendez_vous, 'strftime') else str(rendez_vous.date_rendez_vous))
+    _draw_kv(col2_x, row2_y, "Heure", heure_str)
+
     if rendez_vous.correspondant:
-        visiteur_details.append(("Correspondant", f"{rendez_vous.correspondant.prenoms} {rendez_vous.correspondant.nom}"))
-    
-    for label, value in visiteur_details:
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(3*cm, y, f"{label}:")
-        p.setFont("Helvetica", 10)
-        p.drawString(7*cm, y, str(value))
-        y -= 0.7*cm
-    
-    # Note en bas
-    y -= 1.5*cm
-    p.setFont("Helvetica-Bold", 10)
-    p.drawString(2.5*cm, y, "Veuillez présenter ce document et une pièce d'identité à l'accueil.")
-    
-    # Footer
-    p.setFont("Helvetica", 8)
-    p.drawCentredString(width/2, 2*cm, "Ministère de l'Éducation Nationale, de l'Alphabétisation,")
-    p.drawCentredString(width/2, 1.5*cm, "de l'Enseignement Technique et de la Formation Professionnelle")
-    p.drawCentredString(width/2, 1*cm, "Document généré automatiquement — Ne pas modifier")
-    
+        corr = f"{rendez_vous.correspondant.prenoms} {rendez_vous.correspondant.nom}"
+        _draw_kv(col1_x, row3_y, "Correspondant", corr)
+
+    # ============== CARTE DEMANDEUR ==============
+    card2_top = card_y - 0.6 * cm
+    card2_h = 4.2 * cm
+    card2_y = card2_top - card2_h
+
+    p.setFillColor(BG_LIGHT)
+    p.setStrokeColor(BORDER)
+    p.roundRect(card_x, card2_y, card_w, card2_h, 0.25 * cm, stroke=1, fill=1)
+
+    p.setFillColor(PRIMARY)
+    p.roundRect(card_x, card2_top - 0.9 * cm, card_w, 0.9 * cm, 0.25 * cm, stroke=0, fill=1)
+    p.rect(card_x, card2_top - 0.9 * cm, card_w, 0.45 * cm, stroke=0, fill=1)
+    p.setFillColorRGB(1, 1, 1)
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(card_x + 0.5 * cm, card2_top - 0.6 * cm, "INFORMATIONS DU DEMANDEUR")
+
+    v = rendez_vous.visiteur
+    nom_complet = f"{v.prenoms} {v.nom}"
+    r1 = card2_top - 1.7 * cm
+    r2 = r1 - 1.5 * cm
+
+    _draw_kv(col1_x, r1, "Nom complet", nom_complet)
+    _draw_kv(col2_x, r1, "Téléphone", v.telephone or '-')
+    _draw_kv(col1_x, r2, "Email", v.email or '-')
+    if getattr(v, 'numero_identite', None):
+        _draw_kv(col2_x, r2, "Pièce d'identité", v.numero_identite)
+
+    # ============== QR CODE ==============
+    qr_data = json.dumps({
+        'type': 'preuve_rdv',
+        'rdv_id': rendez_vous.pk,
+        'nom': v.nom,
+        'date': str(rendez_vous.date_rendez_vous),
+    }, ensure_ascii=False)
+
+    qr = qrcode.QRCode(version=1, box_size=4, border=1,
+                       error_correction=qrcode.constants.ERROR_CORRECT_M)
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="#104480", back_color="white")
+    qr_buf = io.BytesIO()
+    qr_img.save(qr_buf, format='PNG')
+    qr_buf.seek(0)
+
+    qr_size = 3.2 * cm
+    qr_x = width - 2 * cm - qr_size
+    qr_y = card2_y - qr_size - 1.2 * cm
+
+    # Cadre autour du QR
+    p.setStrokeColor(BORDER)
+    p.setFillColorRGB(1, 1, 1)
+    p.roundRect(qr_x - 0.2 * cm, qr_y - 0.2 * cm, qr_size + 0.4 * cm, qr_size + 0.4 * cm,
+                0.15 * cm, stroke=1, fill=1)
+    p.drawImage(ImageReader(qr_buf), qr_x, qr_y, width=qr_size, height=qr_size)
+
+    p.setFillColor(TEXT_MUTED)
+    p.setFont("Helvetica", 7.5)
+    p.drawCentredString(qr_x + qr_size / 2, qr_y - 0.5 * cm, "Scannez pour vérifier")
+
+    # Encadré "Instructions" à gauche du QR
+    inst_x = 2 * cm
+    inst_y = qr_y + qr_size + 0.4 * cm
+    inst_w = qr_x - inst_x - 0.6 * cm
+    inst_h = qr_size + 0.4 * cm
+
+    p.setFillColor(HexColor('#fef3c7'))
+    p.setStrokeColor(ACCENT)
+    p.setLineWidth(0.8)
+    p.roundRect(inst_x, inst_y - inst_h, inst_w, inst_h, 0.2 * cm, stroke=1, fill=1)
+
+    p.setFillColor(HexColor('#92400e'))
+    p.setFont("Helvetica-Bold", 9.5)
+    p.drawString(inst_x + 0.4 * cm, inst_y - 0.6 * cm, "⚠  INSTRUCTIONS IMPORTANTES")
+
+    instructions = [
+        "• Présentez ce document à l'accueil le jour du rendez-vous.",
+        "• Munissez-vous d'une pièce d'identité valide.",
+        "• Arrivez 10 minutes avant l'heure prévue.",
+        "• Ce document est strictement personnel.",
+    ]
+    p.setFillColor(HexColor('#78350f'))
+    p.setFont("Helvetica", 8.5)
+    yi = inst_y - 1.15 * cm
+    for line in instructions:
+        p.drawString(inst_x + 0.4 * cm, yi, line)
+        yi -= 0.5 * cm
+
+    # ============== FOOTER ==============
+    footer_h = 1.6 * cm
+    p.setFillColor(PRIMARY)
+    p.rect(0, 0, width, footer_h, stroke=0, fill=1)
+    p.setFillColor(ACCENT)
+    p.rect(0, footer_h, width, 0.1 * cm, stroke=0, fill=1)
+
+    p.setFillColorRGB(1, 1, 1)
+    p.setFont("Helvetica-Bold", 8.5)
+    p.drawCentredString(width / 2, footer_h - 0.5 * cm,
+                        "Cabinet du Ministre — MENA-ETFP — République de Guinée")
+    p.setFont("Helvetica-Oblique", 7.5)
+    p.drawCentredString(width / 2, footer_h - 0.95 * cm,
+                        "Document généré automatiquement — Toute modification rend ce document nul.")
+    p.setFont("Helvetica", 7)
+    p.drawCentredString(width / 2, footer_h - 1.3 * cm,
+                        f"Document n° RDV-{rendez_vous.pk:06d}")
+
     p.showPage()
     p.save()
     buffer.seek(0)

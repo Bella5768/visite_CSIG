@@ -114,12 +114,9 @@
             <div class="card-body">
                 <div class="d-grid gap-2">
                     {% if rendez_vous.statut == 'planifie' %}
-                    <form method="post" action="{% url 'visites:rendez_vous_confirmer' rendez_vous.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-info">
-                            <i class="bi bi-check-circle"></i> Confirmer
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#confirmerModal">
+                        <i class="bi bi-check-circle"></i> Confirmer
+                    </button>
                     {% endif %}
                     
                     {% if rendez_vous.statut == 'planifie' or rendez_vous.statut == 'confirme' %}
@@ -172,6 +169,53 @@
         </div>
     </div>
 </div>
+
+<!-- Confirm Modal -->
+{% if rendez_vous.statut == 'planifie' %}
+<div class="modal fade" id="confirmerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-check-circle"></i> Confirmer le rendez-vous</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'visites:rendez_vous_confirmer' rendez_vous.pk %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="mb-3">
+                        Vous pouvez préciser l'heure exacte du rendez-vous avant de l'envoyer
+                        au demandeur. Laissez les champs tels quels pour conserver le créneau
+                        initial (<strong>{{ rendez_vous.heure_debut|time:"H:i" }} - {{ rendez_vous.heure_fin|time:"H:i" }}</strong>).
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="heure_debut_confirm" class="form-label">Heure de début</label>
+                            <input type="time" class="form-control" id="heure_debut_confirm"
+                                   name="heure_debut" value="{{ rendez_vous.heure_debut|time:'H:i' }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="heure_fin_confirm" class="form-label">Heure de fin</label>
+                            <input type="time" class="form-control" id="heure_fin_confirm"
+                                   name="heure_fin" value="{{ rendez_vous.heure_fin|time:'H:i' }}" required>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-envelope"></i>
+                        Un email de confirmation sera automatiquement envoyé à
+                        <strong>{{ rendez_vous.visiteur.email|default:"(email non renseigné)" }}</strong>.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="bi bi-check-circle"></i> Confirmer et envoyer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Cancel Modal -->
 <div class="modal fade" id="annulerModal" tabindex="-1">

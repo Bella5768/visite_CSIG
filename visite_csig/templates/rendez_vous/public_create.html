@@ -480,8 +480,9 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" name="description" id="description" rows="4" placeholder="Expliquez brièvement votre demande..."></textarea>
+                    <label class="form-label">Commentaire / Description <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="description" id="description" rows="4" required placeholder="Expliquez brièvement votre demande..."></textarea>
+                    <div class="form-text">Ce champ est obligatoire.</div>
                 </div>
                 
                 <div class="form-navigation">
@@ -733,10 +734,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const nom = document.getElementById('nom').value.trim();
         const prenoms = document.getElementById('prenoms').value.trim();
         const sujet = document.getElementById('sujet').value.trim();
+        const description = document.getElementById('description').value.trim();
         const telephone = document.getElementById('telephone').value.trim();
         const email = document.getElementById('email').value.trim();
-        
-        return nom && prenoms && sujet && (telephone || email);
+
+        return nom && prenoms && sujet && description && (telephone || email);
     }
     
     // Étape 4: Confirmation
