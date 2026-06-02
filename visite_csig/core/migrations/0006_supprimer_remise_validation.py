@@ -1,15 +1,16 @@
 from django.db import migrations
 
 
-def supprimer_remise_validation(apps, schema_editor):
-    """Supprime le motif 'Remise de validation officielle' s'il existe."""
+def desactiver_remise_validation(apps, schema_editor):
+    """Désactive le motif 'Remise de validation officielle' s'il existe."""
     MotifVisite = apps.get_model('core', 'MotifVisite')
-    MotifVisite.objects.filter(libelle__icontains='remise de validation').delete()
+    MotifVisite.objects.filter(libelle__icontains='remise de validation').update(actif=False)
 
 
 def restaurer_remise_validation(apps, schema_editor):
-    """Ne restaure rien (rollback vide)."""
-    pass
+    """Réactive le motif (rollback)."""
+    MotifVisite = apps.get_model('core', 'MotifVisite')
+    MotifVisite.objects.filter(libelle__icontains='remise de validation').update(actif=True)
 
 
 class Migration(migrations.Migration):
@@ -19,5 +20,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(supprimer_remise_validation, restaurer_remise_validation),
+        migrations.RunPython(desactiver_remise_validation, restaurer_remise_validation),
     ]
