@@ -10,6 +10,8 @@ ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1', '.pythonanywhere.com']
 CSRF_TRUSTED_ORIGINS = [
     'https://menaetfp.pythonanywhere.com',
     'http://menaetfp.pythonanywhere.com',
+    'https://boubacar32.pythonanywhere.com',
+    'http://boubacar32.pythonanywhere.com',
     'http://127.0.0.1:8000',
     'http://localhost:8000',
     'http://127.0.0.1:52594',
