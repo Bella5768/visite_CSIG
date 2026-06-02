@@ -6,6 +6,10 @@ MOTIFS_PUBLICS = [
         'libelle': 'Visite officielle',
         'description': "Visite officielle du lundi au jeudi, créneau 13h-16h. L'administrateur précisera l'heure exacte lors de la confirmation.",
     },
+    {
+        'libelle': 'Visite personnelle',
+        'description': "Visite personnelle uniquement le vendredi, de 11h à 15h.",
+    },
 ]
 
 
