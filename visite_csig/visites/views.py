@@ -34,11 +34,9 @@ from .utils import generate_badge_pdf
 # Règles métier:
 #  - Motif "Visite officielle" : disponible du lundi au jeudi, créneau 13h-16h.
 #    L'administrateur précise ensuite l'heure exacte au moment de la confirmation.
-#  - Motif "Visite personnelle" : disponible uniquement le vendredi, 11h-15h.
-# Les créneaux sont générés automatiquement à la volée (4 semaines à l'avance).
+# Les créneaux sont générés automatiquement à la volée (semaine en cours).
 
 VISITE_OFFICIELLE = 'officielle'
-VISITE_PERSONNELLE = 'personnelle'
 
 # Jours: lundi=0 ... dimanche=6
 _REGLES_MOTIF = {
@@ -46,11 +44,6 @@ _REGLES_MOTIF = {
         'jours': (0, 1, 2, 3),  # lundi -> jeudi
         'heure_debut': time(13, 0),
         'heure_fin': time(16, 0),
-    },
-    VISITE_PERSONNELLE: {
-        'jours': (4,),  # vendredi
-        'heure_debut': time(11, 0),
-        'heure_fin': time(15, 0),
     },
 }
 
@@ -60,14 +53,12 @@ _MOIS_FR = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
 
 
 def _classifier_motif(motif):
-    """Retourne VISITE_OFFICIELLE / VISITE_PERSONNELLE ou None selon le libellé."""
+    """Retourne VISITE_OFFICIELLE ou None selon le libellé."""
     if motif is None:
         return None
     libelle = (motif.libelle or '').lower()
     if 'officiel' in libelle:
         return VISITE_OFFICIELLE
-    if 'personnel' in libelle:
-        return VISITE_PERSONNELLE
     return None
 
 
@@ -98,27 +89,14 @@ def _generer_creneaux_virtuels(motif):
 
     fin_semaine = lundi + timedelta(days=6)
 
-    # Pour la visite personnelle (un seul créneau par vendredi), on exclut
-    # les dates déjà réservées. La visite officielle accepte plusieurs
-    # demandes par jour (l'admin choisira l'heure exacte).
-    dates_reservees = set()
-    if type_motif == VISITE_PERSONNELLE:
-        dates_reservees = set(
-            CreneauDisponibilite.objects
-            .filter(motif=motif, date__gte=lundi, date__lte=fin_semaine)
-            .filter(rendez_vous__isnull=False)
-            .exclude(rendez_vous__statut='annule')
-            .values_list('date', flat=True)
-        )
-
+    # La visite officielle accepte plusieurs demandes par jour
+    # (l'admin choisira l'heure exacte lors de la confirmation).
     creneaux = []
     for offset in range(7):
         jour = lundi + timedelta(days=offset)
         if jour.weekday() not in jours_autorises:
             continue
         if jour < today:
-            continue
-        if jour in dates_reservees:
             continue
         iso = jour.isoformat()
         creneaux.append({
