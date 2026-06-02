@@ -704,22 +704,18 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
         try:
             nom = (request.POST.get('nom') or '').strip()
             prenoms = (request.POST.get('prenoms') or '').strip()
-            telephone = (request.POST.get('telephone') or '').strip()
             email = (request.POST.get('email') or '').strip()
+            telephone = (request.POST.get('telephone') or '').strip()
 
             if not nom or not prenoms:
                 messages.error(request, 'Veuillez renseigner votre nom et prénoms')
                 return redirect(error_redirect_url_name)
 
-            if not telephone and not email:
-                messages.error(request, 'Veuillez renseigner un téléphone ou un email')
+            if not email:
+                messages.error(request, 'Veuillez renseigner votre email pour recevoir la confirmation')
                 return redirect(error_redirect_url_name)
 
-            visiteur = None
-            if telephone:
-                visiteur = Visiteur.objects.filter(telephone=telephone).first()
-            if not visiteur and email:
-                visiteur = Visiteur.objects.filter(email=email).first()
+            visiteur = Visiteur.objects.filter(email=email).first()
 
             if not visiteur:
                 visiteur = Visiteur.objects.create(

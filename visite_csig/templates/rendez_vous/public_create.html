@@ -439,14 +439,14 @@
                             <span class="input-group-text"><i class="bi bi-telephone"></i></span>
                             <input type="text" class="form-control" name="telephone" id="telephone" placeholder="Ex: +224 ...">
                         </div>
-                        <div class="form-text">Téléphone ou email requis.</div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Email</label>
+                        <label class="form-label">Email <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                            <input type="email" class="form-control" name="email" id="email" placeholder="Ex: vous@email.com">
+                            <input type="email" class="form-control" name="email" id="email" placeholder="Ex: vous@email.com" required>
                         </div>
+                        <div class="form-text">Requis pour recevoir la confirmation par email.</div>
                     </div>
                 </div>
 
@@ -735,10 +735,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const prenoms = document.getElementById('prenoms').value.trim();
         const sujet = document.getElementById('sujet').value.trim();
         const description = document.getElementById('description').value.trim();
-        const telephone = document.getElementById('telephone').value.trim();
         const email = document.getElementById('email').value.trim();
 
-        return nom && prenoms && sujet && description && (telephone || email);
+        return nom && prenoms && sujet && description && email;
     }
     
     // Étape 4: Confirmation

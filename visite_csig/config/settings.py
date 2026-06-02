@@ -82,29 +82,34 @@ AUTH_PASSWORD_VALIDATORS = [
 # Configuration email multi-fournisseurs
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-# Configuration principale (Gmail par défaut)
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+# Configuration SendGrid - fonctionne avec tous les domaines
+# Pour utiliser SendGrid, créez un compte gratuit sur https://sendgrid.com/
+# et obtenez votre API Key dans Settings > API Keys
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.sendgrid.net')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
 EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 'yes')
 
-# Identifiants
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'etfpmena@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'pxrm ikhy yfzj rpon')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Cabinet MENA-ETFP <etfpmena@gmail.com>')
+# Identifiants SendGrid (remplacez par votre clé API réelle)
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'apikey')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'SG.MCSLHKQMR15R94L7GWBPCJD4')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Cabinet MENA-ETFP <noreply@menaetfp.gn>')
+
+# Timeout SMTP
+EMAIL_TIMEOUT = 30
 
 # Configuration pour le développement (commenter pour tester)
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Configurations pré-définies selon le fournisseur
+# Pour SendGrid - recommandé:
+# EMAIL_HOST=smtp.sendgrid.net, EMAIL_PORT=587, EMAIL_USE_TLS=True, EMAIL_HOST_USER=apikey, EMAIL_HOST_PASSWORD=SG.YOUR_API_KEY
+# Pour Brevo (Sendinblue):
+# EMAIL_HOST=smtp-relay.brevo.com, EMAIL_PORT=587, EMAIL_USE_TLS=True
 # Pour Gmail:
 # EMAIL_HOST=smtp.gmail.com, EMAIL_PORT=587, EMAIL_USE_TLS=True
 # Pour Outlook/Hotmail:
 # EMAIL_HOST=smtp-mail.outlook.com, EMAIL_PORT=587, EMAIL_USE_TLS=True
-# Pour Yahoo:
-# EMAIL_HOST=smtp.mail.yahoo.com, EMAIL_PORT=587, EMAIL_USE_TLS=True
-# Pour Orange:
-# EMAIL_HOST=smtp.orange.fr, EMAIL_PORT=587, EMAIL_USE_TLS=True
 
 AUTH_USER_MODEL = 'core.Utilisateur'
 LOGIN_URL = 'core:login'

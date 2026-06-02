@@ -336,7 +336,7 @@ def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
     if not rendez_vous.visiteur.email:
         print(f"[EMAIL] Pas d'email pour le visiteur {rendez_vous.visiteur}")
         return False
-    
+
     import os
     from email.mime.image import MIMEImage
     from django.core.mail import EmailMultiAlternatives
@@ -344,6 +344,11 @@ def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
     from django.urls import reverse
 
     sujet = f"Confirmation de votre rendez-vous - {rendez_vous.sujet}"
+    destinataire = rendez_vous.visiteur.email
+
+    print(f"[EMAIL] Préparation de l'envoi à: {destinataire}")
+    print(f"[EMAIL] Sujet: {sujet}")
+    print(f"[EMAIL] Configuration SMTP: {settings.EMAIL_HOST}:{settings.EMAIL_PORT} (TLS={settings.EMAIL_USE_TLS})")
 
     preuve_token = signing.dumps({'rdv_id': rendez_vous.pk}, salt='rendez_vous_public_preuve')
     preuve_url = request.build_absolute_uri(
@@ -358,19 +363,25 @@ def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
         'site_url': request.build_absolute_uri('/'),
         'preuve_url': preuve_url,
     }
-    
+
     html_message = render_to_string('rendez_vous/email_confirmation.html', context)
     plain_message = strip_tags(html_message)
-    
+
     try:
         email = EmailMultiAlternatives(
             subject=sujet,
             body=plain_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[rendez_vous.visiteur.email],
+            to=[destinataire],
         )
         email.attach_alternative(html_message, "text/html")
         email.mixed_subtype = 'related'
+
+        # Options SMTP supplémentaires pour contourner les restrictions
+        email.extra_headers = {
+            'X-Priority': '1',
+            'X-MSMail-Priority': 'High',
+        }
 
         # Attacher les logos en inline
         images_dir = _get_images_dir()
@@ -403,11 +414,12 @@ def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
         except Exception as e:
             print(f"[EMAIL] Erreur génération PDF: {e}")
 
+        print(f"[EMAIL] Envoi en cours...")
         email.send(fail_silently=False)
-        print(f"[EMAIL] ✅ Email de confirmation envoyé à: {rendez_vous.visiteur.email}")
+        print(f"[EMAIL] ✅ Email de confirmation envoyé avec succès à: {destinataire}")
         return True
     except Exception as e:
-        print(f"[EMAIL] ❌ Erreur lors de l'envoi: {e}")
+        print(f"[EMAIL] ❌ Erreur lors de l'envoi à {destinataire}: {e}")
         import traceback
         traceback.print_exc()
         return False
