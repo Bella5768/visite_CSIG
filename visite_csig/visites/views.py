@@ -98,27 +98,14 @@ def _generer_creneaux_virtuels(motif):
 
     fin_semaine = lundi + timedelta(days=6)
 
-    # Pour la visite personnelle (un seul créneau par vendredi), on exclut
-    # les dates déjà réservées. La visite officielle accepte plusieurs
-    # demandes par jour (l'admin choisira l'heure exacte).
-    dates_reservees = set()
-    if type_motif == VISITE_PERSONNELLE:
-        dates_reservees = set(
-            CreneauDisponibilite.objects
-            .filter(motif=motif, date__gte=lundi, date__lte=fin_semaine)
-            .filter(rendez_vous__isnull=False)
-            .exclude(rendez_vous__statut='annule')
-            .values_list('date', flat=True)
-        )
-
+    # Les deux types de visites acceptent plusieurs demandes par jour
+    # (l'admin choisira l'heure exacte lors de la confirmation).
     creneaux = []
     for offset in range(7):
         jour = lundi + timedelta(days=offset)
         if jour.weekday() not in jours_autorises:
             continue
         if jour < today:
-            continue
-        if jour in dates_reservees:
             continue
         iso = jour.isoformat()
         creneaux.append({
