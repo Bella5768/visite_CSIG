@@ -478,17 +478,49 @@ def rendez_vous_create(request, visiteur_id=None):
     
     if request.method == 'POST':
         try:
+            def _clean(name):
+                # Nettoie les espaces (y compris insécables \xa0) envoyés par
+                # certains navigateurs mobiles.
+                return (request.POST.get(name) or '').replace('\xa0', ' ').strip()
+
+            motif_id = _clean('motif_id')
+            creneau_id = _clean('creneau_id')
+            date_rdv = _clean('date_rendez_vous')
+            heure_debut = _clean('heure_debut')
+            heure_fin = _clean('heure_fin')
+            creneau = None
+
+            # Si un créneau prédéfini a été sélectionné, on en déduit la date
+            # et les heures (créneau virtuel "v:..." ou créneau existant).
+            if creneau_id:
+                motif_obj = get_object_or_404(MotifVisite, pk=motif_id)
+                if creneau_id.startswith('v:'):
+                    creneau = _resoudre_creneau_virtuel(creneau_id, motif_obj)
+                else:
+                    creneau = CreneauDisponibilite.objects.filter(
+                        pk=creneau_id, motif_id=motif_id
+                    ).first()
+                if creneau:
+                    date_rdv = creneau.date
+                    heure_debut = creneau.heure_debut
+                    heure_fin = creneau.heure_fin
+
+            if not date_rdv or not heure_debut or not heure_fin:
+                messages.error(request, 'Veuillez sélectionner un créneau ou renseigner la date et les heures')
+                raise ValueError('Date/heures manquantes')
+
             rdv = RendezVous(
-                visiteur_id=request.POST.get('visiteur_id'),
-                motif_id=request.POST.get('motif_id'),
-                correspondant_id=request.POST.get('correspondant_id') or None,
-                date_rendez_vous=request.POST.get('date_rendez_vous'),
-                heure_debut=request.POST.get('heure_debut'),
-                heure_fin=request.POST.get('heure_fin'),
-                sujet=request.POST.get('sujet'),
+                visiteur_id=_clean('visiteur_id'),
+                motif_id=motif_id,
+                correspondant_id=_clean('correspondant_id') or None,
+                creneau=creneau,
+                date_rendez_vous=date_rdv,
+                heure_debut=heure_debut,
+                heure_fin=heure_fin,
+                sujet=_clean('sujet'),
                 description=request.POST.get('description', ''),
                 notes_confidentielles=request.POST.get('notes_confidentielles', ''),
-                priorite=request.POST.get('priorite', 'normale'),
+                priorite=_clean('priorite') or 'normale',
                 cree_par=request.user
             )
             rdv.full_clean()
@@ -497,6 +529,8 @@ def rendez_vous_create(request, visiteur_id=None):
             messages.success(request, 'Rendez-vous créé avec succès')
             return redirect('visites:rendez_vous_detail', pk=rdv.pk)
             
+        except ValueError:
+            pass
         except ValidationError as e:
             messages.error(request, 'Erreur de validation: ' + str(e))
         except Exception as e:
