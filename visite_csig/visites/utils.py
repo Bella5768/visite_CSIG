@@ -328,6 +328,56 @@ def generer_preuve_pdf(rendez_vous):
     return buffer
 
 
+def envoyer_email_emailjs(template_params, service_id=None, template_id=None):
+    """
+    Envoie un email via l'API REST EmailJS (https://www.emailjs.com/).
+
+    template_params: dict des variables du template EmailJS
+    (ex: to_email, to_name, sujet, date, heure, motif, preuve_url...).
+
+    Retourne True si l'envoi a réussi, False sinon.
+    """
+    import json
+    import urllib.request
+    import urllib.error
+
+    if not getattr(settings, 'USE_EMAILJS', False):
+        print("[EMAILJS] EmailJS non configuré (identifiants manquants)")
+        return False
+
+    payload = {
+        'service_id': service_id or settings.EMAILJS_SERVICE_ID,
+        'template_id': template_id or settings.EMAILJS_TEMPLATE_ID,
+        'user_id': settings.EMAILJS_PUBLIC_KEY,
+        'template_params': template_params,
+    }
+    # La clé privée est requise pour les appels API côté serveur
+    # (activer "Allow EmailJS API for non-browser applications" dans
+    # Account > Security du dashboard EmailJS).
+    if getattr(settings, 'EMAILJS_PRIVATE_KEY', ''):
+        payload['accessToken'] = settings.EMAILJS_PRIVATE_KEY
+
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(
+        'https://api.emailjs.com/api/v1.0/email/send',
+        data=data,
+        headers={'Content-Type': 'application/json'},
+        method='POST',
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body = resp.read().decode('utf-8', errors='replace')
+            print(f"[EMAILJS] Réponse: {resp.status} {body}")
+            return resp.status == 200
+    except urllib.error.HTTPError as e:
+        print(f"[EMAILJS] ❌ Erreur HTTP {e.code}: {e.read().decode('utf-8', errors='replace')}")
+        return False
+    except Exception as e:
+        print(f"[EMAILJS] ❌ Erreur: {e}")
+        return False
+
+
 def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
     """
     Envoie un email de confirmation au demandeur du rendez-vous
@@ -348,12 +398,35 @@ def envoyer_email_confirmation_rendez_vous(rendez_vous, request):
 
     print(f"[EMAIL] Préparation de l'envoi à: {destinataire}")
     print(f"[EMAIL] Sujet: {sujet}")
-    print(f"[EMAIL] Configuration SMTP: {settings.EMAIL_HOST}:{settings.EMAIL_PORT} (TLS={settings.EMAIL_USE_TLS})")
 
     preuve_token = signing.dumps({'rdv_id': rendez_vous.pk}, salt='rendez_vous_public_preuve')
     preuve_url = request.build_absolute_uri(
         reverse('rendez_vous_public_preuve', kwargs={'token': preuve_token})
     )
+
+    # --- Envoi via EmailJS (prioritaire si configuré) ---------------------
+    if getattr(settings, 'USE_EMAILJS', False):
+        heure_str = rendez_vous.heure_debut.strftime('%H:%M')
+        if rendez_vous.heure_fin:
+            heure_str += f" - {rendez_vous.heure_fin.strftime('%H:%M')}"
+        template_params = {
+            'to_email': destinataire,
+            'to_name': f"{rendez_vous.visiteur.prenoms} {rendez_vous.visiteur.nom}",
+            'sujet': rendez_vous.sujet,
+            'motif': rendez_vous.motif.libelle if rendez_vous.motif else '-',
+            'date_rdv': rendez_vous.date_rendez_vous.strftime('%d/%m/%Y'),
+            'heure_rdv': heure_str,
+            'correspondant': str(rendez_vous.correspondant) if rendez_vous.correspondant else '-',
+            'preuve_url': preuve_url,
+            'reference': f"RDV-{rendez_vous.pk:06d}",
+        }
+        if envoyer_email_emailjs(template_params):
+            print(f"[EMAILJS] ✅ Email de confirmation envoyé à: {destinataire}")
+            return True
+        print("[EMAILJS] ⚠️ Échec EmailJS, tentative via SMTP...")
+
+    # --- Envoi via SMTP (fallback) ----------------------------------------
+    print(f"[EMAIL] Configuration SMTP: {settings.EMAIL_HOST}:{settings.EMAIL_PORT} (TLS={settings.EMAIL_USE_TLS})")
 
     context = {
         'rendez_vous': rendez_vous,

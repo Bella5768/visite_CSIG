@@ -100,6 +100,20 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Cabinet MENA-ETFP <no
 # Timeout SMTP
 EMAIL_TIMEOUT = 30
 
+# Configuration EmailJS (envoi via API REST - https://www.emailjs.com/)
+# Créez un compte gratuit, configurez un service email et un template,
+# puis renseignez les identifiants ci-dessous.
+# Dashboard EmailJS:
+#  - Service ID : Email Services > votre service
+#  - Template ID : Email Templates > votre template
+#  - Public Key / Private Key : Account > General
+EMAILJS_SERVICE_ID = os.environ.get('EMAILJS_SERVICE_ID', '')
+EMAILJS_TEMPLATE_ID = os.environ.get('EMAILJS_TEMPLATE_ID', '')
+EMAILJS_PUBLIC_KEY = os.environ.get('EMAILJS_PUBLIC_KEY', '')
+EMAILJS_PRIVATE_KEY = os.environ.get('EMAILJS_PRIVATE_KEY', '')
+# Active EmailJS si les identifiants sont renseignés
+USE_EMAILJS = bool(EMAILJS_SERVICE_ID and EMAILJS_TEMPLATE_ID and EMAILJS_PUBLIC_KEY)
+
 # Configuration pour le développement (commenter pour tester)
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
