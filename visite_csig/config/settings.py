@@ -107,10 +107,10 @@ EMAIL_TIMEOUT = 30
 #  - Service ID : Email Services > votre service
 #  - Template ID : Email Templates > votre template
 #  - Public Key / Private Key : Account > General
-EMAILJS_SERVICE_ID = os.environ.get('EMAILJS_SERVICE_ID', '')
-EMAILJS_TEMPLATE_ID = os.environ.get('EMAILJS_TEMPLATE_ID', '')
-EMAILJS_PUBLIC_KEY = os.environ.get('EMAILJS_PUBLIC_KEY', '')
-EMAILJS_PRIVATE_KEY = os.environ.get('EMAILJS_PRIVATE_KEY', '')
+EMAILJS_SERVICE_ID = os.environ.get('EMAILJS_SERVICE_ID', 'service_dzf7alq')
+EMAILJS_TEMPLATE_ID = os.environ.get('EMAILJS_TEMPLATE_ID', 'template_vb1ojbm')
+EMAILJS_PUBLIC_KEY = os.environ.get('EMAILJS_PUBLIC_KEY', 'DmHMKv0FI7BVr0fGw')
+EMAILJS_PRIVATE_KEY = os.environ.get('EMAILJS_PRIVATE_KEY', 'u-CR5VtSndzFJkHugYj0L')
 # Active EmailJS si les identifiants sont renseignés
 USE_EMAILJS = bool(EMAILJS_SERVICE_ID and EMAILJS_TEMPLATE_ID and EMAILJS_PUBLIC_KEY)
 
