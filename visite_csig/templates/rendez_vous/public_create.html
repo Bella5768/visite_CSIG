@@ -378,15 +378,15 @@
                 </div>
             </div>
 
-            <!-- Étape 2: Créneaux -->
+            <!-- Étape 2: Jour + heure souhaitée -->
             <div class="step-panel" data-step="2">
-                <h3 class="mb-4">Choisissez un créneau disponible</h3>
+                <h3 class="mb-4">Choisissez le jour et l'heure souhaitée</h3>
                 
                 <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
                     <i class="bi bi-info-circle-fill"></i>
                     <div>
-                        <strong>Information :</strong> Les créneaux sont définis à l'avance par l'administration.
-                        <div class="small">Sélectionnez l'horaire qui vous convient le mieux.</div>
+                        <strong>Information :</strong> Les rendez-vous sont possibles du lundi au vendredi.
+                        <div class="small">Sélectionnez un jour puis indiquez l'heure souhaitée (entre 09h00 et 16h00). L'administration confirmera l'heure définitive de votre audience.</div>
                     </div>
                 </div>
                 
@@ -395,11 +395,20 @@
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Chargement...</span>
                         </div>
-                        <p class="mt-3 text-muted">Chargement des créneaux disponibles...</p>
+                        <p class="mt-3 text-muted">Chargement des jours disponibles...</p>
                     </div>
+                </div>
+
+                <div id="heureContainer" class="mt-4" style="display:none;">
+                    <label class="form-label fw-bold"><i class="bi bi-clock"></i> Heure souhaitée</label>
+                    <select class="form-select" id="heureSelect">
+                        <option value="">-- Choisissez une heure --</option>
+                    </select>
+                    <div class="form-text">Heure indicative : l'administration fixera l'heure exacte lors de la validation.</div>
                 </div>
                 
                 <input type="hidden" name="creneau_id" id="selectedCreneau">
+                <input type="hidden" name="heure_souhaitee" id="selectedHeure">
                 
                 <div class="form-navigation">
                     <button type="button" class="btn-nav btn-prev" id="btnStep2Prev">
@@ -575,6 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentStep = 1;
     let selectedMotifId = null;
     let selectedCreneauId = null;
+    let selectedHeure = null;
     let creneauxData = [];
     
     // Éléments DOM
@@ -626,9 +636,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function canGoToStep(stepNumber) {
         if (stepNumber === 2) return selectedMotifId !== null;
-        if (stepNumber === 3) return selectedMotifId !== null && selectedCreneauId !== null;
+        if (stepNumber === 3) return selectedMotifId !== null && selectedCreneauId !== null && selectedHeure !== null;
         if (stepNumber === 4) return validateStep3();
         return false;
+    }
+
+    // Construit les options d'heure (09:00 -> 15:30, pas de 30 min)
+    // pour un créneau donné, en respectant ses bornes.
+    function populateHeures(creneau) {
+        const heureSelect = document.getElementById('heureSelect');
+        heureSelect.innerHTML = '<option value="">-- Choisissez une heure --</option>';
+        const minStr = (creneau && creneau.heure_min) || '09:00';
+        const maxStr = (creneau && creneau.heure_max) || '16:00';
+        const toMin = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+        const startMin = toMin(minStr);
+        // Dernier début possible = borne max - 30 min pour laisser place au RDV.
+        const lastStart = toMin(maxStr) - 30;
+        for (let t = startMin; t <= lastStart; t += 30) {
+            const hh = String(Math.floor(t / 60)).padStart(2, '0');
+            const mm = String(t % 60).padStart(2, '0');
+            const val = `${hh}:${mm}`;
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = val;
+            heureSelect.appendChild(opt);
+        }
     }
     
     // Étape 1: Sélection des motifs
@@ -700,9 +732,8 @@ document.addEventListener('DOMContentLoaded', function() {
             creneauCard.className = 'creneau-card';
             creneauCard.dataset.creneauId = creneau.id;
             creneauCard.innerHTML = `
-                <div class="creneau-time">${creneau.heure_debut} - ${creneau.heure_fin}</div>
-                <div class="creneau-date">${creneau.date_formatted}</div>
-                ${creneau.capacite ? `<div class="text-muted small">Places: ${creneau.capacite}</div>` : ''}
+                <div class="creneau-time"><i class="bi bi-calendar-event"></i> ${creneau.date_formatted}</div>
+                <div class="creneau-date">Heures possibles : ${creneau.heure_min} - ${creneau.heure_max}</div>
             `;
             
             creneauCard.addEventListener('click', function() {
@@ -710,7 +741,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.classList.add('selected');
                 selectedCreneauId = this.dataset.creneauId;
                 document.getElementById('selectedCreneau').value = selectedCreneauId;
-                document.getElementById('btnStep2Next').disabled = false;
+
+                // Réinitialise l'heure et affiche le sélecteur d'heure.
+                const creneauInfo = creneauxData.find(c => c.id == selectedCreneauId);
+                populateHeures(creneauInfo);
+                selectedHeure = null;
+                document.getElementById('selectedHeure').value = '';
+                document.getElementById('heureContainer').style.display = 'block';
+                document.getElementById('btnStep2Next').disabled = true;
             });
             
             container.appendChild(creneauCard);
@@ -719,6 +757,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const btnStep2Prev = document.getElementById('btnStep2Prev');
     const btnStep2Next = document.getElementById('btnStep2Next');
+    const heureSelect = document.getElementById('heureSelect');
+    
+    heureSelect.addEventListener('change', function() {
+        selectedHeure = this.value || null;
+        document.getElementById('selectedHeure').value = this.value;
+        document.getElementById('btnStep2Next').disabled = !(selectedCreneauId && selectedHeure);
+    });
     
     btnStep2Prev.addEventListener('click', () => showStep(1));
     btnStep2Next.addEventListener('click', () => showStep(3));
@@ -776,7 +821,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedCreneauCard) {
             const creneauInfo = creneauxData.find(c => c.id == selectedCreneauId);
             if (creneauInfo) {
-                document.getElementById('confirmCreneau').textContent = `${creneauInfo.date_formatted} - ${creneauInfo.heure_debut} à ${creneauInfo.heure_fin}`;
+                const heureTxt = selectedHeure ? ` - ${selectedHeure} (souhaitée)` : '';
+                document.getElementById('confirmCreneau').textContent = `${creneauInfo.date_formatted}${heureTxt}`;
             }
         } else {
             document.getElementById('confirmCreneau').textContent = '-';
@@ -804,7 +850,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!selectedCreneauId) {
             e.preventDefault();
-            alert('Veuillez sélectionner un créneau');
+            alert('Veuillez sélectionner un jour');
+            showStep(2);
+            return;
+        }
+        
+        if (!selectedHeure) {
+            e.preventDefault();
+            alert('Veuillez choisir une heure souhaitée');
             showStep(2);
             return;
         }

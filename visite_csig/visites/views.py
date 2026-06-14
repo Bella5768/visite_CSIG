@@ -32,25 +32,34 @@ from .utils import generate_badge_pdf
 
 # --- Workflow rendez-vous publics ---------------------------------------------
 # Règles métier:
-#  - Motif "Visite officielle" : disponible du lundi au jeudi, créneau 13h-16h.
-#    L'administrateur précise ensuite l'heure exacte au moment de la confirmation.
-#  - Motif "Visite personnelle" : disponible uniquement le vendredi, 11h-15h.
-# Les créneaux sont générés automatiquement à la volée (semaine en cours).
+#  - Motif "Visite officielle" : disponible du lundi au jeudi.
+#  - Motif "Visite personnelle" : disponible le vendredi.
+#  - Le visiteur choisit librement son heure souhaitée dans la plage 9h-16h.
+#  - Plusieurs rendez-vous peuvent être pris le même jour.
+#  - L'administrateur fixe l'heure définitive en validant la demande
+#    (la demande devient alors une audience confirmée).
+# Les créneaux (jours) sont générés automatiquement à la volée (semaine en cours).
 
 VISITE_OFFICIELLE = 'officielle'
 VISITE_PERSONNELLE = 'personnelle'
+
+# Plage horaire dans laquelle le visiteur choisit son heure souhaitée.
+HEURE_OUVERTURE = time(9, 0)
+HEURE_FERMETURE = time(16, 0)
+# Durée par défaut d'un rendez-vous (l'admin peut la redéfinir).
+DUREE_RDV_MINUTES = 30
 
 # Jours: lundi=0 ... dimanche=6
 _REGLES_MOTIF = {
     VISITE_OFFICIELLE: {
         'jours': (0, 1, 2, 3),  # lundi -> jeudi
-        'heure_debut': time(13, 0),
-        'heure_fin': time(16, 0),
+        'heure_debut': HEURE_OUVERTURE,
+        'heure_fin': HEURE_FERMETURE,
     },
     VISITE_PERSONNELLE: {
         'jours': (4,),  # vendredi
-        'heure_debut': time(11, 0),
-        'heure_fin': time(15, 0),
+        'heure_debut': HEURE_OUVERTURE,
+        'heure_fin': HEURE_FERMETURE,
     },
 }
 
@@ -96,10 +105,8 @@ def _generer_creneaux_virtuels(motif):
     if today > dernier_jour_autorise:
         lundi = lundi + timedelta(days=7)
 
-    fin_semaine = lundi + timedelta(days=6)
-
-    # Les deux types de visites acceptent plusieurs demandes par jour
-    # (l'admin choisira l'heure exacte lors de la confirmation).
+    # Tous les jours ouvrés acceptent plusieurs demandes (le visiteur choisit
+    # son heure souhaitée ; l'admin fixera l'heure exacte à la confirmation).
     creneaux = []
     for offset in range(7):
         jour = lundi + timedelta(days=offset)
@@ -112,20 +119,25 @@ def _generer_creneaux_virtuels(motif):
             'id': f'v:{type_motif}:{iso}',
             'date': iso,
             'date_formatted': f"{_JOURS_FR[jour.weekday()]} {jour.day} {_MOIS_FR[jour.month]} {jour.year}",
-            'heure_debut': h_debut.strftime('%H:%M'),
-            'heure_fin': h_fin.strftime('%H:%M'),
-            'places_restantes': 1,
-            'capacite': 1,
-            'label': f"{jour.strftime('%d/%m/%Y')} {h_debut.strftime('%H:%M')} - {h_fin.strftime('%H:%M')}",
+            # Bornes dans lesquelles le visiteur choisit son heure.
+            'heure_min': h_debut.strftime('%H:%M'),
+            'heure_max': h_fin.strftime('%H:%M'),
+            'choix_heure': True,
+            'label': f"{jour.strftime('%d/%m/%Y')}",
         })
 
     return creneaux
 
 
-def _resoudre_creneau_virtuel(creneau_id, motif):
+def _resoudre_creneau_virtuel(creneau_id, motif, heure_debut=None):
     """Crée (et retourne) un CreneauDisponibilite à partir d'un id virtuel.
 
     Format attendu: ``v:<type>:<YYYY-MM-DD>``.
+    ``heure_debut`` est l'heure souhaitée choisie par le visiteur (objet
+    ``time``) ; si absente, on utilise le début de la plage autorisée.
+    Chaque demande crée son propre créneau (capacité 1) afin d'autoriser
+    plusieurs rendez-vous le même jour. L'administrateur fixera l'heure
+    définitive lors de la validation (audience).
     Retourne ``None`` si l'id n'est pas un id virtuel valide.
     """
     if not creneau_id or not creneau_id.startswith('v:'):
@@ -146,25 +158,21 @@ def _resoudre_creneau_virtuel(creneau_id, motif):
     if _classifier_motif(motif) != type_motif:
         return None
 
-    # Pour la visite personnelle (un seul créneau par vendredi), on réutilise
-    # un éventuel créneau libre existant.
-    if type_motif == VISITE_PERSONNELLE:
-        existant = (
-            CreneauDisponibilite.objects
-            .filter(motif=motif, date=jour,
-                    heure_debut=regle['heure_debut'],
-                    heure_fin=regle['heure_fin'])
-            .first()
-        )
-        if existant and existant.est_disponible():
-            return existant
+    # Heure souhaitée par le visiteur, bornée à la plage autorisée.
+    h_debut = heure_debut or regle['heure_debut']
+    if h_debut < regle['heure_debut'] or h_debut > regle['heure_fin']:
+        return None
+    # Heure de fin = heure choisie + durée par défaut, plafonnée à la fermeture.
+    fin_dt = datetime.combine(jour, h_debut) + timedelta(minutes=DUREE_RDV_MINUTES)
+    h_fin = min(fin_dt.time(), regle['heure_fin'])
+    if h_fin <= h_debut:
+        h_fin = regle['heure_fin']
 
-    # Visite officielle: chaque demande crée son propre créneau (capacité 1)
     creneau = CreneauDisponibilite.objects.create(
         motif=motif,
         date=jour,
-        heure_debut=regle['heure_debut'],
-        heure_fin=regle['heure_fin'],
+        heure_debut=h_debut,
+        heure_fin=h_fin,
         capacite=1,
         actif=True,
     )
@@ -751,13 +759,14 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
 
             motif_id = str(fixed_motif.pk) if fixed_motif else request.POST.get('motif_id')
             creneau_id = request.POST.get('creneau_id')
+            heure_souhaitee_str = (request.POST.get('heure_souhaitee') or '').strip()
 
             if not motif_id:
                 messages.error(request, 'Veuillez sélectionner un motif')
                 return redirect(error_redirect_url_name)
 
             if not creneau_id:
-                messages.error(request, 'Veuillez sélectionner un créneau disponible')
+                messages.error(request, 'Veuillez sélectionner un jour disponible')
                 return redirect(error_redirect_url_name)
 
             description = (request.POST.get('description') or '').strip()
@@ -765,11 +774,27 @@ def _rendez_vous_public_create(request, fixed_motif=None, error_redirect_url_nam
                 messages.error(request, 'Veuillez préciser le commentaire / la description de votre demande')
                 return redirect(error_redirect_url_name)
 
+            # Heure souhaitée choisie par le visiteur (bornée à 9h-16h).
+            heure_choisie = None
+            if heure_souhaitee_str:
+                for fmt in ('%H:%M', '%H:%M:%S'):
+                    try:
+                        heure_choisie = datetime.strptime(heure_souhaitee_str, fmt).time()
+                        break
+                    except ValueError:
+                        continue
+
             # Résolution du créneau: id virtuel (workflow officielle/personnelle)
             # ou id réel d'un CreneauDisponibilite existant.
             motif_obj = get_object_or_404(MotifVisite, pk=motif_id)
             if creneau_id.startswith('v:'):
-                creneau = _resoudre_creneau_virtuel(creneau_id, motif_obj)
+                if heure_choisie is None:
+                    messages.error(request, "Veuillez choisir l'heure souhaitée pour votre rendez-vous.")
+                    return redirect(error_redirect_url_name)
+                if heure_choisie < HEURE_OUVERTURE or heure_choisie > HEURE_FERMETURE:
+                    messages.error(request, "L'heure choisie doit être comprise entre 09h00 et 16h00.")
+                    return redirect(error_redirect_url_name)
+                creneau = _resoudre_creneau_virtuel(creneau_id, motif_obj, heure_debut=heure_choisie)
                 if creneau is None:
                     messages.error(request, "Créneau invalide ou indisponible. Veuillez en choisir un autre.")
                     return redirect(error_redirect_url_name)
